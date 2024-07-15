@@ -10,27 +10,78 @@ import {
   deleteChat,
   sendAttachments,
   getChatDetails,
-  renameGroupChat
+  renameGroupChat,
+  getMessages
 } from "../controllers/chat.controller.js";
 import { isLoggedIn } from "../middlewares/auth.js";
 import { uploadSendAttachments } from "../middlewares/multer.js";
+import {
+  addGroupMemberValidation,
+  createGroupChatValidation,
+  deleteChatValidation,
+  getMessagesValidation,
+  leaveGroupValidation,
+  removeMemberValidation,
+  renameGroupChatValidation,
+  sendAttachmentsValidation
+} from "../validation/chatValidation.js";
+import runValidation from "../validation/runValidation.js";
 
 const chatRoute = express.Router();
 
 chatRoute.use(isLoggedIn);
-chatRoute.post("/new", createGroupChat);
+
+chatRoute.post(
+  "/new",
+  createGroupChatValidation,
+  runValidation,
+  createGroupChat
+);
+
 chatRoute.get("/my-chats", getMyChats);
 chatRoute.get("/my-groups", getMyGroups);
-chatRoute.put("/add-group-member", addGroupMember);
-chatRoute.put("/remove-member", removeMember);
-chatRoute.delete("/leave-group/:id", leaveGroup);
-chatRoute.post("/send-attachments", uploadSendAttachments, sendAttachments);
+
+chatRoute.put(
+  "/add-group-member",
+  addGroupMemberValidation,
+  runValidation,
+  addGroupMember
+);
+
+chatRoute.put(
+  "/remove-member",
+  removeMemberValidation,
+  runValidation,
+  removeMember
+);
+
+chatRoute.delete(
+  "/leave-group/:id",
+  leaveGroupValidation,
+  runValidation,
+  leaveGroup
+);
+
+chatRoute.post(
+  "/send-attachments",
+  uploadSendAttachments,
+  sendAttachmentsValidation,
+  runValidation,
+  sendAttachments
+);
+
+chatRoute.get(
+  "/message/:id",
+  getMessagesValidation,
+  runValidation,
+  getMessages
+);
 
 // Dynamic Route
 chatRoute
   .route("/:id")
   .get(getChatDetails)
-  .put(renameGroupChat)
-  .delete(deleteChat);
+  .put(renameGroupChatValidation, runValidation, renameGroupChat)
+  .delete(deleteChatValidation, runValidation, deleteChat);
 
 export default chatRoute;

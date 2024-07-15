@@ -1,5 +1,6 @@
 import { verifyJsonWebToken } from "../helper/jsonWebToken.js";
 import { errorResponse } from "../helper/responseHandler.js";
+import User from "../models/user.model.js";
 import { accessTokenKey } from "../secret.js";
 
 const isLoggedIn = async (req, res, next) => {
@@ -28,7 +29,6 @@ const isLoggedIn = async (req, res, next) => {
       return;
     }
     req.userId = userInfo._id;
-    // console.log(userInfo._id);
     next();
   } catch (error) {
     return next(error);
@@ -37,9 +37,10 @@ const isLoggedIn = async (req, res, next) => {
 
 const isAdmin = async (req, res, next) => {
   try {
-    const { user } = req;
+    const { userId } = req;
 
-    if (!user) {
+
+    if (!userId) {
       errorResponse(res, {
         statusCode: 404,
         errorMessage: "User not found with access token please login again",
@@ -50,6 +51,7 @@ const isAdmin = async (req, res, next) => {
       return;
     }
 
+    const user = await User.findById(userId);
     if (!user.isAdmin) {
       errorResponse(res, {
         statusCode: 401,

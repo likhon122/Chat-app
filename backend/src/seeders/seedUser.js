@@ -27,7 +27,7 @@ const seedUser = async (req, res, next) => {
     const users = await Promise.all(usersPromise);
     successResponse(res, {
       statusCode: 201,
-      successMessage: "Users seeding successfull!",
+      successMessage: "Users seeded successful!",
       payload: { users },
       nextURl: {}
     });

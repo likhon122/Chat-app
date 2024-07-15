@@ -8,6 +8,9 @@ import {
 } from "../helper/jsonWebToken.js";
 import { frontendUrl, jsonWebTokenKey } from "../secret.js";
 import { sendEmailWithNodemailer } from "../helper/sendEmail.js";
+import Request from "../models/request.model.js";
+import { emitEvent } from "../helper/socketIo.js";
+import { NEW_FRIEND_REQUEST, REFETCH_CHATS } from "../constants/event.js";
 
 const getSingleUser = async (req, res, next) => {
   try {
@@ -214,9 +217,300 @@ const verifyUserController = async (req, res, next) => {
   }
 };
 
+const searchUser = async (req, res, next) => {
+  try {
+    const searchName = req.query.name;
+
+    const searchingUsers = await User.find({
+      name: { $regex: searchName, $options: "i" }
+    }).select("avatar name username");
+
+    if (searchingUsers.length < 1) {
+      errorResponse(res, {
+        statusCode: 404,
+        errorMessage: `Could not found any user for ${searchName} name!`,
+        nextURl: {}
+      });
+    }
+
+    const searchResult = searchingUsers.map(
+      ({ _id, username, name, avatar }) => {
+        return { _id, username, name, avatar: avatar.url };
+      }
+    );
+
+    successResponse(res, {
+      statusCode: 200,
+      successMessage: "Search result returned successfully!!",
+      payload: [...searchResult],
+      nextURl: {}
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const sendRequest = async (req, res, next) => {
+  try {
+    const { sender, receiver } = req.body;
+
+    const validUserCheck = await User.findById({ _id: receiver }).select(
+      "friends"
+    );
+
+    if (!validUserCheck) {
+      errorResponse(res, {
+        statusCode: 404,
+        errorMessage:
+          "Make sure you send friend request for valid person!! Please send friend request for valid person! This person is not found!!",
+        nextURl: {}
+      });
+    }
+
+    if (sender !== req.userId) {
+      errorResponse(res, {
+        statusCode: 400,
+        errorMessage:
+          "Only you can send friend request for your id! Please logged in your id and send friend request!",
+        nextURl: {}
+      });
+    }
+
+    if (receiver === req.userId) {
+      errorResponse(res, {
+        statusCode: 400,
+        errorMessage: "You can not send friend request itself!!",
+        nextURl: {}
+      });
+    }
+
+    if (validUserCheck.friends.includes(sender)) {
+      return errorResponse(res, {
+        statusCode: 400,
+        errorMessage: "This user is already your friend!",
+        nextURl: {}
+      });
+    }
+
+    const request = await Request.findOne({
+      $or: [
+        { sender, receiver },
+        {
+          sender: receiver,
+          receiver: sender
+        }
+      ]
+    });
+
+    if (request) {
+      return errorResponse(res, {
+        statusCode: 400,
+        errorMessage: "You already send friend request for this person!",
+        nextURl: {}
+      });
+    }
+
+    const dbMessage = {
+      sender,
+      receiver
+    };
+
+    await Request.create(dbMessage);
+
+    emitEvent(req, NEW_FRIEND_REQUEST, [receiver]);
+
+    successResponse(res, {
+      statusCode: 200,
+      successMessage: "Send Request successfully!!",
+      payload: {},
+      nextURl: {}
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getFriends = async (req, res, next) => {
+  try {
+    const { userId } = req;
+    const { page } = req.query || 1;
+
+    const skip = (page - 1) * 20;
+
+    const allFriends = await User.findOne({ _id: userId })
+      .select("friends")
+      .populate({
+        path: "friends",
+        select: "name avatar",
+        options: {
+          limit: 20,
+          skip
+        }
+      });
+
+    if (!allFriends) {
+      errorResponse(res, {
+        statusCode: 404,
+        errorMessage:
+          "You don't have any friends! Please add any friend's and enjoy chat!!",
+        nextURl: { sendFriendRequest: "/api/v1/user/send-request" }
+      });
+    }
+
+    const editFriends = allFriends.friends;
+
+    const friends = editFriends.map(({ _id, name, avatar }) => {
+      return { _id, name, avatar: avatar.url };
+    });
+
+    successResponse(res, {
+      statusCode: 200,
+      successMessage: "All friends returned successfully!!",
+      payload: { friends },
+      nextURl: {}
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const acceptRequest = async (req, res, next) => {
+  try {
+    const { acceptId } = req.body;
+
+    const requestDetails = await Request.findById(
+      { _id: acceptId },
+      "sender receiver status"
+    );
+
+    if (!requestDetails) {
+      errorResponse(res, {
+        statusCode: 404,
+        errorMessage:
+          "You can accept friend request for valid person!! Please make sure this request is valid!! This friend request is not found!!",
+        nextURl: {}
+      });
+    }
+
+    const [senderDetails, receiverDetails, requestDeleteDetails] =
+      await Promise.all([
+        User.findOneAndUpdate(
+          { _id: requestDetails.sender },
+          { $addToSet: { friends: requestDetails.receiver } },
+          { new: true, runValidators: true }
+        ),
+        User.findByIdAndUpdate(
+          { _id: requestDetails.receiver },
+          { $addToSet: { friends: requestDetails.sender } },
+          { new: true, runValidators: true }
+        ),
+        Request.findOneAndDelete({ _id: acceptId })
+      ]);
+
+    if (!senderDetails || !receiverDetails || !requestDeleteDetails) {
+      return errorResponse(res, {
+        statusCode: 400,
+        errorMessage: "Friend request accept failed! Something is wrong!!",
+        nextURl: {}
+      });
+    }
+    const members = [requestDetails.sender, requestDetails.receiver];
+
+    emitEvent(req, REFETCH_CHATS, members);
+
+    successResponse(res, {
+      statusCode: 200,
+      successMessage: "Accept friend Request successfully!!",
+      payload: {},
+      nextURl: {}
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const deleteRequest = async (req, res, next) => {
+  try {
+    const { deleteId } = req.body;
+
+    const requestDetails = await Request.findById(
+      { _id: deleteId },
+      "sender receiver status"
+    );
+
+    if (!requestDetails) {
+      errorResponse(res, {
+        statusCode: 404,
+        errorMessage:
+          "You can delete friend request for valid person!! Please make sure this request is valid!! This friend request is not found!!",
+        nextURl: {}
+      });
+    }
+
+    await Request.findOneAndDelete({ _id: deleteId });
+
+    successResponse(res, {
+      statusCode: 200,
+      successMessage: "Friend Request deleted successfully!!",
+      payload: {},
+      nextURl: {}
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getFriendRequestNotifications = async (req, res, next) => {
+  try {
+    const { userId } = req;
+
+    const requests = await Request.find({ receiver: userId })
+      .select("sender")
+      .populate({
+        path: "sender",
+        select: "name avatar"
+      });
+
+    if (!requests) {
+      errorResponse(res, {
+        statusCode: 404,
+        errorMessage: "You don't have any friend request!!",
+        nextURl: {}
+      });
+    }
+
+    const friendRequests = requests.map(({ _id, name, sender }) => {
+      return {
+        _id,
+        name,
+        sender: {
+          _id: sender._id,
+          name: sender.name,
+          avatar: sender.avatar.url
+        }
+      };
+    });
+
+    successResponse(res, {
+      statusCode: 200,
+      successMessage: "Friend Request notifications returned successfully!!",
+      payload: { friendRequests },
+      nextURl: {}
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export {
   getSingleUser,
   getAllUsers,
   verifyUserController,
-  processRegisterController
+  processRegisterController,
+  searchUser,
+  sendRequest,
+  acceptRequest,
+  deleteRequest,
+  getFriends,
+  getFriendRequestNotifications
 };

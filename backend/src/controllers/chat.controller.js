@@ -5,6 +5,7 @@ import {
   REFETCH_CHATS
 } from "../constants/event.js";
 import { checkIsChatAdmin, deleteChatWithId } from "../helper/Chat.js";
+import { deleteFilesFromCloudinary } from "../helper/cloudinary.js";
 import { errorResponse, successResponse } from "../helper/responseHandler.js";
 import { emitEvent } from "../helper/socketIo.js";
 import Chat from "../models/chat.model.js";
@@ -449,10 +450,10 @@ const leaveGroup = async (req, res, next) => {
 
 const sendAttachments = async (req, res, next) => {
   try {
-    const { chatId } = req.body;
+    const { groupId } = req.body;
     const { userId } = req;
     const [chat, userInfo] = await Promise.all([
-      Chat.findById(chatId),
+      Chat.findById(groupId),
       User.findById(userId, "name avatar")
     ]);
 
@@ -482,7 +483,7 @@ const sendAttachments = async (req, res, next) => {
       sender: userId,
       content: "",
       attachments,
-      chat: chatId
+      chat: groupId
     };
     const messageForRealTime = {
       ...dbMessage,
@@ -506,10 +507,10 @@ const sendAttachments = async (req, res, next) => {
 
     emitEvent(req, NEW_ATTACHMENT, chat.members, {
       message: messageForRealTime,
-      chatId
+      groupId
     });
 
-    emitEvent(req, NEW_MESSAGE_ALERT, chat.members, { chatId });
+    emitEvent(req, NEW_MESSAGE_ALERT, chat.members, { groupId });
 
     successResponse(res, {
       statusCode: 200,
@@ -691,12 +692,80 @@ const deleteChat = async (req, res, next) => {
       });
     }
 
-    // await Chat.findByIdAndDelete(chatId);
+    // Here delete all attachments from cloudinary !
+    const messageWithAttachments = await Message.find({
+      chat: chatId,
+      attachment: { $exists: true, $ne: [] }
+    });
+
+    const publicIds = [];
+
+    messageWithAttachments.forEach(({ attachment }) => {
+      attachment.forEach(({ publicId }) => publicIds.push(publicId));
+    });
+
+    await Promise.all([
+      deleteFilesFromCloudinary(publicIds),
+      Chat.findByIdAndDelete(chatId)
+    ]);
+
+    emitEvent(req, REFETCH_CHATS, chat.members);
 
     successResponse(res, {
       statusCode: 200,
       successMessage: "Group chat deleted successfully!",
       payload: {},
+      nextURl: {}
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getMessages = async (req, res, next) => {
+  try {
+    const chatId = req.params.id;
+    const { page = 1 } = req.query;
+
+    console.log(page);
+
+    const limit = 20;
+    const skip = (page - 1) * limit;
+
+    const [messages, totalMessagesCount] = await Promise.all([
+      Message.find({ chat: chatId })
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .populate("sender", "name avatar")
+        .lean(),
+      Message.countDocuments({ chat: chatId })
+    ]);
+
+    if (!messages) {
+      errorResponse(res, {
+        statusCode: 404,
+        errorMessage: "Messages not found!",
+        nextURl: {
+          // createGroup: "/api/v1/chat/new"
+        }
+      });
+    }
+
+    const totalPages = Math.ceil(totalMessagesCount / limit);
+
+    successResponse(res, {
+      statusCode: 200,
+      successMessage: "Message returned successfully!",
+      payload: {
+        messages,
+        pagination: {
+          totalMessages: totalMessagesCount,
+          page: Number(page),
+          limit,
+          totalPages
+        }
+      },
       nextURl: {}
     });
   } catch (error) {
@@ -714,5 +783,6 @@ export {
   deleteChat,
   sendAttachments,
   getChatDetails,
-  renameGroupChat
+  renameGroupChat,
+  getMessages
 };
