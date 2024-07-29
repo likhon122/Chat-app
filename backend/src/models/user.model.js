@@ -25,12 +25,12 @@ const userSchema = new mongoose.Schema(
     },
     avatar: {
       publicId: {
-        type: String,
-        required: [true, "Avatar public id is required!"]
+        type: String
+        // required: [true, "Avatar public id is required!"]
       },
       url: {
-        type: String,
-        required: [true, "Avatar url is required!"]
+        type: String
+        // required: [true, "Avatar url is required!"]
       }
     },
     friends: [{ type: mongoose.Schema.ObjectId, ref: "User" }],

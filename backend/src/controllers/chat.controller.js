@@ -49,6 +49,7 @@ const createGroupChat = async (req, res, next) => {
 const getMyChats = async (req, res, next) => {
   try {
     const { userId } = req;
+    // console.log(userId);
     const chats = await Chat.find({ members: userId }).populate(
       "members",
       "avatar name email"
@@ -77,9 +78,9 @@ const getMyChats = async (req, res, next) => {
         groupChat,
         avatar: groupChat
           ? members.slice(0, 3).map((member) => {
-              return member.avatar.url;
+              return member.avatar?.url;
             })
-          : otherMember?.avatar.url,
+          : otherMember()?.avatar?.url,
         members: members.reduce((previous, current) => {
           if (current._id.toString() !== userId.toString()) {
             previous.push(current._id);

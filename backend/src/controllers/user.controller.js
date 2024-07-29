@@ -81,22 +81,39 @@ const getAllUsers = async (req, res, next) => {
 
 const processRegisterController = async (req, res, next) => {
   try {
-    const { name, email, password, profilePic } = req.body;
+    const { name, username, email, password } = req.body;
 
-    const existUser = await User.findOne({ email });
+    const [existUser, existUserName] = await Promise.all([
+      User.findOne({ email }),
+      User.findOne({ username })
+    ]);
 
+    if (existUserName) {
+      errorResponse(res, {
+        statusCode: 400,
+        errorMessage:
+          "Username is already have anyone taken! Please select another username!",
+        nextURl: {}
+      });
+    }
     if (existUser) {
       errorResponse(res, {
         statusCode: 409,
         errorMessage: "User is already exist please login!",
-        nextURl: { login: "/api/v1/login" }
+        nextURl: {}
       });
     }
 
     const salt = await bcryptjs.genSalt(10);
     const hashedPassword = await bcryptjs.hash(password, salt);
 
-    const tokenData = { name, email, password: hashedPassword, profilePic };
+    const tokenData = {
+      name,
+      username,
+      email,
+      password: hashedPassword
+      // profilePic
+    };
 
     // Create json web token
     const token = createJsonWebToken(tokenData, jsonWebTokenKey, "10m");
@@ -144,7 +161,6 @@ const processRegisterController = async (req, res, next) => {
       statusCode: 201,
       successMessage: `Please go to your email ${email} and verify your email!`,
       payload: { token },
-      // payload:{},
       nextURl: {
         verifyEmail: "/api/v1/verify",
         login: "/api/v1/login"
@@ -168,6 +184,8 @@ const processRegisterController = async (req, res, next) => {
 const verifyUserController = async (req, res, next) => {
   try {
     const { token } = req.body;
+    
+    console.log(token);
 
     if (!token) {
       errorResponse(res, {

@@ -4,8 +4,46 @@ import User from "../models/user.model.js";
 import { errorResponse, successResponse } from "../helper/responseHandler.js";
 import {
   createAccessToken,
-  createRefreshToken
+  createRefreshToken,
+  verifyJsonWebToken
 } from "../helper/jsonWebToken.js";
+import { accessTokenKey } from "../secret.js";
+
+const getUser = async (req, res, next) => {
+  try {
+    const { accessToken } = req.cookies;
+
+    if (!accessToken) {
+      errorResponse(res, {
+        statusCode: 401,
+        errorMessage: "Access token not found please login again!",
+        nextURl: {
+          login: "/api/v1/login"
+        }
+      });
+      return;
+    }
+    const user = verifyJsonWebToken(accessToken, accessTokenKey);
+    if (!user) {
+      errorResponse(res, {
+        statusCode: 401,
+        errorMessage: "Access token not valid please login again!",
+        nextURl: {
+          login: "/api/v1/login"
+        }
+      });
+      return;
+    }
+    successResponse(res, {
+      statusCode: 200,
+      successMessage: "User logged in successfully!",
+      payload: { user },
+      nextURl: {}
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
 
 const loginUser = async (req, res, next) => {
   try {
@@ -41,7 +79,7 @@ const loginUser = async (req, res, next) => {
     }
     const user = existUser.toObject();
     delete user.password;
-    
+
     createAccessToken(res, user);
     createRefreshToken(res, user);
 
@@ -95,4 +133,4 @@ const logOutUser = async (req, res, next) => {
   }
 };
 
-export { loginUser, logOutUser };
+export { loginUser, logOutUser, getUser };
