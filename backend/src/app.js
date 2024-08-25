@@ -3,6 +3,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import { Server } from "socket.io";
 import { createServer } from "http";
+import { v4 as uuid } from "uuid";
 
 import { frontendUrl } from "./secret.js";
 import seedRoute from "./seeders/seed.route.js";
@@ -10,16 +11,23 @@ import userRoute from "./routes/user.route.js";
 import authRoute from "./routes/auth.route.js";
 import chatRoute from "./routes/chat.route.js";
 import { errorResponse } from "./helper/responseHandler.js";
+import { NEW_MESSAGE, NEW_MESSAGE_ALERT } from "./constants/event.js";
+import { getSockets } from "./helper/socketIo.js";
+import Message from "./models/message.model.js";
+import { socketAuthenticator } from "./middlewares/auth.js";
 
 const app = express();
 
 const server = createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "*",
+    origin: [frontendUrl],
+    methods: ["GET", "POST"],
     credentials: true
   }
 });
+
+app.set("io", io);
 
 app.use(
   cors({
@@ -41,10 +49,63 @@ app.use("/api/v1/auth", authRoute);
 app.use("/api/v1/chat", chatRoute);
 
 // Socket io setup
+io.use((socket, next) => {
+  cookieParser()(
+    socket.request,
+    socket.request.res,
+    async (err) => await socketAuthenticator(err, socket, next)
+  );
+});
+
+export const userSocketIds = new Map();
+
 io.on("connection", (socket) => {
-  console.log(`User connected ${socket.id}`);
+  const { user } = socket;
+
+  userSocketIds.set(user._id.toString(), socket.id);
+
+  socket.on(NEW_MESSAGE, async ({ chatId, members, message }) => {
+    const messageForRealTime = {
+      content: message,
+      _id: uuid(),
+      sender: {
+        _id: user._id,
+        name: user.name,
+        avatar: user?.avatar?.url
+      },
+      chatId,
+      createdAt: new Date().toISOString()
+    };
+
+    const messageForDb = {
+      content: message,
+      sender: user._id,
+      chat: chatId
+    };
+  
+
+    const membersSocket = getSockets(members);
+
+    io.to(membersSocket).emit(NEW_MESSAGE, {
+      chatId,
+      message: messageForRealTime
+    });
+
+    io.to(membersSocket).emit(NEW_MESSAGE_ALERT, { chatId });
+
+    try {
+      const resMessage = await Message.create(messageForDb);
+
+      if (!resMessage) {
+        console.error("Message not saved in DB.. Something went wrong!!");
+      }
+    } catch (error) {
+      console.error("Message not saved in DB.. Something went wrong!!", error);
+    }
+  });
 
   socket.on("disconnect", () => {
+    userSocketIds.delete(user._id.toString());
     console.log("User disconnected");
   });
 });

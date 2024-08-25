@@ -3,7 +3,8 @@ import {
   createBrowserRouter,
   createRoutesFromElements,
   Route,
-  RouterProvider
+  RouterProvider,
+  Routes
 } from "react-router-dom";
 import Layout from "./Layout";
 import Home from "./pages/home/Home";
@@ -17,6 +18,10 @@ import { serverUrl } from "..";
 import { useDispatch } from "react-redux";
 import { setUser } from "./app/features/authSlice";
 import Verify from "./pages/sign-up/Verify";
+import { useVerifyUserQuery } from "./app/api/api";
+import { SocketProvider } from "./Socket";
+import MyChats from "./pages/chat/MyChats";
+import ShowChat from "./pages/chat/ShowChats";
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -24,7 +29,8 @@ const router = createBrowserRouter(
       <Route path="" element={<Home />} />
       <Route path="sign-up" element={<SignUp />} />
       <Route path="login" element={<Login />} />
-      <Route path="chat" element={<Chat />} />
+      <Route path="chat" element={<ShowChat />} />
+      <Route path="chat/:chatId" element={<Chat />} />
       <Route path="/api/v1/verify/:token" element={<Verify />} />
       <Route path="*" element={<NotFound />} />
     </Route>
@@ -33,22 +39,11 @@ const router = createBrowserRouter(
 
 const App = () => {
   const dispatch = useDispatch();
+
+  const { data, isLoading, isError, error } = useVerifyUserQuery();
   useEffect(() => {
-    (async () => {
-      try {
-        const response = await axios.get(`${serverUrl}/api/v1/auth`, {
-          withCredentials: true,
-          headers: {
-            "Content-Type": "application/json"
-          }
-        });
-        const user = response?.data?.payload?.user;
-        dispatch(setUser(user));
-      } catch (error) {
-        console.error("Error fetching auth data:", error);
-      }
-    })();
-  }, [dispatch]);
+    dispatch(setUser(data?.payload?.user));
+  }, [dispatch, data]);
 
   return <RouterProvider router={router} />;
 };

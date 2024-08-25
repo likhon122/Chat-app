@@ -39,7 +39,6 @@ const isAdmin = async (req, res, next) => {
   try {
     const { userId } = req;
 
-
     if (!userId) {
       errorResponse(res, {
         statusCode: 404,
@@ -90,6 +89,40 @@ const isLoggedOut = async (req, res, next) => {
   }
 };
 
+const socketAuthenticator = async (err, socket, next) => {
+  try {
+    if (err) {
+      console.error("Error in socket middleware:", err);
+      return next(err);
+    }
+
+    const { accessToken } = socket.request.cookies;
+
+    if (!accessToken) {
+      return next(
+        new Error("Authentication error: Please login and send messages!")
+      );
+    }
+
+   
+    const userInfo = verifyJsonWebToken(accessToken, accessTokenKey);
+    if (!userInfo) {
+      return next(
+        new Error("Authentication error: Please login and send messages!")
+      );
+    }
+
+    socket.user = userInfo;
+
+    next();
+  } catch (error) {
+    console.error("Authentication error:", error);
+    return next(
+      new Error("Authentication error: Please login and send messages!")
+    );
+  }
+};
+
 // const isAuthenticated = async (req, res, next) => {
 //   try {
 //     const { accessToken } = req.cookies;
@@ -120,4 +153,4 @@ const isLoggedOut = async (req, res, next) => {
 //   } catch (error) {}
 // };
 
-export { isLoggedIn, isAdmin, isLoggedOut };
+export { isLoggedIn, isAdmin, isLoggedOut, socketAuthenticator };

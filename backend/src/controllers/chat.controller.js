@@ -1,11 +1,15 @@
 import {
   ALERT,
   NEW_ATTACHMENT,
+  NEW_MESSAGE,
   NEW_MESSAGE_ALERT,
   REFETCH_CHATS
 } from "../constants/event.js";
 import { checkIsChatAdmin, deleteChatWithId } from "../helper/Chat.js";
-import { deleteFilesFromCloudinary } from "../helper/cloudinary.js";
+import {
+  deleteFilesFromCloudinary,
+  uploadFilesFromCloudinary
+} from "../helper/cloudinary.js";
 import { errorResponse, successResponse } from "../helper/responseHandler.js";
 import { emitEvent } from "../helper/socketIo.js";
 import Chat from "../models/chat.model.js";
@@ -46,6 +50,7 @@ const createGroupChat = async (req, res, next) => {
   }
 };
 
+// Also some issue there!!
 const getMyChats = async (req, res, next) => {
   try {
     const { userId } = req;
@@ -55,6 +60,16 @@ const getMyChats = async (req, res, next) => {
       "avatar name email"
     );
 
+    if (!chats) {
+      errorResponse(res, {
+        statusCode: 400,
+        errorMessage: "No Chats found please make any conversion or group!",
+        nextURl: {
+          createGroup: "/api/v1/chat/new"
+        }
+      });
+    }
+
     const allChats = chats.map(({ members, _id, groupChat, chatName }) => {
       const otherMember = () => {
         return members.find((member) => {
@@ -62,15 +77,7 @@ const getMyChats = async (req, res, next) => {
         });
       };
 
-      if (!chats) {
-        errorResponse(res, {
-          statusCode: 400,
-          errorMessage: "No Chats found please make any conversion or group!",
-          nextURl: {
-            createGroup: "/api/v1/chat/new"
-          }
-        });
-      }
+      const membersId = members.map((member) => member._id);
 
       return {
         chatName,
@@ -81,12 +88,7 @@ const getMyChats = async (req, res, next) => {
               return member.avatar?.url;
             })
           : otherMember()?.avatar?.url,
-        members: members.reduce((previous, current) => {
-          if (current._id.toString() !== userId.toString()) {
-            previous.push(current._id);
-          }
-          return previous;
-        }, [])
+        members: membersId
       };
     });
 
@@ -451,10 +453,29 @@ const leaveGroup = async (req, res, next) => {
 
 const sendAttachments = async (req, res, next) => {
   try {
-    const { groupId } = req.body;
+    const { chatId, message: formMessage } = req.body;
+
     const { userId } = req;
+
+    const { files } = req;
+
+    if (files.length < 0) {
+      errorResponse(res, {
+        statusCode: 400,
+        errorMessage: "Please provide any attachments at least 1 and upto 5!!",
+        nextURl: {}
+      });
+    }
+    if (files.length > 5) {
+      errorResponse(res, {
+        statusCode: 400,
+        errorMessage: "Please provide any attachments at least 1 and upto 5!!",
+        nextURl: {}
+      });
+    }
+
     const [chat, userInfo] = await Promise.all([
-      Chat.findById(groupId),
+      Chat.findById(chatId),
       User.findById(userId, "name avatar")
     ]);
 
@@ -468,26 +489,19 @@ const sendAttachments = async (req, res, next) => {
       });
     }
 
-    const reqAttachments = req.files;
-
-    if (reqAttachments.length < 1) {
-      errorResponse(res, {
-        statusCode: 400,
-        errorMessage: "Please provide attachments!",
-        nextURl: {}
-      });
-    }
-
-    const attachments = [];
+    const attachments = await uploadFilesFromCloudinary(files);
 
     const dbMessage = {
       sender: userId,
-      content: "",
-      attachments,
-      chat: groupId
+      content: formMessage ? formMessage : "",
+      attachment: attachments,
+      chat: chatId
     };
     const messageForRealTime = {
-      ...dbMessage,
+      sender: userId,
+      content: formMessage ? formMessage : "",
+      attachment: attachments,
+      chatId,
       sender: {
         _id: userId,
         name: userInfo.name,
@@ -506,12 +520,12 @@ const sendAttachments = async (req, res, next) => {
       });
     }
 
-    emitEvent(req, NEW_ATTACHMENT, chat.members, {
+    emitEvent(req, NEW_MESSAGE, chat.members, {
       message: messageForRealTime,
-      groupId
+      chatId
     });
 
-    emitEvent(req, NEW_MESSAGE_ALERT, chat.members, { groupId });
+    emitEvent(req, NEW_MESSAGE_ALERT, chat.members, { chatId });
 
     successResponse(res, {
       statusCode: 200,

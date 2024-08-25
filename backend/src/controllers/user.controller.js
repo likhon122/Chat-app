@@ -11,6 +11,7 @@ import { sendEmailWithNodemailer } from "../helper/sendEmail.js";
 import Request from "../models/request.model.js";
 import { emitEvent } from "../helper/socketIo.js";
 import { NEW_FRIEND_REQUEST, REFETCH_CHATS } from "../constants/event.js";
+import Chat from "../models/chat.model.js";
 
 const getSingleUser = async (req, res, next) => {
   try {
@@ -184,7 +185,7 @@ const processRegisterController = async (req, res, next) => {
 const verifyUserController = async (req, res, next) => {
   try {
     const { token } = req.body;
-    
+
     console.log(token);
 
     if (!token) {
@@ -432,7 +433,16 @@ const acceptRequest = async (req, res, next) => {
         nextURl: {}
       });
     }
+
     const members = [requestDetails.sender, requestDetails.receiver];
+
+    console.log(senderDetails.name, receiverDetails.name);
+
+    await Chat.create({
+      members,
+      chatName: `${senderDetails.name}-${receiverDetails.name}`,
+      creator: senderDetails._id
+    });
 
     emitEvent(req, REFETCH_CHATS, members);
 

@@ -65,20 +65,11 @@ const leaveGroupValidation = [
 ];
 
 const sendAttachmentsValidation = [
-  body("groupId")
+  body("chatId")
     .trim()
     .notEmpty()
     .withMessage(
       "Sending any attachments to this group make sure you provide groupId. Sending any attachments must be required userId!"
-    ),
-  check("attachments")
-    .notEmpty()
-    .withMessage(
-      "Attachments is must be an array format! Its length min 1 to max 5! Please Provide attachments!"
-    )
-    .isArray({ min: 1, max: 5 })
-    .withMessage(
-      "Attachments is must be an array format! Its length min 1 to max 5! Please Provide attachments!"
     )
 ];
 

@@ -35,7 +35,7 @@
       "BinaryExpression[operator='in']"
     ],
     "prefer-template": "off",
-    "no-underscore-dangle": 1,
+    "no-underscore-dangle": 0,
     "no-unused-vars": 1,
     "object-curly-newline": 0,
     "no-multiple-empty-lines": 0,

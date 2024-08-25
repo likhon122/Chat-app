@@ -6,7 +6,7 @@ import { successResponse } from "../helper/responseHandler.js";
 
 const seedUser = async (req, res, next) => {
   try {
-    await User.deleteMany();
+    // await User.deleteMany();
     const usersPromise = [];
     const hashedPassword = await bcryptjs.hash("Likhon122", 10);
     for (let i = 0; i < 10; i += 1) {
