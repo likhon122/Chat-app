@@ -36,12 +36,12 @@ const MyChats = () => {
 
   return (
     <div className="overflow-y-scroll h-[94.5vh]">
-      {!data.payload.allChats.length > 0 && (
+      {!data?.payload.allChats.length > 0 && (
         <h1>Please send anyone Friend request!!</h1>
       )}
       {data &&
-        data.payload.allChats.length > 0 &&
-        data.payload.allChats.map((chat) => {
+        data?.payload?.allChats.length > 0 &&
+        data?.payload?.allChats.map((chat) => {
           const notificationCount = getNotificationCount(chat._id);
 
           return (
