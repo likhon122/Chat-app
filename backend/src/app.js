@@ -21,7 +21,7 @@ const app = express();
 const server = createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: [frontendUrl],
+    origin: [frontendUrl, "https://friends-adda.netlify.app/"],
     methods: ["GET", "POST"],
     credentials: true
   }
@@ -31,7 +31,7 @@ app.set("io", io);
 
 app.use(
   cors({
-    origin: [frontendUrl],
+    origin: [frontendUrl, "https://friends-adda.netlify.app/"],
     credentials: true
   })
 );
@@ -82,7 +82,6 @@ io.on("connection", (socket) => {
       sender: user._id,
       chat: chatId
     };
-  
 
     const membersSocket = getSockets(members);
 
