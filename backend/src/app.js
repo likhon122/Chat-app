@@ -11,7 +11,12 @@ import userRoute from "./routes/user.route.js";
 import authRoute from "./routes/auth.route.js";
 import chatRoute from "./routes/chat.route.js";
 import { errorResponse } from "./helper/responseHandler.js";
-import { NEW_MESSAGE, NEW_MESSAGE_ALERT } from "./constants/event.js";
+import {
+  NEW_MESSAGE,
+  NEW_MESSAGE_ALERT,
+  START_TYPING,
+  STOP_TYPING
+} from "./constants/event.js";
 import { getSockets } from "./helper/socketIo.js";
 import Message from "./models/message.model.js";
 import { socketAuthenticator } from "./middlewares/auth.js";
@@ -101,6 +106,16 @@ io.on("connection", (socket) => {
     } catch (error) {
       console.error("Message not saved in DB.. Something went wrong!!", error);
     }
+  });
+
+  socket.on(START_TYPING, async ({ members, chatId }) => {
+    const membersSocket = getSockets(members);
+    socket.to(membersSocket).emit(START_TYPING, { chatId });
+  });
+
+  socket.on(STOP_TYPING, async ({ members, chatId }) => {
+    const membersSocket = getSockets(members);
+    socket.to(membersSocket).emit(STOP_TYPING, { chatId });
   });
 
   socket.on("disconnect", () => {

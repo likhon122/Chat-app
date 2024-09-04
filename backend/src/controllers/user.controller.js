@@ -12,26 +12,29 @@ import Request from "../models/request.model.js";
 import { emitEvent } from "../helper/socketIo.js";
 import { NEW_FRIEND_REQUEST, REFETCH_CHATS } from "../constants/event.js";
 import Chat from "../models/chat.model.js";
+import { uploadFilesFromCloudinary } from "../helper/cloudinary.js";
 
 const getSingleUser = async (req, res, next) => {
   try {
-    const { id } = req.body;
+    const id = req.params.userId;
 
     if (!id) {
       errorResponse(res, {
         statusCode: 400,
-        errorMessage: "userId is required to get a single user",
+        errorMessage: "UserId is required to get a single user",
         nextURl: {
           login: "/api/v1/login"
         }
       });
     }
 
-    const user = await User.findOne({ _id: id }).select({
-      password: 0
-    });
+    const withOutObject = await User.findOne({ _id: id })
+      .select({
+        password: 0
+      })
+      .populate("friends", "name avatar");
 
-    if (!user) {
+    if (!withOutObject) {
       errorResponse(res, {
         statusCode: 404,
         errorMessage:
@@ -41,6 +44,11 @@ const getSingleUser = async (req, res, next) => {
           login: "/api/v1/login"
         }
       });
+    }
+    const user = withOutObject.toObject();
+
+    if (user.avatar && user.avatar.url) {
+      user.avatar = user.avatar.url;
     }
 
     successResponse(res, {
@@ -82,7 +90,7 @@ const getAllUsers = async (req, res, next) => {
 
 const processRegisterController = async (req, res, next) => {
   try {
-    const { name, username, email, password } = req.body;
+    const { name, username, email, password, bio } = req.body;
 
     const [existUser, existUserName] = await Promise.all([
       User.findOne({ email }),
@@ -108,13 +116,35 @@ const processRegisterController = async (req, res, next) => {
     const salt = await bcryptjs.genSalt(10);
     const hashedPassword = await bcryptjs.hash(password, salt);
 
+    const profilePic = req.file;
+
+    let avatar = {};
+
+    if (profilePic) {
+      const file = [profilePic];
+      const attachment = await uploadFilesFromCloudinary(file);
+      avatar = {
+        publicId: attachment[0].public_id,
+        url: attachment[0].url
+      };
+    }
+
     const tokenData = {
       name,
       username,
       email,
-      password: hashedPassword
-      // profilePic
+      password: hashedPassword,
+      avatar: avatar.publicId
+        ? avatar
+        : {
+            publicId: "",
+            url: ""
+          }
     };
+
+    if (bio) {
+      tokenData.bio = bio;
+    }
 
     // Create json web token
     const token = createJsonWebToken(tokenData, jsonWebTokenKey, "10m");
@@ -186,8 +216,6 @@ const verifyUserController = async (req, res, next) => {
   try {
     const { token } = req.body;
 
-    console.log(token);
-
     if (!token) {
       errorResponse(res, {
         statusCode: 400,
@@ -220,6 +248,7 @@ const verifyUserController = async (req, res, next) => {
         errorMessage: "User is already exist please login!",
         nextURl: { login: "api/v1/login" }
       });
+      return;
     }
 
     const createUser = new User(userData);
@@ -351,7 +380,16 @@ const sendRequest = async (req, res, next) => {
 
 const getFriends = async (req, res, next) => {
   try {
-    const { userId } = req;
+    const { userId } = req.params;
+    if (!userId) {
+      errorResponse(res, {
+        statusCode: 400,
+        errorMessage:
+          "userId is required on params!! You don't send any userId on params!! Make sure you send userId on params!!",
+        nextURl: {}
+      });
+    }
+
     const { page } = req.query || 1;
 
     const skip = (page - 1) * 20;

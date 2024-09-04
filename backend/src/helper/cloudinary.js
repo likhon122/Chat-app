@@ -17,6 +17,7 @@ const uploadFilesFromCloudinary = async (files = []) => {
         getBase64(file),
         {
           resource_type: "auto",
+          folder: "Friends-chat",
           public_id: uuid()
         },
         (error, result) => {
@@ -47,6 +48,31 @@ const uploadFilesFromCloudinary = async (files = []) => {
   }
 };
 
-const deleteFilesFromCloudinary = async (publicIds) => {};
+const deleteFilesFromCloudinary = async (publicIds = []) => {
+  if (!Array.isArray(publicIds) || publicIds.length === 0) {
+    throw new Error("Please provide an array of public IDs to delete.");
+  }
+  const deletePromises = publicIds.map((publicId) => {
+    return new Promise((resolve, reject) => {
+      cloudinary.uploader.destroy(publicId, (error, result) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(result);
+        }
+      });
+    });
+  });
+
+  try {
+    const results = await Promise.all(deletePromises);
+    return results;
+  } catch (error) {
+    throw new Error(
+      "Error deleting files from Cloudinary! Please provide correct public IDs.",
+      error
+    );
+  }
+};
 
 export { deleteFilesFromCloudinary, uploadFilesFromCloudinary };

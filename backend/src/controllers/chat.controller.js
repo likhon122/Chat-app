@@ -54,7 +54,6 @@ const createGroupChat = async (req, res, next) => {
 const getMyChats = async (req, res, next) => {
   try {
     const { userId } = req;
-    // console.log(userId);
     const chats = await Chat.find({ members: userId }).populate(
       "members",
       "avatar name email"
@@ -244,14 +243,47 @@ const addGroupMember = async (req, res, next) => {
   }
 };
 
+// Bug is here
 const removeMember = async (req, res, next) => {
   try {
-    const { userId, groupId } = req.body;
+    const { members, groupId } = req.body;
+    if (!members || !Array.isArray(members) || members.length < 1) {
+      errorResponse(res, {
+        statusCode: 400,
+        errorMessage:
+          "Remove to member any group to send member id is required! Members is always an array type! Please sent data on array type and add at least one member on the group!",
+        nextURl: {}
+      });
+    }
 
-    const [chat, removeMemberName] = await Promise.all([
-      Chat.findById(groupId),
-      User.findById(userId, "name")
-    ]);
+    const chat = await Chat.findById(groupId);
+
+    if (!chat) {
+      errorResponse(res, {
+        statusCode: 404,
+        errorMessage: "Group not found!",
+        nextURl: {
+          createGroup: "/api/v1/chat/new"
+        }
+      });
+    }
+
+    const allNewMembersNamePromise = members.map((memberId) => {
+      return User.findById(memberId, "name");
+    });
+
+    const allNewMembersName = await Promise.all(allNewMembersNamePromise);
+
+    if (!allNewMembersName) {
+      errorResponse(res, {
+        statusCode: 404,
+        errorMessage: "User not found!",
+        nextURl: {
+          registerUser: "/api/v1/user/process-register",
+          login: "/api/v1/auth/login"
+        }
+      });
+    }
 
     const creatorName = await User.findById(chat.creator, "name");
 
@@ -259,16 +291,6 @@ const removeMember = async (req, res, next) => {
       errorResponse(res, {
         statusCode: 404,
         errorMessage: "Creator is not found!",
-        nextURl: {
-          createGroup: "/api/v1/chat/new"
-        }
-      });
-    }
-
-    if (!chat) {
-      errorResponse(res, {
-        statusCode: 404,
-        errorMessage: "Chat not found!",
         nextURl: {
           createGroup: "/api/v1/chat/new"
         }
@@ -285,39 +307,18 @@ const removeMember = async (req, res, next) => {
       });
     }
 
-    if (!removeMemberName) {
-      errorResponse(res, {
-        statusCode: 404,
-        errorMessage: "Member not found!",
-        nextURl: {
-          createGroup: "/api/v1/chat/new",
-          addMember: "/api/v1/chat/add-group-member"
-        }
-      });
-    }
-
-    if (chat.creator.toString() === userId) {
+    if (chat.creator.toString().includes(members)) {
       errorResponse(res, {
         statusCode: 400,
         errorMessage:
           "Admin can leave this group or delete this group but Admin not remove itself for this group!",
         nextURl: {}
       });
-    }
-
-    if (!chat.members.includes(userId)) {
-      errorResponse(res, {
-        statusCode: 404,
-        errorMessage: "Member not found with this group! Please add first!",
-        nextURl: {
-          createGroup: "/api/v1/chat/new",
-          addMember: "/api/v1/chat/add-group-member"
-        }
-      });
+      return;
     }
 
     const filteredMembers = chat.members.filter(
-      (memberId) => memberId.toString() !== userId.toString()
+      (memberId) => !memberId.toString().includes(members)
     );
 
     chat.members = filteredMembers;
@@ -331,21 +332,30 @@ const removeMember = async (req, res, next) => {
           addMember: "/api/v1/chat/add-group-member"
         }
       });
+      return;
     }
 
     await chat.save();
+
+    const uniqueNames = [
+      ...new Set(
+        allNewMembersName.map((user) => {
+          return user.name;
+        })
+      )
+    ];
 
     emitEvent(
       req,
       ALERT,
       chat.members,
-      `${removeMemberName.name} removed from the group ${creatorName.name}`
+      `${uniqueNames.map((name) => name)} removed from the group ${creatorName.name}`
     );
     emitEvent(req, REFETCH_CHATS, chat.members);
 
     successResponse(res, {
       statusCode: 200,
-      successMessage: `${removeMemberName.name} removed from the group ${creatorName.name}`,
+      successMessage: `${uniqueNames.map((name) => name)} removed from the group ${creatorName.name}`,
       payload: {},
       nextURl: {}
     });
@@ -354,6 +364,7 @@ const removeMember = async (req, res, next) => {
   }
 };
 
+// Bug is here
 const leaveGroup = async (req, res, next) => {
   try {
     const groupId = req.params.id;
@@ -405,6 +416,13 @@ const leaveGroup = async (req, res, next) => {
 
       chat.creator = randomCreator;
       await chat.save();
+      emitEvent(
+        req,
+        ALERT,
+        chat.members,
+        `${leftUserName.name} is left the group!`
+      );
+      emitEvent(req, REFETCH_CHATS, chat.members);
       successResponse(res, {
         statusCode: 200,
         successMessage: "Leave and new group admin make successfully!",
@@ -440,6 +458,7 @@ const leaveGroup = async (req, res, next) => {
       `${leftUserName.name} is left the group!`
     );
     emitEvent(req, REFETCH_CHATS, chat.members);
+
     successResponse(res, {
       statusCode: 200,
       successMessage: `${leftUserName.name} is left the group!`,
@@ -556,7 +575,7 @@ const getChatDetails = async (req, res, next) => {
       chat.members = chat.members.map(({ avatar, _id, name }) => ({
         _id,
         name,
-        avatar: avatar.url
+        avatar: avatar?.url
       }));
       successResponse(res, {
         statusCode: 200,
@@ -576,6 +595,7 @@ const getChatDetails = async (req, res, next) => {
           }
         });
       }
+
       successResponse(res, {
         statusCode: 200,
         successMessage: "Chat details without populate returned successfully!",
@@ -685,16 +705,71 @@ const deleteChat = async (req, res, next) => {
     }
 
     if (!chat.groupChat) {
-      errorResponse(res, {
-        statusCode: 400,
-        errorMessage: "Group This is not a group chat!",
-        nextURl: {
-          createGroup: "/api/v1/chat/new"
-        }
+      const user = await User.findOne({ _id: userId }).select("-password");
+
+      const messageWithAttachments = await Message.find({
+        chat: chatId,
+        attachment: { $exists: true, $ne: [] }
       });
+
+      const publicIds = [];
+
+      messageWithAttachments.forEach(({ attachment }) => {
+        attachment.forEach(({ public_id }) => publicIds.push(public_id));
+      });
+
+      if (publicIds.length > 0) {
+        await deleteFilesFromCloudinary(publicIds);
+      }
+
+      const deletedFriend = chat.members.filter(
+        (member) => member._id.toString() !== userId.toString()
+      );
+
+      const deletedFriendDetails = await User.findOne({
+        _id: deletedFriend[0]
+      }).select("-password");
+
+      if (!deletedFriendDetails) {
+        errorResponse(res, {
+          statusCode: 404,
+          errorMessage:
+            "Friend not found!! Please provide correct information!!",
+          nextURl: {}
+        });
+        return;
+      }
+
+      const newFriends = user.friends.filter(
+        (friend) => friend.toString() !== deletedFriend[0].toString()
+      );
+
+      const newFriendForDeletedFriend = deletedFriendDetails.friends.filter(
+        (friend) => friend.toString() !== userId.toString()
+      );
+
+      user.friends = newFriends;
+      deletedFriendDetails.friends = newFriendForDeletedFriend;
+
+      await Promise.all([
+        user.save(),
+        deletedFriendDetails.save(),
+        Chat.findByIdAndDelete(chatId)
+      ]);
+
+      emitEvent(req, REFETCH_CHATS, chat.members);
+
+      successResponse(res, {
+        statusCode: 200,
+        successMessage: "Chat delete and unfriend successfully!",
+        payload: {},
+        nextURl: {}
+      });
+      return;
     }
 
     const isAdmin = checkIsChatAdmin(res, userId, chat);
+
     if (!isAdmin) {
       errorResponse(res, {
         statusCode: 403,
@@ -707,7 +782,6 @@ const deleteChat = async (req, res, next) => {
       });
     }
 
-    // Here delete all attachments from cloudinary !
     const messageWithAttachments = await Message.find({
       chat: chatId,
       attachment: { $exists: true, $ne: [] }
@@ -716,13 +790,14 @@ const deleteChat = async (req, res, next) => {
     const publicIds = [];
 
     messageWithAttachments.forEach(({ attachment }) => {
-      attachment.forEach(({ publicId }) => publicIds.push(publicId));
+      attachment.forEach(({ public_id }) => publicIds.push(public_id));
     });
 
-    await Promise.all([
-      deleteFilesFromCloudinary(publicIds),
-      Chat.findByIdAndDelete(chatId)
-    ]);
+    if (publicIds.length > 0) {
+      await deleteFilesFromCloudinary(publicIds);
+    }
+
+    await Chat.findByIdAndDelete(chatId);
 
     emitEvent(req, REFETCH_CHATS, chat.members);
 
@@ -742,8 +817,6 @@ const getMessages = async (req, res, next) => {
     const chatId = req.params.id;
     const { page = 1 } = req.query;
 
-    console.log(page);
-
     const limit = 20;
     const skip = (page - 1) * limit;
 
@@ -761,9 +834,7 @@ const getMessages = async (req, res, next) => {
       errorResponse(res, {
         statusCode: 404,
         errorMessage: "Messages not found!",
-        nextURl: {
-          // createGroup: "/api/v1/chat/new"
-        }
+        nextURl: {}
       });
     }
 

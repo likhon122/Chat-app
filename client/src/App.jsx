@@ -22,6 +22,9 @@ import { useVerifyUserQuery } from "./app/api/api";
 import { SocketProvider } from "./Socket";
 import MyChats from "./pages/chat/MyChats";
 import ShowChat from "./pages/chat/ShowChats";
+import Profile from "./pages/profile/Profile";
+import Friends from "./pages/friends/Friends";
+import MyGroups from "./pages/myGroups/MyGroups";
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -32,6 +35,10 @@ const router = createBrowserRouter(
       <Route path="chat" element={<ShowChat />} />
       <Route path="chat/:chatId" element={<Chat />} />
       <Route path="/api/v1/verify/:token" element={<Verify />} />
+      <Route path="profile/:userId" element={<Profile />} />
+      <Route path="friends/:userId" element={<Friends />} />
+      <Route path="my-groups/:groupId" element={<MyGroups />} />
+
       <Route path="*" element={<NotFound />} />
     </Route>
   )

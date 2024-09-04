@@ -8,7 +8,6 @@ const useAsyncMutation = (mutationHook) => {
   const [mutate] = mutationHook();
 
   const executeMutation = async (tostMessage, ...args) => {
-
     let loadingToastId = toast.loading(
       tostMessage || "Updating something...!!"
     );

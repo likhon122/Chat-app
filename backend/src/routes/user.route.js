@@ -22,22 +22,18 @@ import {
   verifyUserRegistrationValidation
 } from "../validation/userValidation.js";
 import runValidation from "../validation/runValidation.js";
+import { singleAvatar } from "../middlewares/multer.js";
 
 const userRoute = express.Router();
 
-userRoute.get(
-  "/single-user",
-  isLoggedIn,
-  getSingleUserValidation,
-  runValidation,
-  getSingleUser
-);
+userRoute.get("/single-user/:userId", isLoggedIn, runValidation, getSingleUser);
 
 userRoute.get("/all-user", isLoggedIn, isAdmin, getAllUsers);
 
 userRoute.post(
   "/process-register",
   isLoggedOut,
+  singleAvatar,
   registerUserValidation,
   runValidation,
   processRegisterController
@@ -53,7 +49,7 @@ userRoute.post(
 
 userRoute.get("/search-user", searchUser);
 
-userRoute.get("/get-friends", isLoggedIn, getFriends);
+userRoute.get("/get-friends/:userId", isLoggedIn, getFriends);
 
 userRoute.get("/friend-requests", isLoggedIn, getFriendRequestNotifications);
 

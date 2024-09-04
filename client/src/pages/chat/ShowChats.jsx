@@ -1,22 +1,29 @@
-// import React from 'react'
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import MyChats from "./MyChats";
 import { setMessageNotification } from "../../app/features/chatSlice";
 import { getSocket } from "../../Socket";
+import DuelSpinner from "../../components/Loaders/DuelSpinner";
+import SingleSpinner from "../../components/Loaders/SingleSpinner";
 
 const ShowChat = () => {
   const userData = useSelector((state) => state.auth.user);
-
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const socket = getSocket();
 
   useEffect(() => {
+    let timeOutId;
     if (!userData) {
-      navigate("/sign-up");
+      timeOutId = setTimeout(() => {
+        navigate("/sign-up");
+      }, 1000);
     }
+
+    return () => {
+      clearTimeout(timeOutId);
+    };
   }, [userData, navigate]);
 
   useEffect(() => {
@@ -31,21 +38,13 @@ const ShowChat = () => {
     };
   }, [dispatch, socket]);
 
-  // useEffect(() => {
-  //   console.log("Message Notification:", messageNotification);
-  // }, [messageNotification]);
-
   return (
-    <div>
-      <div className="grid grid-cols-2">
-        <div className="border border-black">
-          <MyChats />
-        </div>
-        <div className="border border-black">
-          <div className="flex items-center justify-center h-screen">
-            <h1>Please select any chat!!!</h1>
-          </div>
-        </div>
+    <div className=" grid  h-[95vh] grid-cols-[1fr_2fr]">
+      <div className=" bg-gray-100 border-r border-gray-300 ">
+        <MyChats />
+      </div>
+      <div className="flex-1 dark:bg-[#1F2937] flex items-center justify-center">
+        <h1 className="text-gray-500 text-lg">Please select a chat!</h1>
       </div>
     </div>
   );

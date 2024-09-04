@@ -46,6 +46,38 @@ const api = createApi({
       keepUnusedDataFor: 0
     }),
 
+    getUser: builder.query({
+      query: (id) => ({
+        url: `user/single-user/${id}`,
+        credentials: "include"
+      }),
+      providesTags: ["User"]
+    }),
+
+    getFriends: builder.query({
+      query: (id) => ({
+        url: `user/get-friends/${id}`,
+        credentials: "include"
+      }),
+      providesTags: ["User"]
+    }),
+
+    getMyGroups: builder.query({
+      query: () => ({
+        url: `chat/my-groups`,
+        credentials: "include"
+      }),
+      providesTags: ["Chat"]
+    }),
+
+    getGroupDetails: builder.query({
+      query: (id, populate = true) => ({
+        url: `/chat/${id}?populate=${populate}`,
+        credentials: "include"
+      }),
+      providesTags: ["Chat"]
+    }),
+
     sendFriendRequest: builder.mutation({
       query: (data) => ({
         url: "user/send-request",
@@ -75,6 +107,37 @@ const api = createApi({
       }),
       invalidatesTags: ["Auth", "User", "Chat"]
     }),
+
+    renameGroupChat: builder.mutation({
+      query: (data) => ({
+        url: `chat/${data.chatId}`,
+        method: "PUT",
+        credentials: "include",
+        body: { name: data.name }
+      }),
+      invalidatesTags: ["Chat"]
+    }),
+
+    addGroupMembers: builder.mutation({
+      query: (data) => ({
+        url: `chat/add-group-member`,
+        method: "PUT",
+        credentials: "include",
+        body: data
+      }),
+      invalidatesTags: ["Chat"]
+    }),
+
+    removeGroupMembers: builder.mutation({
+      query: (data) => ({
+        url: `chat/remove-member`,
+        method: "PUT",
+        credentials: "include",
+        body: data
+      }),
+      invalidatesTags: ["Chat"]
+    }),
+
     sendAttachments: builder.mutation({
       query: (data) => ({
         url: "chat/send-attachments",
@@ -85,6 +148,16 @@ const api = createApi({
       keepUnusedDataFor: 0
     }),
 
+    makeGroupChat: builder.mutation({
+      query: (data) => ({
+        url: "chat/create-group",
+        method: "POST",
+        credentials: "include",
+        body: data
+      }),
+      invalidatesTags: ["Chat"]
+    }),
+
     rejectFriendRequest: builder.mutation({
       query: (data) => ({
         url: "user/delete-request",
@@ -93,6 +166,23 @@ const api = createApi({
         body: data
       }),
       invalidatesTags: ["User"]
+    }),
+
+    deleteGroup: builder.mutation({
+      query: (chatId) => ({
+        url: `chat/${chatId}`,
+        method: "DELETE",
+        credentials: "include"
+      }),
+      invalidatesTags: ["Chat"]
+    }),
+    leaveGroup: builder.mutation({
+      query: (chatId) => ({
+        url: `chat/leave-group/${chatId}`,
+        method: "DELETE",
+        credentials: "include"
+      }),
+      invalidatesTags: ["Chat"]
     })
   })
 });
@@ -109,5 +199,15 @@ export const {
   useVerifyUserQuery,
   useRejectFriendRequestMutation,
   useGetMessagesQuery,
-  useSendAttachmentsMutation
+  useSendAttachmentsMutation,
+  useGetUserQuery,
+  useGetFriendsQuery,
+  useMakeGroupChatMutation,
+  useGetMyGroupsQuery,
+  useGetGroupDetailsQuery,
+  useRenameGroupChatMutation,
+  useAddGroupMembersMutation,
+  useRemoveGroupMembersMutation,
+  useDeleteGroupMutation,
+  useLeaveGroupMutation
 } = api;

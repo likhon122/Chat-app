@@ -23,7 +23,9 @@ const getUser = async (req, res, next) => {
       });
       return;
     }
+
     const user = verifyJsonWebToken(accessToken, accessTokenKey);
+
     if (!user) {
       errorResponse(res, {
         statusCode: 401,
@@ -34,6 +36,7 @@ const getUser = async (req, res, next) => {
       });
       return;
     }
+
     successResponse(res, {
       statusCode: 200,
       successMessage: "User logged in successfully!",
@@ -78,12 +81,15 @@ const loginUser = async (req, res, next) => {
       });
     }
     const user = existUser.toObject();
+
     delete user.password;
+
+    if (user.avatar && user.avatar.url) {
+      user.avatar = user.avatar.url;
+    }
 
     createAccessToken(res, user);
     createRefreshToken(res, user);
-
-    delete user.password;
 
     successResponse(res, {
       statusCode: 200,

@@ -1,4 +1,4 @@
-import mongoose, { Mongoose } from "mongoose";
+import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema(
   {
@@ -13,6 +13,10 @@ const userSchema = new mongoose.Schema(
         true,
         "Username is already have anyone taken! Please select another username"
       ]
+    },
+    bio: {
+      type: String,
+      default: "Chat is everything!!👍"
     },
     email: {
       type: String,

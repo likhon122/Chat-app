@@ -4,6 +4,7 @@ import { setUser } from "../../app/features/authSlice";
 import { useNavigate } from "react-router-dom";
 import { useAsyncMutation } from "../../hooks/useAsyncMutationHook";
 import { useLoginUserMutation } from "../../app/api/api";
+import { FiMail, FiLock } from "react-icons/fi";
 
 const Login = () => {
   const userData = useSelector((state) => state.auth.user);
@@ -44,43 +45,45 @@ const Login = () => {
   }, [navigate, userData, data, dispatch]);
 
   return (
-    <>
-      <div>
-        <div className="flex justify-center items-center h-screen">
-          <form className="flex flex-col gap-3" onSubmit={handleSubmit}>
-            <div className="flex gap-2">
-              <label htmlFor="email">Email</label>
-              <input
-                type="email"
-                name="email"
-                id="email"
-                value={loginData.email}
-                placeholder="Enter your email"
-                className="border-black border"
-                onChange={(e) => handleChange(e)}
-              />
-            </div>
-            <div className="flex gap-2">
-              <label htmlFor="password">Password</label>
-              <input
-                type="text"
-                name="password"
-                id="password"
-                value={loginData.password}
-                placeholder="Enter your password"
-                className="border-black border"
-                onChange={(e) => handleChange(e)}
-              />
-            </div>
-            <div>
-              <button type="submit" className="border-black border">
-                Login
-              </button>
-            </div>
-          </form>
-        </div>
+    <div className="flex justify-center items-center min-h-screen dark:bg-[#222222]">
+      <div className="bg-white dark:bg-[#2B2B2B] rounded-lg shadow-lg p-8 max-w-md w-full">
+        <h2 className="text-2xl font-semibold text-center text-gray-800 dark:text-white mb-6">
+          Login
+        </h2>
+        <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+          <div className="relative">
+            <FiMail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-300" />
+            <input
+              type="email"
+              name="email"
+              id="email"
+              value={loginData.email}
+              placeholder="Enter your email"
+              className="w-full py-2 pl-10 pr-4 border rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-[#3A3B3C] dark:text-white dark:border-[#444] dark:focus:ring-purple-500"
+              onChange={handleChange}
+            />
+          </div>
+          <div className="relative">
+            <FiLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-300" />
+            <input
+              type="password"
+              name="password"
+              id="password"
+              value={loginData.password}
+              placeholder="Enter your password"
+              className="w-full py-2 pl-10 pr-4 border rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-[#3A3B3C] dark:text-white dark:border-[#444] dark:focus:ring-purple-500"
+              onChange={handleChange}
+            />
+          </div>
+          <button
+            type="submit"
+            className="w-full py-2 mt-4 text-white bg-indigo-600 rounded-lg hover:bg-indigo-500 dark:bg-purple-600 dark:hover:bg-purple-500 transition duration-300"
+          >
+            Login
+          </button>
+        </form>
       </div>
-    </>
+    </div>
   );
 };
 

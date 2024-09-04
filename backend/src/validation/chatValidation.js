@@ -47,11 +47,15 @@ const removeMemberValidation = [
     .withMessage(
       "Removing a person to this group make sure you provide groupId. Removing a new person must be required groupId!"
     ),
-  body("userId")
+  body("members")
     .trim()
     .notEmpty()
     .withMessage(
-      "Removing a person to this group make sure you provide userId. Removing a new person must be required userId!"
+      "Members is must be an array. Please sent members an array type!!"
+    )
+    .isArray({ min: 1 })
+    .withMessage(
+      "Members is must be an array. Please sent members an array type! And make sure it's length minimum 1!!"
     )
 ];
 

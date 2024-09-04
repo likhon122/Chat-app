@@ -1,3 +1,37 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.scrollbar-thin {
+  scroll-behavior: smooth;
+}
+
+/* Global styles for custom scrollbar */
+/* Global styles for custom scrollbar with animations */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: #4b5563 #1f2937;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 12px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #4b5563, #6b7280);
+  border-radius: 10px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+  transition: background 0.3s ease, transform 0.3s ease; /* Add transform transition */
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #6b7280, #4b5563);
+  transform: scale(1.1); /* Slightly enlarge the thumb on hover */
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: #1f2937;
+  border-radius: 10px;
+}

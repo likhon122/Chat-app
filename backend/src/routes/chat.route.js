@@ -32,7 +32,7 @@ const chatRoute = express.Router();
 chatRoute.use(isLoggedIn);
 
 chatRoute.post(
-  "/new",
+  "/create-group",
   createGroupChatValidation,
   runValidation,
   createGroupChat
