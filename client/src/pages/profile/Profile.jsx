@@ -9,6 +9,7 @@ import { toast } from "react-toastify";
 import { removeUser } from "../../app/features/authSlice";
 import { serverUrl } from "../../../index";
 import FriendsList from "./FriendsList";
+import DuelSpinner from "../../components/Loaders/DuelSpinner";
 
 const Profile = () => {
   const userData = useSelector((state) => state.auth.user);
@@ -52,14 +53,16 @@ const Profile = () => {
 
   useEffect(() => {
     if (!userData) {
-      navigate("/sign-up");
+      setTimeout(() => {
+        navigate("/sign-up");
+      }, 1000);
     }
   }, [userData, navigate]);
 
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-[94.7vh] text-lg text-gray-700 dark:text-gray-300 dark:bg-gray-900">
-        Loading...
+        <DuelSpinner />
       </div>
     );
   }

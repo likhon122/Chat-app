@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { IoSearch } from "react-icons/io5";
 import {
   useLazySearchUserQuery,
@@ -15,6 +15,7 @@ const Search = () => {
   const [searchUser, { isLoading, data, isError, error }] =
     useLazySearchUserQuery();
   const [sendFriendRequest] = useAsyncMutation(useSendFriendRequestMutation);
+  const searchResultsRef = useRef(null); // Create a ref for the search results
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -40,13 +41,28 @@ const Search = () => {
     return () => clearTimeout(timeOutId);
   }, [searchValue, searchUser]);
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        searchResultsRef.current &&
+        !searchResultsRef.current.contains(event.target)
+      ) {
+        setSearchValue(""); // Clear search value to hide results
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   return (
     <div className="relative w-full max-w-xs mx-auto">
-      {" "}
       <form onSubmit={handleSubmit} className="flex items-center">
         <input
           type="search"
-          className="bg-white dark:bg-[#3A3B3C] dark:text-white px-2 py-1 flex-grow border border-[#3A3B3C] rounded-l-md outline-none transition duration-300 hover:shadow-lg focus:shadow-lg text-sm" // Smaller input
+          className="bg-white dark:bg-[#3A3B3C] dark:text-white px-2 py-1 flex-grow border border-[#3A3B3C] rounded-l-md outline-none transition duration-300 hover:shadow-lg focus:shadow-lg text-sm"
           onChange={(e) => setSearchValue(e.target.value)}
           spellCheck={false}
           placeholder="Search users..."
@@ -60,13 +76,14 @@ const Search = () => {
       </form>
       {searchValue && (
         <div
+          ref={searchResultsRef} // Attach ref to the search results container
           className={`absolute mt-2 w-full bg-white dark:bg-[#222222] shadow-lg rounded-md z-10 ${
             data || isError || isLoading ? "block" : "hidden"
           }`}
         >
           {isLoading ? (
             <div className="p-4">
-              <SingleSpinner />
+              <SingleSpinner size="h-16 w-16" />
             </div>
           ) : (
             <div className="flex flex-col gap-2">

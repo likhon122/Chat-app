@@ -25,6 +25,7 @@ import ShowChat from "./pages/chat/ShowChats";
 import Profile from "./pages/profile/Profile";
 import Friends from "./pages/friends/Friends";
 import MyGroups from "./pages/myGroups/MyGroups";
+import DuelSpinner from "./components/Loaders/DuelSpinner";
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -48,11 +49,20 @@ const App = () => {
   const dispatch = useDispatch();
 
   const { data, isLoading, isError, error } = useVerifyUserQuery();
+
   useEffect(() => {
     dispatch(setUser(data?.payload?.user));
   }, [dispatch, data]);
 
-  return <RouterProvider router={router} />;
+  if (isLoading) {
+    return (
+      <div className="h-screen dark:bg-darkBg flex items-center justify-center">
+        <DuelSpinner />
+      </div>
+    );
+  }
+
+  return !isLoading && <RouterProvider router={router} />;
 };
 
 export default App;

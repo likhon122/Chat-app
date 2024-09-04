@@ -105,7 +105,7 @@ const api = createApi({
         credentials: "include",
         body: data
       }),
-      invalidatesTags: ["Auth", "User", "Chat"]
+      invalidatesTags: ["User", "Chat"]
     }),
 
     renameGroupChat: builder.mutation({

@@ -23,22 +23,24 @@ const Chat = () => {
   const { chatId } = params;
 
   useEffect(() => {
-    if (!userData) {
-      navigate("/sign-up");
-    }
+    setTimeout(() => {
+      if (!userData) {
+        navigate("/sign-up");
+      }
+    }, 2000);
   }, [userData, navigate]);
 
   return (
     <>
-      <div>
+      <div className="md:block hidden">
         <div
-          className={`${
+          className={` ${
             groupInfoDrawer
-              ? "grid grid-cols-[1fr_1.3fr_.7fr]"
-              : "grid grid-cols-[1fr_2fr]"
+              ? "md:grid grid-cols-[1fr_1.3fr_.7fr]"
+              : "md:grid grid-cols-[1fr_2fr]"
           }`}
         >
-          <div className="border border-black h-[95vh]">
+          <div className="border border-black h-[93.9vh] ">
             <MyChats />
           </div>
           <div className="border border-black ">
@@ -50,6 +52,21 @@ const Chat = () => {
               <GroupInfo chatId={chatId} />
             </div>
           )}
+        </div>
+      </div>
+
+      <div className="md:hidden block">
+        <div className={``}>
+          <div className="border border-black ">
+            <GroupChatNav chatId={chatId} />
+            {groupInfoDrawer ? (
+              <div className="border border-black ">
+                <GroupInfo chatId={chatId} />
+              </div>
+            ) : (
+              <Message chatId={chatId} />
+            )}
+          </div>
         </div>
       </div>
     </>

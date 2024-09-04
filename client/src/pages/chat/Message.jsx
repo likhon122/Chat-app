@@ -25,6 +25,7 @@ import {
   resetMessageNotification,
   setMessageNotification
 } from "../../app/features/chatSlice";
+import SingleSpinner from "../../components/Loaders/SingleSpinner";
 
 const Message = ({ chatId }) => {
   const members = useSelector((state) => state.other.members);
@@ -170,7 +171,7 @@ const Message = ({ chatId }) => {
   useSocketHook(socket, eventHandlers);
 
   return (
-    <div className="flex flex-col h-[90.9vh] bg-gray-900 text-gray-100 scrollbar-thin scrollbar-thumb-rounded">
+    <div className="flex flex-col h-[88.9vh] md:h-[89.8vh] bg-gray-900 text-gray-100 scrollbar-thin scrollbar-thumb-rounded">
       <div
         className="flex-1 overflow-y-auto bg-gray-800 p-4 rounded-t-lg shadow-lg"
         ref={containerRef}
@@ -224,6 +225,7 @@ const Message = ({ chatId }) => {
               );
             })}
         </div>
+
         <div ref={bottomRef} />
       </div>
 

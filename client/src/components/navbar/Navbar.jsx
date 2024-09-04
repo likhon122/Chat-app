@@ -39,7 +39,7 @@ const Navbar = () => {
   };
 
   return (
-    <div className="shadow-lg bg-[#FFFFFF] dark:bg-[#222222] top-0 left-0 w-full z-10">
+    <div className="shadow-lg bg-[#FFFFFF] dark:bg-[#1F2937] top-0 left-0 w-full z-10">
       <div className="container mx-auto flex items-center justify-between px-4 py-2 gap-2">
         <div className="md:hidden">
           <button
@@ -50,22 +50,22 @@ const Navbar = () => {
           </button>
         </div>
         <ul className="md:flex items-center gap-8 hidden">
-          <li>
-            <NavLink
-              to="/"
-              className={({ isActive }) =>
-                `text-lg font-medium transition-colors ${
-                  isActive
-                    ? "text-[#7D8ABC] dark:text-[#7D8ABC]"
-                    : "text-gray-700 dark:text-white"
-                } hover:text-gray-900 dark:hover:text-gray-300`
-              }
-            >
-              Home
-            </NavLink>
-          </li>
           {!userData && (
             <>
+              <li>
+                <NavLink
+                  to="/"
+                  className={({ isActive }) =>
+                    `text-lg font-medium transition-colors ${
+                      isActive
+                        ? "text-[#7D8ABC] dark:text-[#7D8ABC]"
+                        : "text-gray-700 dark:text-white"
+                    } hover:text-gray-900 dark:hover:text-gray-300`
+                  }
+                >
+                  Home
+                </NavLink>
+              </li>
               <li>
                 <NavLink
                   to="/login"
@@ -144,23 +144,23 @@ const Navbar = () => {
         } overflow-hidden transition-max-height duration-300 ease-in-out bg-white dark:bg-[#222222] md:hidden border-t border-gray-200 dark:border-gray-700`}
       >
         <ul className="flex flex-col gap-4 p-4">
-          <li>
-            <NavLink
-              to="/"
-              onClick={handleNavLinkClick}
-              className={({ isActive }) =>
-                `text-lg font-medium transition-colors ${
-                  isActive
-                    ? "text-[#7D8ABC] dark:text-[#7D8ABC]"
-                    : "text-gray-700 dark:text-white"
-                } hover:text-gray-900 dark:hover:text-gray-300`
-              }
-            >
-              Home
-            </NavLink>
-          </li>
           {!userData && (
             <>
+              <li>
+                <NavLink
+                  to="/"
+                  onClick={handleNavLinkClick}
+                  className={({ isActive }) =>
+                    `text-lg font-medium transition-colors ${
+                      isActive
+                        ? "text-[#7D8ABC] dark:text-[#7D8ABC]"
+                        : "text-gray-700 dark:text-white"
+                    } hover:text-gray-900 dark:hover:text-gray-300`
+                  }
+                >
+                  Home
+                </NavLink>
+              </li>
               <li>
                 <NavLink
                   to="/login"
@@ -215,13 +215,15 @@ const Navbar = () => {
               <NavLink
                 to={`/profile/${userData._id}`}
                 onClick={handleNavLinkClick}
-                className="flex items-center"
+                className={({ isActive }) =>
+                  `md:text-lg font-medium transition-colors ${
+                    isActive
+                      ? "text-[#7D8ABC] dark:text-[#7D8ABC]"
+                      : "text-gray-700 dark:text-white"
+                  } hover:text-gray-900 dark:hover:text-gray-300`
+                }
               >
-                <img
-                  src={userData.avatar}
-                  alt="User Avatar"
-                  className="w-8 h-8 rounded-full border border-gray-300 dark:border-gray-600 mr-1"
-                />
+                Profile
               </NavLink>
             </li>
           )}

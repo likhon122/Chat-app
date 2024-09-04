@@ -7,9 +7,11 @@ import {
   useRejectFriendRequestMutation
 } from "../../app/api/api";
 import { toast } from "react-toastify";
+import SingleSpinner from "../Loaders/SingleSpinner";
 
 const NotificationDrawer = ({ onClose }) => {
   const { data, isLoading, error } = useFriendRequestNotificationQuery();
+
   const [acceptFriendRequest] = useAcceptFriendRequestMutation();
   const [rejectFriendRequest] = useRejectFriendRequestMutation();
   const dispatch = useDispatch();
@@ -47,7 +49,7 @@ const NotificationDrawer = ({ onClose }) => {
         </button>
       </div>
       <div className="flex flex-col gap-2">
-        {isLoading && <h3>Loading...</h3>}
+        {isLoading && <SingleSpinner size="h-10 w-10"/>}
         {!isLoading && !error && data?.payload?.friendRequests.length > 0 ? (
           data.payload.friendRequests.map(({ _id, sender }) => (
             <div

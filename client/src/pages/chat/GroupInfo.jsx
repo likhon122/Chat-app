@@ -8,6 +8,7 @@ import {
 } from "../../app/api/api";
 import { timeSince } from "../../helper/timeSince";
 import { useAsyncMutation } from "../../hooks/useAsyncMutationHook";
+import SingleSpinner from "../../components/Loaders/SingleSpinner";
 
 const GroupInfo = ({ chatId }) => {
   const navigate = useNavigate();
@@ -42,8 +43,13 @@ const GroupInfo = ({ chatId }) => {
         Error occurred! Something went wrong.
       </div>
     );
+
   if (isLoading)
-    return <div className="text-gray-400 text-center">Loading...</div>;
+    return (
+      <div className="text-gray-400 text-center dark:bg-gray-900 h-[85.9vh] items-center justify-center flex">
+        <SingleSpinner size="h-14 w-14" />
+      </div>
+    );
 
   return (
     <div className="flex flex-col min-h-[94.7vh] dark:bg-gray-900 dark:text-gray-200 px-4 py-8">

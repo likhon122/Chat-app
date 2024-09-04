@@ -14,16 +14,11 @@ const ShowChat = () => {
   const socket = getSocket();
 
   useEffect(() => {
-    let timeOutId;
     if (!userData) {
-      timeOutId = setTimeout(() => {
+      setTimeout(() => {
         navigate("/sign-up");
       }, 1000);
     }
-
-    return () => {
-      clearTimeout(timeOutId);
-    };
   }, [userData, navigate]);
 
   useEffect(() => {
@@ -39,11 +34,11 @@ const ShowChat = () => {
   }, [dispatch, socket]);
 
   return (
-    <div className=" grid  h-[95vh] grid-cols-[1fr_2fr]">
+    <div className=" grid  h-[95vh] grid-cols-1 md:grid-cols-[1fr_2fr]">
       <div className=" bg-gray-100 border-r border-gray-300 ">
         <MyChats />
       </div>
-      <div className="flex-1 dark:bg-[#1F2937] flex items-center justify-center">
+      <div className="flex-1 dark:bg-[#1F2937]  items-center justify-center hidden md:flex">
         <h1 className="text-gray-500 text-lg">Please select a chat!</h1>
       </div>
     </div>

@@ -42,8 +42,10 @@ const MyChats = () => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-full dark:bg-gray-900">
-        <SingleSpinner speed="spin-fast"/>
+      <div className="h-full dark:bg-gray-900">
+        <div className="pt-20">
+          <SingleSpinner speed="animate-spin-fast" size="h-16 w-16" />
+        </div>
       </div>
     );
   }
@@ -63,19 +65,20 @@ const MyChats = () => {
               className="bg-white border border-gray-200 rounded-lg shadow-sm mb-3 
                          transition-colors duration-300 hover:bg-blue-100 
                          hover:border-blue-300 dark:bg-gray-800 
-                         dark:border-gray-700 dark:hover:bg-gray-700 dark:hover:border-gray-600 cursor-pointer"
+                         dark:border-gray-700 dark:hover:bg-gray-700 dark:hover:border-gray-600 cursor-pointer
+                         sm:p-2 sm:rounded-md"
               onClick={() => handleClick(chat)}
             >
-              <div className="flex items-center p-3 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex items-center p-3 border-b border-gray-200 dark:border-gray-700 sm:p-2">
                 <div className="flex items-center space-x-3">
                   {chat.groupChat ? (
-                    <div className="flex -space-x-1">
+                    <div className="flex -space-x-1 sm:-space-x-0.5">
                       {chat.avatar.map((avatar, index) => (
                         <img
                           key={index}
                           src={avatar}
                           alt={`avatar-${index}`}
-                          className="w-10 h-10 rounded-full border-2 border-white dark:border-gray-800"
+                          className="w-10 h-10 rounded-full border-2 border-white dark:border-gray-800 sm:w-8 sm:h-8"
                         />
                       ))}
                     </div>
@@ -83,20 +86,20 @@ const MyChats = () => {
                     <img
                       src={chat.avatar}
                       alt="avatar"
-                      className="w-10 h-10 rounded-full border-2 border-white dark:border-gray-800"
+                      className="w-10 h-10 rounded-full border-2 border-white dark:border-gray-800 sm:w-8 sm:h-8"
                     />
                   )}
                   <div className="flex flex-col">
-                    <h2 className="text-lg font-medium text-gray-800 dark:text-gray-200">
+                    <h2 className="text-lg font-medium text-gray-800 dark:text-gray-200 sm:text-base sm:font-normal">
                       {chat.chatName}
                     </h2>
-                    <span className="text-sm text-gray-500 dark:text-gray-400">
+                    <span className="text-sm text-gray-500 dark:text-gray-400 sm:text-xs">
                       {chat.lastMessage || "No messages yet"}
                     </span>
                   </div>
                 </div>
                 {notificationCount > 0 && (
-                  <span className="ml-auto bg-red-500 text-white rounded-full px-3 py-1 text-sm">
+                  <span className="ml-auto bg-red-500 text-white rounded-full px-3 py-1 text-sm sm:px-2 sm:py-0.5 sm:text-xs">
                     {notificationCount}
                   </span>
                 )}

@@ -44,16 +44,17 @@ const Notification = () => {
       </div>
 
       {/* Notification Drawer */}
-      <div
-        className={`fixed w-full right-0 top-14 md:w-[400px] max-h-[100vh] sm:right-52 sm:top-11 transition-transform duration-500 ${
-          drawerToggle ? "animate-slide-in" : "translate-x-full hidden"
-        }`}
-        aria-hidden={!drawerToggle}
-      >
-        <div className="bg-white dark:bg-[#222222] w-full md:w-[400px] max-h-[100vh] overflow-y-auto p-4 shadow-lg rounded-lg ">
-          <NotificationDrawer onClose={handleClick} />
+      {drawerToggle && (
+        <div
+          className={`fixed w-full right-0 top-14 md:w-[400px] max-h-[100vh] sm:right-52 sm:top-11 transition-transform duration-500 
+            "
+          }`}
+        >
+          <div className="bg-white dark:bg-[#222222] w-full md:w-[400px] max-h-[100vh] overflow-y-auto p-4 shadow-lg rounded-lg ">
+            <NotificationDrawer onClose={handleClick} />
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
