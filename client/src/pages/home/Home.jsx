@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { motion, useAnimation } from "framer-motion";
 import { useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 const HomePage = () => {
   const userData = useSelector((state) => state.auth.user);
@@ -14,6 +15,10 @@ const HomePage = () => {
   const ctaControls = useAnimation();
   const contactControls = useAnimation();
   const navigate = useNavigate();
+
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
 
   // Function to handle scroll event and trigger animations
   const handleScroll = () => {
@@ -72,11 +77,30 @@ const HomePage = () => {
     }
   };
 
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const toastId = toast.loading("Sending message...");
+
+    setMessage("");
+    setEmail("");
+    setName("");
+    setTimeout(() => {
+      toast.update(toastId, {
+        render:
+          "Message Sent Successful!! Our support team contact you very soon",
+        type: "success",
+        isLoading: false,
+        autoClose: 5000,
+        closeButton: true
+      });
+    }, 2000);
+  };
+
   useEffect(() => {
     if (userData) {
       navigate("/chat");
     }
-  }, [userData,navigate]);
+  }, [userData, navigate]);
 
   // Attach scroll event listener on component mount
   useEffect(() => {
@@ -107,11 +131,11 @@ const HomePage = () => {
             Connect instantly with friends and colleagues. Enjoy seamless
             communication and stay in touch with ease.
           </p>
-          <a href="#get-started">
+          <Link to={"/sign-up"}>
             <button className="bg-yellow-500 dark:bg-yellow-400 text-gray-900 dark:text-gray-900 text-lg md:text-xl py-4 px-8 rounded-full shadow-lg hover:bg-yellow-600 dark:hover:bg-yellow-300 transition duration-300 ease-in-out transform hover:scale-105">
               Get Started
             </button>
-          </a>
+          </Link>
         </motion.div>
       </section>
 
@@ -208,11 +232,11 @@ const HomePage = () => {
             Join millions of users who are already enjoying seamless
             communication with ChatApp.
           </p>
-          <a href="#signup">
+          <Link to={"/sign-up"}>
             <button className="bg-yellow-500 dark:bg-yellow-400 text-gray-900 dark:text-gray-900 text-lg py-3 px-6 rounded-lg shadow-lg hover:bg-yellow-600 dark:hover:bg-yellow-300 transition duration-300 ease-in-out">
               Sign Up Now
             </button>
-          </a>
+          </Link>
         </motion.div>
       </section>
 
@@ -228,7 +252,7 @@ const HomePage = () => {
             Contact Us
           </motion.h2>
           <div className="max-w-md mx-auto bg-white dark:bg-gray-700 p-8 rounded-lg shadow-lg">
-            <form action="#" method="POST">
+            <form onSubmit={handleSubmit}>
               <div className="mb-4">
                 <label
                   htmlFor="name"
@@ -239,8 +263,10 @@ const HomePage = () => {
                 <input
                   type="text"
                   id="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
                   name="name"
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 dark:bg-slate-600"
                   required
                 />
               </div>
@@ -255,7 +281,9 @@ const HomePage = () => {
                   type="email"
                   id="email"
                   name="email"
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 dark:bg-slate-600"
                   required
                 />
               </div>
@@ -270,7 +298,9 @@ const HomePage = () => {
                   id="message"
                   name="message"
                   rows="4"
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600"
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 dark:bg-slate-600"
                   required
                 ></textarea>
               </div>

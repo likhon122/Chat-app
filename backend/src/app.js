@@ -45,6 +45,12 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+app.get("/api/v1/health", (_, res, __) => {
+  res.status(200).send({
+    message: "Server is running good!!"
+  });
+});
+
 // Seeding route it's don't use on production !!!!!!!!!!!!!!
 app.use("/api/v1/seed", seedRoute);
 
