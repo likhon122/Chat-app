@@ -20,6 +20,8 @@ import {
 } from "../../app/api/api";
 import { useInfiniteScrollTop } from "6pp";
 import { toast } from "react-toastify";
+import { FaFilePdf } from "react-icons/fa";
+import { FaUpload } from "react-icons/fa";
 import { useAsyncMutation } from "../../hooks/useAsyncMutationHook";
 import {
   resetMessageNotification,
@@ -38,6 +40,7 @@ const Message = ({ chatId }) => {
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
   const [page, setPage] = useState(1);
+  const [selectedImage, setSelectedImage] = useState(null);
 
   const [iAmTyping, setIAmTyping] = useState(false);
   const [userTyping, setUserTyping] = useState(false);
@@ -83,6 +86,15 @@ const Message = ({ chatId }) => {
     }, 2000);
   };
 
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setSelectedImage(URL.createObjectURL(file)); // Set the selected image URL
+    } else {
+      setSelectedImage(null); // Clear the selected image if no file is chosen
+    }
+  };
+
   const submitHandler = async (e) => {
     e.preventDefault();
 
@@ -108,6 +120,9 @@ const Message = ({ chatId }) => {
     if (message) formData.append("message", message);
 
     try {
+      setMessage("");
+      fileInput.value = "";
+      setSelectedImage("");
       await sendAttachmentHandler("Sending attachments", formData);
     } catch (error) {
       console.log(error);
@@ -171,61 +186,119 @@ const Message = ({ chatId }) => {
   useSocketHook(socket, eventHandlers);
 
   return (
-    <div className="flex flex-col h-[88.9vh] md:h-[89.8vh] bg-gray-900 text-gray-100 scrollbar-thin scrollbar-thumb-rounded">
+    <div className="flex flex-col h-[calc(100vh-90px)] sm:h-[calc(100vh-90px)] bg-gray-900 text-gray-100 scrollbar-thin scrollbar-thumb-rounded-lg">
       <div
         className="flex-1 overflow-y-auto bg-gray-800 p-4 rounded-t-lg shadow-lg"
         ref={containerRef}
       >
-        <div>
-          {allMessages.length > 0 &&
-            allMessages.map((message) => {
-              const isSameSender = message.sender._id === userId;
-              return (
+        {/* Render messages */}
+        {allMessages.length > 0 &&
+          allMessages.map((message) => {
+            const isSameSender = message.sender._id === userId;
+            return (
+              <div
+                key={message._id}
+                className={`flex ${
+                  isSameSender ? "justify-end" : "justify-start"
+                } mb-4`}
+              >
                 <div
-                  key={message._id}
-                  className={`flex ${
-                    isSameSender ? "justify-end" : "justify-start"
-                  } mb-4`}
+                  className={`p-4 shadow-md max-w-full sm:max-w-md lg:max-w-lg min-w-20 ${
+                    isSameSender
+                      ? "bg-[#0B2F9F] text-white rounded-s-3xl rounded-ee-3xl rounded-tr-sm"
+                      : "bg-gray-700 text-gray-200 rounded-e-3xl rounded-ss-3xl rounded-bl-sm"
+                  }`}
                 >
-                  <div
-                    className={`p-3 rounded-lg ${
-                      isSameSender
-                        ? "bg-blue-600 text-white"
-                        : "bg-gray-700 text-gray-300"
-                    } shadow-md max-w-xs md:max-w-md`}
-                  >
-                    {!isSameSender && (
-                      <h3 className="mb-1 text-gray-400 text-xs">
-                        {message.sender.name}
-                      </h3>
-                    )}
-                    <p className="break-words font-semibold">
-                      {message.content}
-                    </p>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {message.attachment?.length > 0 &&
-                        message.attachment.map((att) => (
-                          <a
-                            key={att.public_id}
-                            href={att.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="block"
-                          >
-                            <img
-                              src={att.url}
-                              className="h-24 w-24 object-cover rounded-lg border border-gray-600"
-                              alt=""
-                            />
-                          </a>
-                        ))}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-        </div>
+                  {!isSameSender && (
+                    <h3 className="mb-1 text-sky-400 text-xs sm:text-sm font-semibold uppercase">
+                      {message.sender.name}
+                    </h3>
+                  )}
+                  <p className="break-words text-sm sm:text-base leading-relaxed">
+                    {message.content}
+                  </p>
 
+                  {message.attachment?.length > 0 && (
+                    <div
+                      className={`mt-2 grid ${
+                        message.attachment?.length < 2
+                          ? "grid-cols-1"
+                          : "sm:grid-cols-2"
+                      } grid-cols-1 gap-2`}
+                    >
+                      {message.attachment.map((att) => {
+                        const isVideo =
+                          att.url.endsWith(".mp4") ||
+                          att.url.endsWith(".webm") ||
+                          att.url.endsWith(".ogg");
+                        const isAudio =
+                          att.url.endsWith(".mp3") || att.url.endsWith(".wav");
+                        const isPDF = att.url.endsWith(".pdf");
+                        const isCodeFile =
+                          att.url.endsWith(".js") ||
+                          att.url.endsWith(".html") ||
+                          att.url.endsWith(".css");
+
+                        return (
+                          <div
+                            key={att.public_id}
+                            className="relative overflow-hidden rounded-lg shadow-md"
+                          >
+                            {isVideo ? (
+                              <video
+                                className="w-[200px] h-auto object-cover transition-transform duration-200 ease-in-out transform hover:scale-105"
+                                controls
+                                src={att.url}
+                              />
+                            ) : isAudio ? (
+                              <audio controls className="w-full">
+                                <source src={att.url} />
+                              </audio>
+                            ) : isPDF ? (
+                              <div className="relative">
+                                <a
+                                  href={att.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center justify-center border border-transparent bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold py-2 px-4 rounded-lg shadow-lg hover:scale-105 hover:shadow-xl transition-transform duration-200 ease-in-out"
+                                >
+                                  <FaFilePdf className="mr-2" />
+                                  Download PDF
+                                </a>
+                              </div>
+                            ) : isCodeFile ? (
+                              <a
+                                href={att.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="block border border-gray-600 p-2 rounded-lg hover:border-gray-400"
+                              >
+                                Download{" "}
+                                {att.url.split(".").pop().toUpperCase()} file
+                              </a>
+                            ) : (
+                              <a
+                                href={att.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="block overflow-hidden rounded-lg border border-gray-600 hover:border-gray-400 transition duration-200 ease-in-out"
+                              >
+                                <img
+                                  src={att.url}
+                                  className="h-24 sm:h-32 w-full object-cover rounded-lg transition-transform duration-200 ease-in-out transform hover:scale-105"
+                                  alt="Image attachment"
+                                />
+                              </a>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         <div ref={bottomRef} />
       </div>
 
@@ -235,33 +308,47 @@ const Message = ({ chatId }) => {
         </div>
       )}
 
-      <div className="bg-gray-800 p-4 border-t border-gray-600">
-        <form onSubmit={submitHandler} className="flex items-center space-x-4">
+      <div className="bg-gray-800 p-3 sm:p-4 border-t border-gray-600">
+        <form
+          onSubmit={submitHandler}
+          className="flex flex-row items-center  sm:space-y-0 sm:space-x-4"
+        >
           <label
             htmlFor="file"
-            className="cursor-pointer text-blue-400 hover:underline"
+            className="cursor-pointer text-blue-400 hover:text-blue-300 transition-colors duration-200 ease-in-out flex items-center"
           >
-            <span>Select Files</span>
+            <FaUpload className="mr-2" />
+            <span className="text-xs sm:text-sm hidden md:block">Select Files</span>
             <input
               type="file"
               name="file"
               id="file"
               multiple
               className="hidden"
+              onChange={handleFileChange} 
             />
           </label>
 
-          <input
-            type="text"
-            spellCheck={false}
-            placeholder="Type your message..."
-            value={message}
-            className="flex-1 border border-gray-600 bg-gray-700 p-2 rounded-lg text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-            onChange={handleMessageChange}
-          />
+          <div className="relative flex-1 w-full">
+            <input
+              type="text"
+              spellCheck={false}
+              placeholder="Type your message..."
+              value={message}
+              className="border border-gray-600 bg-gray-700 p-2 rounded-lg text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all w-full"
+              onChange={handleMessageChange}
+            />
+            {selectedImage && (
+              <img
+                src={selectedImage}
+                alt="Selected"
+                className="absolute top-0 right-0 h-10 w-10 object-cover rounded-lg border border-gray-600"
+              />
+            )}
+          </div>
 
           <button
-            className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition duration-150 ease-in-out"
+            className="sm:px-4 sm:py-5 px-4 py-2 bg-blue-500 text-white sm:font-semibold rounded-lg shadow-md hover:bg-blue-600 transition duration-150 ease-in-out  sm:w-auto"
             type="submit"
           >
             Send

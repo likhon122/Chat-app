@@ -40,7 +40,7 @@ const Chat = () => {
               : "md:grid grid-cols-[1fr_2fr]"
           }`}
         >
-          <div className="border border-black h-[93.9vh] ">
+          <div className="border border-black sm:h-[calc(100vh-52px)] ">
             <MyChats />
           </div>
           <div className="border border-black ">
@@ -56,17 +56,15 @@ const Chat = () => {
       </div>
 
       <div className="md:hidden block">
-        <div className={``}>
-          <div className="border border-black ">
-            <GroupChatNav chatId={chatId} />
-            {groupInfoDrawer ? (
-              <div className="border border-black ">
-                <GroupInfo chatId={chatId} />
-              </div>
-            ) : (
-              <Message chatId={chatId} />
-            )}
-          </div>
+        <div className="border border-black ">
+          <GroupChatNav chatId={chatId} />
+          {groupInfoDrawer ? (
+            <div className="border border-black ">
+              <GroupInfo chatId={chatId} />
+            </div>
+          ) : (
+            <Message chatId={chatId} />
+          )}
         </div>
       </div>
     </>
