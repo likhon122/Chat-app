@@ -1,21 +1,39 @@
 import { useEffect, useRef, useState } from "react";
 import { IoSearch } from "react-icons/io5";
 import {
+  useGetFriendsQuery,
+  useGetPendingFriendRequestQuery,
   useLazySearchUserQuery,
   useSendFriendRequestMutation
 } from "../../app/api/api";
 import { useSelector } from "react-redux";
 import { useAsyncMutation } from "../../hooks/useAsyncMutationHook";
 import SingleSpinner from "../Loaders/SingleSpinner";
+import { useNavigate } from "react-router-dom";
 
 const Search = () => {
   const [searchValue, setSearchValue] = useState("");
   const sender = useSelector((state) => state.auth?.user?._id);
+  const userData = useSelector((state) => state.auth?.user);
+
+  const navigate = useNavigate();
 
   const [searchUser, { isLoading, data, isError, error }] =
     useLazySearchUserQuery();
+  const {
+    data: getFriendsData,
+    error: getFriendsError,
+    isLoading: getFriendsLoading
+  } = useGetFriendsQuery(sender);
+
+  const {
+    data: pendingFriendRequestData,
+    isLoading: pendingFriendRequestLoading,
+    error: pendingFriendRequestError
+  } = useGetPendingFriendRequestQuery();
+
   const [sendFriendRequest] = useAsyncMutation(useSendFriendRequestMutation);
-  const searchResultsRef = useRef(null); // Create a ref for the search results
+  const searchResultsRef = useRef(null);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -30,6 +48,11 @@ const Search = () => {
     } catch (err) {
       console.log(err);
     }
+  };
+
+  const handleViewProfile = (id) => {
+    navigate(`/profile/${id}`);
+    setSearchValue("");
   };
 
   useEffect(() => {
@@ -47,7 +70,7 @@ const Search = () => {
         searchResultsRef.current &&
         !searchResultsRef.current.contains(event.target)
       ) {
-        setSearchValue(""); // Clear search value to hide results
+        setSearchValue("");
       }
     };
 
@@ -76,7 +99,7 @@ const Search = () => {
       </form>
       {searchValue && (
         <div
-          ref={searchResultsRef} // Attach ref to the search results container
+          ref={searchResultsRef}
           className={`absolute mt-2 w-full bg-white dark:bg-[#222222] shadow-lg rounded-md z-10 ${
             data || isError || isLoading ? "block" : "hidden"
           }`}
@@ -88,32 +111,78 @@ const Search = () => {
           ) : (
             <div className="flex flex-col gap-2">
               {data && !isError && data.payload.length > 0 ? (
-                data.payload.map(({ _id, name, avatar, username }) => (
-                  <div
-                    key={_id}
-                    className="flex items-center justify-between gap-3 p-2 hover:bg-gray-200 dark:hover:bg-gray-600 cursor-pointer transition"
-                  >
-                    <div className="flex gap-3">
-                      <img
-                        src={avatar}
-                        alt="Profile"
-                        className="h-10 w-10 rounded-full"
-                      />
-                      <div>
-                        <h3 className="font-medium dark:text-white">{name}</h3>
-                        <h4 className="text-sm text-gray-500 dark:text-gray-400">
-                          {username}
-                        </h4>
-                      </div>
-                    </div>
-                    <button
-                      className="bg-blue-500 text-white hover:bg-blue-400 rounded-md px-2 py-1 transition duration-300"
-                      onClick={() => handleSendFriendRequest(_id)}
+                data.payload.map(({ _id, name, avatar, username }) => {
+                  const isFriend =
+                    getFriendsData?.payload?.friends.includes(_id);
+                  const isPending =
+                    pendingFriendRequestData?.payload?.pendingRequests.some(
+                      (request) => request.receiver._id === _id
+                    );
+
+                  console.log(isPending);
+
+                  console.log(isPending);
+                  return (
+                    <div
+                      key={_id}
+                      className="flex items-center justify-between gap-3 p-2 hover:bg-gray-200 dark:hover:bg-gray-600 cursor-pointer transition"
                     >
-                      Add Friend
-                    </button>
-                  </div>
-                ))
+                      <div
+                        className="flex gap-3"
+                        onClick={() => handleViewProfile(_id)}
+                      >
+                        <img
+                          src={avatar}
+                          alt="Profile"
+                          className="h-10 w-10 rounded-full"
+                        />
+                        <div>
+                          <h3 className="font-medium dark:text-white">
+                            {name}
+                          </h3>
+                          <h4 className="text-sm text-gray-500 dark:text-gray-400">
+                            {username}
+                          </h4>
+                        </div>
+                      </div>
+
+                      {userData && _id === sender && (
+                        <button
+                          className="bg-blue-500 text-white hover:bg-blue-400 rounded-md px-2 py-1 transition duration-300"
+                          onClick={() => handleViewProfile(_id)}
+                        >
+                          View Profile
+                        </button>
+                      )}
+
+                      {!isFriend &&
+                        !isPending &&
+                        _id !== sender &&
+                        userData && (
+                          <button
+                            className="bg-blue-500 text-white hover:bg-blue-400 rounded-md px-2 py-1 transition duration-300"
+                            onClick={() => handleSendFriendRequest(_id)}
+                          >
+                            Add Friend
+                          </button>
+                        )}
+
+                      {!userData && (
+                        <button
+                          className="bg-blue-500 text-white hover:bg-blue-400 rounded-md px-2 py-1 transition duration-300"
+                          onClick={() => handleViewProfile(_id)}
+                        >
+                          View Profile
+                        </button>
+                      )}
+                      {isPending && (
+                        <button className="bg-blue-500 text-white hover:bg-blue-400 rounded-md px-2 py-1 transition duration-300">
+                          Already sent
+                        </button>
+                      )}
+                    </div>
+                  );
+                })
               ) : (
                 <div className="p-4">
                   <h1 className="text-red-500">{error?.data?.errorMessage}</h1>

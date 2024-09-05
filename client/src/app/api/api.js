@@ -78,6 +78,14 @@ const api = createApi({
       providesTags: ["Chat"]
     }),
 
+    getPendingFriendRequest: builder.query({
+      query: () => ({
+        url: "/user/pending-requests",
+        credentials: "include"
+      }),
+      providesTags: ["User"]
+    }),
+
     sendFriendRequest: builder.mutation({
       query: (data) => ({
         url: "user/send-request",
@@ -209,5 +217,6 @@ export const {
   useAddGroupMembersMutation,
   useRemoveGroupMembersMutation,
   useDeleteGroupMutation,
-  useLeaveGroupMutation
+  useLeaveGroupMutation,
+  useGetPendingFriendRequestQuery
 } = api;

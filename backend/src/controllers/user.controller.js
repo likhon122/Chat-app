@@ -568,6 +568,25 @@ const getFriendRequestNotifications = async (req, res, next) => {
   }
 };
 
+const getPendingFriendRequests = async (req, res, next) => {
+  try {
+    const { userId } = req;
+
+    const pendingRequests = await Request.find({ sender: userId })
+      .select("receiver")
+      .populate("receiver", "avatar name");
+
+    successResponse(res, {
+      statusCode: 200,
+      successMessage: "Pending friend request returned successfully!!",
+      payload: { pendingRequests },
+      nextURl: {}
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export {
   getSingleUser,
   getAllUsers,
@@ -578,5 +597,6 @@ export {
   acceptRequest,
   deleteRequest,
   getFriends,
-  getFriendRequestNotifications
+  getFriendRequestNotifications,
+  getPendingFriendRequests
 };

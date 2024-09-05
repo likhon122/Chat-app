@@ -10,7 +10,8 @@ import {
   acceptRequest,
   deleteRequest,
   getFriends,
-  getFriendRequestNotifications
+  getFriendRequestNotifications,
+  getPendingFriendRequests
 } from "../controllers/user.controller.js";
 import { isAdmin, isLoggedIn, isLoggedOut } from "../middlewares/auth.js";
 import {
@@ -60,6 +61,8 @@ userRoute.post(
   isLoggedIn,
   sendRequest
 );
+
+userRoute.get("/pending-requests", isLoggedIn, getPendingFriendRequests);
 
 userRoute.put(
   "/accept-request",
