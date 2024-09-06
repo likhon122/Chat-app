@@ -20,8 +20,7 @@ import {
 } from "../../app/api/api";
 import { useInfiniteScrollTop } from "6pp";
 import { toast } from "react-toastify";
-import { FaFilePdf } from "react-icons/fa";
-import { FaUpload } from "react-icons/fa";
+import { FaFilePdf, FaUpload, FaTimes, FaPaperPlane } from "react-icons/fa";
 import { useAsyncMutation } from "../../hooks/useAsyncMutationHook";
 import {
   resetMessageNotification,
@@ -34,13 +33,12 @@ const Message = ({ chatId }) => {
   const userId = useSelector((state) => state.auth.user?._id);
   const { messageNotification } = useSelector((state) => state.chat);
   const socket = getSocket();
-
   const dispatch = useDispatch();
 
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
   const [page, setPage] = useState(1);
-  const [selectedImage, setSelectedImage] = useState(null);
+  const [selectedImage, setSelectedImage] = useState([]);
 
   const [iAmTyping, setIAmTyping] = useState(false);
   const [userTyping, setUserTyping] = useState(false);
@@ -86,20 +84,34 @@ const Message = ({ chatId }) => {
     }, 2000);
   };
 
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setSelectedImage(URL.createObjectURL(file)); // Set the selected image URL
-    } else {
-      setSelectedImage(null); // Clear the selected image if no file is chosen
-    }
+  const [submitFile, setSubmitFile] = useState();
+  const handleFileChange = (event) => {
+    const files = Array.from(event.target.files);
+    setSubmitFile(files);
+    const newImages = files.map((file) => ({
+      url: URL.createObjectURL(file)
+    }));
+    setSelectedImage((prevImages) => [...prevImages, ...newImages]);
   };
+
+  const handleRemoveImage = (index) => {
+    setSelectedImage((prevImages) => prevImages.filter((_, i) => i !== index));
+    setSubmitFile((prevFiles) => prevFiles.filter((_, i) => i !== index));
+  };
+
+  const getGridClasses = (length) => {
+    if (length > 4) return "grid-cols-3";
+    if (length > 2) return "grid-cols-3";
+    return "grid-cols-2";
+  };
+
+  const getItemClasses = () => "w-16 h-16"; // Smaller size for images
 
   const submitHandler = async (e) => {
     e.preventDefault();
 
     const fileInput = e.target.file;
-    const files = fileInput?.files;
+    const files = submitFile;
 
     if (message.trim() === "" && !files?.length) return;
 
@@ -120,9 +132,10 @@ const Message = ({ chatId }) => {
     if (message) formData.append("message", message);
 
     try {
-      setMessage("");
       fileInput.value = "";
-      setSelectedImage("");
+      setMessage("");
+      setSelectedImage([]); // Clear the selected image preview
+      setSubmitFile([]);
       await sendAttachmentHandler("Sending attachments", formData);
     } catch (error) {
       console.log(error);
@@ -186,12 +199,13 @@ const Message = ({ chatId }) => {
   useSocketHook(socket, eventHandlers);
 
   return (
-    <div className="flex flex-col h-[calc(100vh-90px)] sm:h-[calc(100vh-90px)] bg-gray-900 text-gray-100 scrollbar-thin scrollbar-thumb-rounded-lg">
+    <div
+      className={`flex flex-col h-[calc(100vh-90px)] sm:h-[calc(100vh-90px)] bg-gray-900 text-gray-100 scrollbar-thin scrollbar-thumb-rounded-lg`}
+    >
       <div
         className="flex-1 overflow-y-auto bg-gray-800 p-4 rounded-t-lg shadow-lg"
         ref={containerRef}
       >
-        {/* Render messages */}
         {allMessages.length > 0 &&
           allMessages.map((message) => {
             const isSameSender = message.sender._id === userId;
@@ -205,8 +219,8 @@ const Message = ({ chatId }) => {
                 <div
                   className={`p-4 shadow-md max-w-full sm:max-w-md lg:max-w-lg min-w-20 ${
                     isSameSender
-                      ? "bg-[#0B2F9F] text-white rounded-s-3xl rounded-ee-3xl rounded-tr-sm"
-                      : "bg-gray-700 text-gray-200 rounded-e-3xl rounded-ss-3xl rounded-bl-sm"
+                      ? "bg-[#0B2F9F] text-white rounded-s-[1.6rem]  rounded-tr-[1.6rem]"
+                      : "bg-gray-700 text-gray-200 rounded-e-[1.6rem] rounded-bl-[1.6rem]"
                   }`}
                 >
                   {!isSameSender && (
@@ -217,7 +231,6 @@ const Message = ({ chatId }) => {
                   <p className="break-words text-sm sm:text-base leading-relaxed">
                     {message.content}
                   </p>
-
                   {message.attachment?.length > 0 && (
                     <div
                       className={`mt-2 grid ${
@@ -285,7 +298,7 @@ const Message = ({ chatId }) => {
                               >
                                 <img
                                   src={att.url}
-                                  className="h-24 sm:h-32 w-full object-cover rounded-lg transition-transform duration-200 ease-in-out transform hover:scale-105"
+                                  className="h-20  sm:h-32 w-40 object-cover rounded-lg transition-transform duration-200 ease-in-out transform hover:scale-105"
                                   alt="Image attachment"
                                 />
                               </a>
@@ -303,56 +316,119 @@ const Message = ({ chatId }) => {
       </div>
 
       {userTyping && (
-        <div className="bg-gray-800 p-2 text-center text-sm text-gray-400">
-          <p>TYPING...</p>
+        <div className="bg-gray-800 p-2 text-center text-sm text-gray-400 flex justify-center items-center shadow-md rounded-md">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="w-16 h-4"
+            viewBox="0 0 100 20"
+            fill="none"
+            stroke="none"
+          >
+            <circle cx="10" cy="10" r="8" fill="currentColor" className="dot" />
+            <circle cx="30" cy="10" r="8" fill="currentColor" className="dot" />
+            <circle cx="50" cy="10" r="8" fill="currentColor" className="dot" />
+            <circle cx="70" cy="10" r="8" fill="currentColor" className="dot" />
+            <circle cx="90" cy="10" r="8" fill="currentColor" className="dot" />
+            <style>
+              {`
+          .dot {
+            animation: bounce 1.5s infinite;
+          }
+          .dot:nth-child(1) { animation-delay: 0s; }
+          .dot:nth-child(2) { animation-delay: 0.3s; }
+          .dot:nth-child(3) { animation-delay: 0.6s; }
+          .dot:nth-child(4) { animation-delay: 0.9s; }
+          .dot:nth-child(5) { animation-delay: 1.2s; }
+          @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+              transform: scale(1);
+            }
+            40% {
+              transform: scale(1.2);
+            }
+            60% {
+              transform: scale(1.2);
+            }
+          }
+        `}
+            </style>
+          </svg>
         </div>
       )}
 
-      <div className="bg-gray-800 p-3 sm:p-4 border-t border-gray-600">
+      <div className="relative bg-gray-800 p-3 sm:p-4 border-t border-gray-600">
+        <div>
+          {selectedImage.length > 0 && (
+            <div
+              className={`absolute left-4 md:left-28 bottom-[75px] bg-[#374151] p-2 md:p-3 rounded-xl max-h-80 max-w-80 grid gap-2 ${getGridClasses(
+                selectedImage.length
+              )}`}
+            >
+              {selectedImage.map((image, index) => (
+                <div key={index} className="relative">
+                  <img
+                    src={image.url}
+                    alt={`Selected ${index}`}
+                    className={`object-cover rounded-lg border border-gray-600 ${getItemClasses()}`}
+                  />
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRemoveImage(index);
+                    }}
+                    className="absolute top-0 right-0 bg-gray-800 text-white rounded-full p-1 hover:bg-gray-700"
+                  >
+                    <FaTimes />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
         <form
           onSubmit={submitHandler}
-          className="flex flex-row items-center  sm:space-y-0 sm:space-x-4"
+          className="flex flex-row items-center space-x-2 sm:space-y-0 sm:space-x-4"
         >
           <label
             htmlFor="file"
-            className="cursor-pointer text-blue-400 hover:text-blue-300 transition-colors duration-200 ease-in-out flex items-center"
+            className="cursor-pointer relative text-blue-400 hover:text-blue-300 transition-colors duration-200 ease-in-out flex items-center"
           >
             <FaUpload className="mr-2" />
-            <span className="text-xs sm:text-sm hidden md:block">Select Files</span>
+            <span className="text-xs hidden sm:block">Select Files</span>
             <input
               type="file"
               name="file"
               id="file"
               multiple
-              className="hidden"
-              onChange={handleFileChange} 
+              className="opacity-0 absolute z-30 left-0 sm:w-[80px] w-6"
+              onChange={handleFileChange}
             />
           </label>
-
           <div className="relative flex-1 w-full">
             <input
               type="text"
               spellCheck={false}
               placeholder="Type your message..."
               value={message}
-              className="border border-gray-600 bg-gray-700 p-2 rounded-lg text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all w-full"
+              className="border border-gray-600 bg-gray-700 px-2 py-1 sm:p-2 rounded-lg text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all w-full "
               onChange={handleMessageChange}
             />
-            {selectedImage && (
-              <img
-                src={selectedImage}
-                alt="Selected"
-                className="absolute top-0 right-0 h-10 w-10 object-cover rounded-lg border border-gray-600"
-              />
-            )}
-          </div>
 
-          <button
-            className="sm:px-4 sm:py-5 px-4 py-2 bg-blue-500 text-white sm:font-semibold rounded-lg shadow-md hover:bg-blue-600 transition duration-150 ease-in-out  sm:w-auto"
-            type="submit"
+            <button
+              className=" bg-[#1230AE] text-[18px]   font-semibold px-[9px] py-[7px] sm:py-[9px]  transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95  absolute right-0 top-[0px] border border-[#1230AE] rounded-e-lg"
+              type="submit"
+            >
+              <FaPaperPlane className="text-[18px] sm:text-[22px] text-white" />
+            </button>
+          </div>
+          <div
+            className="cursor-pointer text-[20px]"
+            onClick={() =>
+              toast.success("This fucking feature is coming soon!!!")
+            }
           >
-            Send
-          </button>
+            😊
+          </div>
         </form>
       </div>
     </div>

@@ -32,6 +32,18 @@ const Chat = () => {
 
   return (
     <>
+      <div className="md:hidden block">
+        <div className="border border-black ">
+          <GroupChatNav chatId={chatId} />
+          {groupInfoDrawer ? (
+            <div className="border border-black ">
+              <GroupInfo chatId={chatId} />
+            </div>
+          ) : (
+            <Message chatId={chatId} />
+          )}
+        </div>
+      </div>
       <div className="md:block hidden">
         <div
           className={` ${
@@ -51,19 +63,6 @@ const Chat = () => {
             <div className="border border-black ">
               <GroupInfo chatId={chatId} />
             </div>
-          )}
-        </div>
-      </div>
-
-      <div className="md:hidden block">
-        <div className="border border-black ">
-          <GroupChatNav chatId={chatId} />
-          {groupInfoDrawer ? (
-            <div className="border border-black ">
-              <GroupInfo chatId={chatId} />
-            </div>
-          ) : (
-            <Message chatId={chatId} />
           )}
         </div>
       </div>
