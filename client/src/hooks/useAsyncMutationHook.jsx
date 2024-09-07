@@ -20,7 +20,7 @@ const useAsyncMutation = (mutationHook) => {
           render: data.successMessage,
           type: "success",
           isLoading: false,
-          autoClose: 5000,
+          autoClose: 2000,
           closeButton: true
         });
       }
@@ -30,7 +30,7 @@ const useAsyncMutation = (mutationHook) => {
         render: err.data?.errorMessage || "Something went wrong!!",
         type: "error",
         isLoading: false,
-        autoClose: 5000,
+        autoClose: 2000,
         closeButton: true
       });
     } finally {

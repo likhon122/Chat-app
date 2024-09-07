@@ -27,11 +27,14 @@ import {
   setMessageNotification
 } from "../../app/features/chatSlice";
 import SingleSpinner from "../../components/Loaders/SingleSpinner";
+import EmojiPicker from "emoji-picker-react";
+import useClickOutside from "../../hooks/useClickOutsideHook";
 
 const Message = ({ chatId }) => {
   const members = useSelector((state) => state.other.members);
   const userId = useSelector((state) => state.auth.user?._id);
   const { messageNotification } = useSelector((state) => state.chat);
+
   const socket = getSocket();
   const dispatch = useDispatch();
 
@@ -39,13 +42,15 @@ const Message = ({ chatId }) => {
   const [messages, setMessages] = useState([]);
   const [page, setPage] = useState(1);
   const [selectedImage, setSelectedImage] = useState([]);
-
   const [iAmTyping, setIAmTyping] = useState(false);
   const [userTyping, setUserTyping] = useState(false);
-  const typingTimeOut = useRef(null);
+  const [submitFile, setSubmitFile] = useState();
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
+  const typingTimeOut = useRef(null);
   const containerRef = useRef(null);
   const bottomRef = useRef(null);
+  const emojiRef = useRef(null);
 
   const oldMessagesChunk = useGetMessagesQuery({ chatId, page });
 
@@ -68,6 +73,12 @@ const Message = ({ chatId }) => {
 
   const allMessages = [...data, ...messages];
 
+  useClickOutside(emojiRef, () => {
+    if (showEmojiPicker) {
+      setShowEmojiPicker(false);
+    }
+  });
+
   const handleMessageChange = (e) => {
     setMessage(e.target.value);
 
@@ -83,8 +94,10 @@ const Message = ({ chatId }) => {
       setIAmTyping(false);
     }, 2000);
   };
+  const handleEmojiClick = useCallback((emojiObject) => {
+    setMessage((prevMessage) => prevMessage + emojiObject.emoji);
+  }, []);
 
-  const [submitFile, setSubmitFile] = useState();
   const handleFileChange = (event) => {
     const files = Array.from(event.target.files);
     setSubmitFile(files);
@@ -105,10 +118,11 @@ const Message = ({ chatId }) => {
     return "grid-cols-2";
   };
 
-  const getItemClasses = () => "w-16 h-16"; // Smaller size for images
+  const getItemClasses = () => "w-16 h-16";
 
   const submitHandler = async (e) => {
     e.preventDefault();
+    document.getElementById("messageInput").focus();
 
     const fileInput = e.target.file;
     const files = submitFile;
@@ -118,7 +132,7 @@ const Message = ({ chatId }) => {
     if (message && !files?.length) {
       socket.emit(NEW_MESSAGE, { chatId, members, message });
       setMessage("");
-      document.getElementById("messageInput").focus();
+
       return;
     }
 
@@ -135,10 +149,9 @@ const Message = ({ chatId }) => {
     try {
       fileInput.value = "";
       setMessage("");
-      setSelectedImage([]); // Clear the selected image preview
+      setSelectedImage([]);
       setSubmitFile([]);
       await sendAttachmentHandler("Sending attachments", formData);
-      document.getElementById("messageInput").focus();
     } catch (error) {
       console.log(error);
     }
@@ -426,13 +439,26 @@ const Message = ({ chatId }) => {
               <FaPaperPlane className="text-[18px] sm:text-[22px] text-white" />
             </button>
           </div>
-          <div
-            className="cursor-pointer text-[20px]"
-            onClick={() =>
-              toast.success("This fucking feature is coming soon!!!")
-            }
-          >
-            😊
+          <div className="relative flex items-center" ref={emojiRef}>
+            <button
+              type="button"
+              onClick={() => setShowEmojiPicker((prev) => !prev)}
+              className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 transition duration-300 ease-in-out hover:bg-gray-300 dark:hover:bg-gray-600 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              aria-label="Toggle emoji picker" // Accessibility
+            >
+              😊
+            </button>
+            {showEmojiPicker && (
+              <div className="absolute bottom-full right-0 mb-2 z-50 ">
+                <div className="p-2 rounded-lg bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700">
+                  <EmojiPicker
+                    onEmojiClick={handleEmojiClick}
+                    height={400}
+                    width={300}
+                  />
+                </div>
+              </div>
+            )}
           </div>
         </form>
       </div>

@@ -40,7 +40,7 @@ const Navbar = () => {
 
   return (
     <div className="shadow-lg bg-[#FFFFFF] dark:bg-[#1F2937] top-0 left-0 w-full z-10">
-      <div className="container mx-auto flex items-center justify-between px-4 py-2 gap-2">
+      <div className="container mx-auto flex items-center justify-between py-2 px-2 sm:px-4 sm:py-2 gap-1 sm:gap-2 ">
         <div className="md:hidden">
           <button
             onClick={toggleMobileMenu}
@@ -118,7 +118,7 @@ const Navbar = () => {
           <Search />
         </div>
 
-        <div className="flex items-center gap-2" title="Profile">
+        <div className="flex items-center sm:gap-2 gap-1 z-50" title="Profile">
           {userData && <Notification />}
           {userData?._id && (
             <NavLink

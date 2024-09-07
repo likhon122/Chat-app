@@ -22,14 +22,14 @@ import Message from "./models/message.model.js";
 import { socketAuthenticator } from "./middlewares/auth.js";
 
 const app = express();
-
 const server = createServer(app);
 
+// Setup Socket.io
 const io = new Server(server, {
   cors: {
     origin: [frontendUrl1, frontendUrl2, frontendUrl3],
     methods: ["GET", "POST"],
-    credentials: true 
+    credentials: true
   }
 });
 
@@ -46,41 +46,36 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-app.use((req, res, next) => {
-  console.log(`Received request: ${req.method} ${req.url}`);
-  next();
-});
-
-app.get("/api/v1/health", (_, res, __) => {
-  res.status(200).send({
+// Health check route
+app.get("/api/v1/health", (_, res) => {
+  return res.status(200).send({
     message: "Server is running good!!"
   });
 });
 
-
 app.use("/api/v1/seed", seedRoute);
-
-// Set all Routes
 app.use("/api/v1/user", userRoute);
 app.use("/api/v1/auth", authRoute);
 app.use("/api/v1/chat", chatRoute);
 
-// Socket io setup
+// Socket.io Authentication Middleware
 io.use((socket, next) => {
-  cookieParser()(
-    socket.request,
-    socket.request.res,
-    async (err) => await socketAuthenticator(err, socket, next)
-  );
+  cookieParser()(socket.request, socket.request.res, async (err) => {
+    if (err) {
+      return next(err);
+    }
+    await socketAuthenticator(socket, next);
+  });
 });
 
+// Map for storing user socket IDs
 export const userSocketIds = new Map();
 
 io.on("connection", (socket) => {
   const { user } = socket;
-
   userSocketIds.set(user._id.toString(), socket.id);
 
+  // Handle new message
   socket.on(NEW_MESSAGE, async ({ chatId, members, message }) => {
     const messageForRealTime = {
       content: message,
@@ -102,6 +97,7 @@ io.on("connection", (socket) => {
 
     const membersSocket = getSockets(members);
 
+    // Emit message in real-time
     io.to(membersSocket).emit(NEW_MESSAGE, {
       chatId,
       message: messageForRealTime
@@ -111,15 +107,15 @@ io.on("connection", (socket) => {
 
     try {
       const resMessage = await Message.create(messageForDb);
-
       if (!resMessage) {
-        console.error("Message not saved in DB.. Something went wrong!!");
+        console.error("Message not saved in DB. Something went wrong!!");
       }
     } catch (error) {
-      console.error("Message not saved in DB.. Something went wrong!!", error);
+      console.error("Message not saved in DB. Something went wrong!!", error);
     }
   });
 
+  // Handle typing events
   socket.on(START_TYPING, async ({ members, chatId }) => {
     const membersSocket = getSockets(members);
     socket.to(membersSocket).emit(START_TYPING, { chatId });
@@ -136,36 +132,40 @@ io.on("connection", (socket) => {
   });
 });
 
-// Fallback route for handling 404 errors
-app.use((req, res, next) => {
-  res.status(404).json({
+// 404 Handler
+app.use((req, res) => {
+  return res.status(404).json({
     statusCode: 404,
     message: "Not Found"
   });
 });
 
-// Handle all internal server errors
+// Error handling middleware
 app.use((err, req, res, next) => {
+  if (res.headersSent) {
+    return next(err); 
+  }
+
   if (err.kind === "ObjectId") {
-    const errorMessage = `Wrong object id path:${err.path}, errorId:${err.value._id}, Please provide correct objectId!!`;
-    errorResponse(res, {
+    const errorMessage = `Invalid object ID: ${err.path}. Please provide a valid object ID.`;
+    return errorResponse(res, {
       statusCode: 400,
-      errorMessage,
-      nextURl: {}
+      errorMessage
     });
   }
 
   if (err.code === 11000) {
-    errorResponse(res, {
+    return errorResponse(res, {
       statusCode: 422,
-      errorMessage: `Duplicate key error email or username must be unique!! ${Object.keys(err.keyPattern)[0]} is duplicate!! Please select another username!!`,
+      errorMessage: `Duplicate key error: ${Object.keys(err.keyPattern)[0]} is already in use. Please use another value.`,
       nextURl: {
         processRegister: "/api/v1/process-register",
         customerService: "www.friends-chat-app.netlify.app"
       }
     });
   }
-  res.status(err.status || 500).json({
+
+  return res.status(err.status || 500).json({
     statusCode: err.status || 500,
     message: err.message || "Internal Server Error"
   });

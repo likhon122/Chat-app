@@ -54,7 +54,7 @@ const Notification = () => {
       {/* Notification Drawer */}
       {drawerToggle && (
         <div
-          className={`absolute  w-80 right-[-20px]  sm:right-0 top-14 md:w-[400px] max-h-[100vh]  sm:top-11 transition-transform duration-500 
+          className={`absolute  w-80 right-[-38px]  sm:right-0 top-14 md:w-[400px] max-h-[100vh]  sm:top-11 transition-transform duration-500 
             "
           }`}
           ref={drawerRef}

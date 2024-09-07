@@ -1,17 +1,21 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { FaXmark } from "react-icons/fa6";
 import {
   useGetFriendsQuery,
   useMakeGroupChatMutation
 } from "../../app/api/api";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { setMakeGroupDrawer } from "../../app/features/otherSlice";
 import { Link } from "react-router-dom";
 import { useAsyncMutation } from "../../hooks/useAsyncMutationHook";
+import useClickOutside from "../../hooks/useClickOutsideHook";
 
 const MakeGroup = (props) => {
+  const { makeGroupDrawer } = useSelector((state) => state.other);
+  const userId = useSelector((state) => state.auth.user._id);
   const id = props.userId;
   const dispatch = useDispatch();
+  const createGroupRef = useRef();
 
   const [selectedFriends, setSelectedFriends] = useState([]);
   const [groupName, setGroupName] = useState("");
@@ -48,8 +52,23 @@ const MakeGroup = (props) => {
     }
   };
 
+  useClickOutside(createGroupRef, () => {
+    if (makeGroupDrawer) {
+      dispatch(setMakeGroupDrawer(false));
+    }
+  });
+
+  useEffect(() => {
+    if (userId !== id) {
+      dispatch(setMakeGroupDrawer(false));
+    }
+  }, [id, userId, dispatch]);
+
   return (
-    <div className="bg-gray-950  text-white  w-full max-w-md mx-auto  rounded-lg shadow-lg overflow-hidden">
+    <div
+      className="bg-gray-950  text-white  w-full max-w-md mx-auto  rounded-lg shadow-lg overflow-hidden"
+      ref={createGroupRef}
+    >
       <div className="p-4">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold">Create Group Chat</h2>

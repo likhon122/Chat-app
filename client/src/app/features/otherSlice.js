@@ -6,7 +6,8 @@ const initialState = {
   makeGroupDrawer: false,
   groupInfoDrawer: false,
   groupId: "",
-  theme: "dark"
+  theme: "dark",
+  editGroup: false
 };
 
 const otherSlice = createSlice({
@@ -31,6 +32,9 @@ const otherSlice = createSlice({
     setTheme: (state) => {
       console.log(state.theme);
       state.theme = state.theme === "light" ? "dark" : "light";
+    },
+    setEditGroup: (state, action) => {
+      state.editGroup = action.payload;
     }
   }
 });
@@ -41,7 +45,8 @@ export const {
   setMakeGroupDrawer,
   setGroupInfoDrawer,
   setGroupId,
-  setTheme
+  setTheme,
+  setEditGroup
 } = otherSlice.actions;
 
 export default otherSlice.reducer;

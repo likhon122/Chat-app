@@ -37,7 +37,7 @@ const NotificationDrawer = ({ onClose }) => {
   };
 
   return (
-    <div className="h-full bg-white dark:bg-[#222222] min-h-[400px] max-h-[100vh] overflow-y-auto p-4">
+    <div className="h-full bg-white dark:bg-[#222222] min-h-[400px] max-h-[100vh] overflow-y-auto ">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-lg font-semibold text-gray-800 dark:text-white">
           Notifications

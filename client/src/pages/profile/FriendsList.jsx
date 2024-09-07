@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 
 const FriendsList = ({ friends }) => {
   // State to manage how many friends to show
@@ -22,9 +23,11 @@ const FriendsList = ({ friends }) => {
 
   return (
     <div className="flex flex-col items-center mt-8">
+      
       <div className="flex flex-wrap justify-center gap-6">
         {displayedFriends.map((friend) => (
-          <div
+          <Link
+            to={`/profile/${friend._id}`}
             key={friend._id}
             className="flex flex-col items-center w-52 bg-gray-100 dark:bg-gray-700 rounded-lg shadow-lg transition-transform duration-300 transform hover:scale-105 p-4"
           >
@@ -32,7 +35,7 @@ const FriendsList = ({ friends }) => {
               <img
                 src={friend.avatar.url || "https://via.placeholder.com/150"}
                 alt={friend.name}
-                className="w-32 h-32 rounded-full object-cover border-4 border-blue-500 dark:border-blue-700 shadow-md"
+                className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-4 border-blue-500 dark:border-blue-700 shadow-md"
               />
               <div className="absolute top-2 right-2">
                 <span className="bg-blue-500 text-white text-xs font-semibold rounded-full px-2 py-1">
@@ -43,16 +46,14 @@ const FriendsList = ({ friends }) => {
             <p className="text-gray-800 dark:text-gray-100 mt-4 text-lg font-semibold text-center">
               {friend.name}
             </p>
-            <p className="text-gray-500 dark:text-gray-400 text-sm text-center">
-              @{friend.username}
-            </p>
+            
             <button className="mt-3 bg-blue-600 dark:bg-blue-700 text-white rounded-md px-3 py-1 text-xs font-medium shadow-sm hover:bg-blue-700 dark:hover:bg-blue-800 transition duration-200 transform hover:scale-105">
-              Message
+              View Profile
             </button>
-          </div>
+          </Link>
         ))}
       </div>
-      {visibleCount < friends.length && (
+      {visibleCount < friends?.length && (
         <button
           onClick={handleShowMore}
           className="mt-4 bg-blue-500 dark:bg-blue-600 text-white rounded-md px-4 py-2 text-sm font-medium shadow-md hover:bg-blue-600 dark:hover:bg-blue-700 transition duration-300"

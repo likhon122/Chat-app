@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useGetMyGroupsQuery } from "../../app/api/api";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import { setGroupId } from "../../app/features/otherSlice";
+import { setEditGroup, setGroupId } from "../../app/features/otherSlice";
 
 const MyGroup = () => {
   const navigate = useNavigate();
@@ -18,8 +18,13 @@ const MyGroup = () => {
 
   const handleClick = (chat) => {
     dispatch(setGroupId(chat._id));
+    dispatch(setEditGroup(true));
     navigate(`/my-groups/${chat._id}`);
   };
+
+  useEffect(() => {
+    dispatch(setEditGroup(false));
+  }, []);
 
   if (isLoading) {
     return (

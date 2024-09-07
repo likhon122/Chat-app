@@ -89,13 +89,8 @@ const isLoggedOut = async (req, res, next) => {
   }
 };
 
-const socketAuthenticator = async (err, socket, next) => {
+const socketAuthenticator = async (socket, next) => {
   try {
-    if (err) {
-      console.error("Error in socket middleware:", err);
-      return next(err);
-    }
-
     const { accessToken } = socket.request.cookies;
 
     if (!accessToken) {
@@ -104,7 +99,6 @@ const socketAuthenticator = async (err, socket, next) => {
       );
     }
 
-   
     const userInfo = verifyJsonWebToken(accessToken, accessTokenKey);
     if (!userInfo) {
       return next(
