@@ -118,6 +118,7 @@ const Message = ({ chatId }) => {
     if (message && !files?.length) {
       socket.emit(NEW_MESSAGE, { chatId, members, message });
       setMessage("");
+      document.getElementById("messageInput").focus();
       return;
     }
 
@@ -137,6 +138,7 @@ const Message = ({ chatId }) => {
       setSelectedImage([]); // Clear the selected image preview
       setSubmitFile([]);
       await sendAttachmentHandler("Sending attachments", formData);
+      document.getElementById("messageInput").focus();
     } catch (error) {
       console.log(error);
     }
@@ -391,22 +393,25 @@ const Message = ({ chatId }) => {
         >
           <label
             htmlFor="file"
-            className="cursor-pointer relative text-blue-400 hover:text-blue-300 transition-colors duration-200 ease-in-out flex items-center"
+            className=" relative text-blue-400 hover:text-blue-300 transition-colors duration-200 ease-in-out flex items-center cursor-pointer"
           >
-            <FaUpload className="mr-2" />
-            <span className="text-xs hidden sm:block">Select Files</span>
+            <FaUpload className="mr-2" cursor-pointer />
+            <span className="text-xs hidden sm:block cursor-pointer">
+              Select Files
+            </span>
             <input
               type="file"
               name="file"
               id="file"
               multiple
-              className="opacity-0 absolute z-30 left-0 sm:w-[80px] w-6"
+              className="opacity-0 absolute z-30 left-0 sm:w-[80px] w-6 cursor-pointer"
               onChange={handleFileChange}
             />
           </label>
           <div className="relative flex-1 w-full">
             <input
               type="text"
+              id="messageInput"
               spellCheck={false}
               placeholder="Type your message..."
               value={message}

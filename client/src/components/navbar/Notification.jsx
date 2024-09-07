@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import { useCallback, useRef } from "react";
 import { IoMdNotifications } from "react-icons/io";
 import { useDispatch, useSelector } from "react-redux";
 import { setNotificationDrawer } from "../../app/features/otherSlice";
@@ -7,12 +7,14 @@ import { getSocket } from "../../Socket";
 import { useSocketHook } from "../../hooks/useSocketHook";
 import { NEW_FRIEND_REQUEST } from "../../constants/event";
 import { setRequestNotificationCount } from "../../app/features/chatSlice";
+import useClickOutside from "../../hooks/useClickOutsideHook";
 
 const Notification = () => {
   const drawerToggle = useSelector((state) => state.other.notificationDrawer);
   const { requestNotification } = useSelector((state) => state.chat);
   const dispatch = useDispatch();
   const socket = getSocket();
+  const drawerRef = useRef(null);
 
   const newRequestHandler = useCallback(() => {
     dispatch(setRequestNotificationCount());
@@ -25,6 +27,12 @@ const Notification = () => {
   const handleClick = () => {
     dispatch(setNotificationDrawer(!drawerToggle));
   };
+
+  useClickOutside(drawerRef, () => {
+    if (drawerToggle) {
+      dispatch(setNotificationDrawer(false));
+    }
+  });
 
   return (
     <div className="relative">
@@ -46,9 +54,10 @@ const Notification = () => {
       {/* Notification Drawer */}
       {drawerToggle && (
         <div
-          className={`fixed w-full right-0 top-14 md:w-[400px] max-h-[100vh] sm:right-52 sm:top-11 transition-transform duration-500 
+          className={`absolute  w-80 right-[-20px]  sm:right-0 top-14 md:w-[400px] max-h-[100vh]  sm:top-11 transition-transform duration-500 
             "
           }`}
+          ref={drawerRef}
         >
           <div className="bg-white dark:bg-[#222222] w-full md:w-[400px] max-h-[100vh] overflow-y-auto p-4 shadow-lg rounded-lg ">
             <NotificationDrawer onClose={handleClick} />

@@ -6,7 +6,7 @@ import {
   createJsonWebToken,
   verifyJsonWebToken
 } from "../helper/jsonWebToken.js";
-import { frontendUrl, jsonWebTokenKey } from "../secret.js";
+import { frontendUrl1, jsonWebTokenKey } from "../secret.js";
 import { sendEmailWithNodemailer } from "../helper/sendEmail.js";
 import Request from "../models/request.model.js";
 import { emitEvent } from "../helper/socketIo.js";
@@ -161,7 +161,7 @@ const processRegisterController = async (req, res, next) => {
       the button Verify account or click
       <a
         style="color: blue; text-decoration: underline"
-        href="${frontendUrl}/api/v1/verify/${token}"
+        href="${frontendUrl1}/api/v1/verify/${token}"
         >Verify Account
       </a>
       this link!
@@ -176,7 +176,7 @@ const processRegisterController = async (req, res, next) => {
           color: white;
           border-radius: 8px;
         "
-        href="${frontendUrl}/api/v1/verify/${token}"
+        href="${frontendUrl1}/api/v1/verify/${token}"
       >
         Verify Account</a
       >

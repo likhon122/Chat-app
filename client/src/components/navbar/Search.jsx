@@ -112,16 +112,17 @@ const Search = () => {
             <div className="flex flex-col gap-2">
               {data && !isError && data.payload.length > 0 ? (
                 data.payload.map(({ _id, name, avatar, username }) => {
-                  const isFriend =
-                    getFriendsData?.payload?.friends.includes(_id);
+                  // console.log(
+                  //   pendingFriendRequestData?.payload?.pendingRequests
+                  // );
+                  const isFriend = getFriendsData?.payload?.friends.some(
+                    (friend) => friend._id === _id
+                  );
+                  console.log(isFriend);
                   const isPending =
                     pendingFriendRequestData?.payload?.pendingRequests.some(
                       (request) => request.receiver._id === _id
                     );
-
-                  console.log(isPending);
-
-                  console.log(isPending);
                   return (
                     <div
                       key={_id}
@@ -155,17 +156,20 @@ const Search = () => {
                         </button>
                       )}
 
-                      {!isFriend &&
-                        !isPending &&
-                        _id !== sender &&
-                        userData && (
-                          <button
-                            className="bg-blue-500 text-white hover:bg-blue-400 rounded-md px-2 py-1 transition duration-300"
-                            onClick={() => handleSendFriendRequest(_id)}
-                          >
-                            Add Friend
-                          </button>
-                        )}
+                      {!isFriend && !isPending && _id !== sender && (
+                        <button
+                          className="bg-blue-500 text-white hover:bg-blue-400 rounded-md px-2 py-1 transition duration-300"
+                          onClick={() => handleSendFriendRequest(_id)}
+                        >
+                          Add Friend
+                        </button>
+                      )}
+
+                      {isFriend && (
+                        <button className="bg-blue-500 text-white hover:bg-blue-400 rounded-md px-2 py-1 transition duration-300">
+                          Friends
+                        </button>
+                      )}
 
                       {!userData && (
                         <button

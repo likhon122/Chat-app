@@ -1,5 +1,5 @@
 import React from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { FaXmark } from "react-icons/fa6";
 import {
   useAcceptFriendRequestMutation,
@@ -10,8 +10,8 @@ import { toast } from "react-toastify";
 import SingleSpinner from "../Loaders/SingleSpinner";
 
 const NotificationDrawer = ({ onClose }) => {
-  const { data, isLoading, error } = useFriendRequestNotificationQuery();
-
+  const { data, isLoading, error, refetch } =
+    useFriendRequestNotificationQuery();
   const [acceptFriendRequest] = useAcceptFriendRequestMutation();
   const [rejectFriendRequest] = useRejectFriendRequestMutation();
   const dispatch = useDispatch();
@@ -20,6 +20,7 @@ const NotificationDrawer = ({ onClose }) => {
     try {
       await acceptFriendRequest({ acceptId: id });
       toast.success("Friend request accepted!");
+      refetch(); // Refetch after accepting the request
     } catch (error) {
       toast.error("Something went wrong!");
     }
@@ -27,8 +28,9 @@ const NotificationDrawer = ({ onClose }) => {
 
   const handleRejectRequest = async (id) => {
     try {
-      await rejectFriendRequest({ deleteId: id });
+      await rejectFriendRequest({ deleteId: id }).unwrap();
       toast.success("Friend request rejected!");
+      refetch(); // Refetch after rejecting the request
     } catch (error) {
       toast.error("Something went wrong!");
     }
@@ -49,7 +51,7 @@ const NotificationDrawer = ({ onClose }) => {
         </button>
       </div>
       <div className="flex flex-col gap-2">
-        {isLoading && <SingleSpinner size="h-10 w-10"/>}
+        {isLoading && <SingleSpinner size="h-10 w-10" />}
         {!isLoading && !error && data?.payload?.friendRequests.length > 0 ? (
           data.payload.friendRequests.map(({ _id, sender }) => (
             <div
@@ -67,14 +69,13 @@ const NotificationDrawer = ({ onClose }) => {
                     {sender.name}
                   </h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {sender.email}{" "}
-                    {/* Optional: Display additional info if necessary */}
+                    {sender.email}
                   </p>
                 </div>
               </div>
-              <div className="flex justify-center items-center gap-3  sm:mt-0">
+              <div className="flex justify-center items-center gap-3 sm:mt-0">
                 <button
-                  className="bg-green-600 text-white py-2  px-4 sm:px-1 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors duration-200"
+                  className="bg-green-600 text-white py-2 px-4 sm:px-1 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors duration-200"
                   onClick={() => handleConfirmRequest(_id)}
                 >
                   Confirm

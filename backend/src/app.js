@@ -5,7 +5,7 @@ import { Server } from "socket.io";
 import { createServer } from "http";
 import { v4 as uuid } from "uuid";
 
-import { frontendUrl } from "./secret.js";
+import { frontendUrl1, frontendUrl2, frontendUrl3 } from "./secret.js";
 import seedRoute from "./seeders/seed.route.js";
 import userRoute from "./routes/user.route.js";
 import authRoute from "./routes/auth.route.js";
@@ -24,11 +24,12 @@ import { socketAuthenticator } from "./middlewares/auth.js";
 const app = express();
 
 const server = createServer(app);
+
 const io = new Server(server, {
   cors: {
-    origin: [frontendUrl, "https://friends-adda.netlify.app"],
+    origin: [frontendUrl1, frontendUrl2, frontendUrl3],
     methods: ["GET", "POST"],
-    credentials: true
+    credentials: true 
   }
 });
 
@@ -36,7 +37,7 @@ app.set("io", io);
 
 app.use(
   cors({
-    origin: [frontendUrl, "https://friends-adda.netlify.app"],
+    origin: [frontendUrl1, frontendUrl2, frontendUrl3],
     credentials: true
   })
 );
@@ -45,13 +46,18 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+app.use((req, res, next) => {
+  console.log(`Received request: ${req.method} ${req.url}`);
+  next();
+});
+
 app.get("/api/v1/health", (_, res, __) => {
   res.status(200).send({
     message: "Server is running good!!"
   });
 });
 
-// Seeding route it's don't use on production !!!!!!!!!!!!!!
+
 app.use("/api/v1/seed", seedRoute);
 
 // Set all Routes

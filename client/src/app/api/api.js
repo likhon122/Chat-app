@@ -35,7 +35,7 @@ const api = createApi({
         url: "user/friend-requests",
         credentials: "include"
       }),
-      providesTags: ["User"]
+      providesTags: ["User"] // <-- Add this line to provide "User" tags
     }),
 
     getMessages: builder.query({
@@ -83,7 +83,7 @@ const api = createApi({
         url: "/user/pending-requests",
         credentials: "include"
       }),
-      providesTags: ["User"]
+      keepUnusedDataFor: ["User"]
     }),
 
     sendFriendRequest: builder.mutation({
@@ -113,7 +113,7 @@ const api = createApi({
         credentials: "include",
         body: data
       }),
-      invalidatesTags: ["User", "Chat"]
+      invalidatesTags: ["User"] // <-- Invalidate "User" tag so that it refetches
     }),
 
     renameGroupChat: builder.mutation({
@@ -173,7 +173,7 @@ const api = createApi({
         credentials: "include",
         body: data
       }),
-      invalidatesTags: ["User"]
+      invalidatesTags: ["User"] // <-- Invalidate "User" tag so that it refetches
     }),
 
     deleteGroup: builder.mutation({
