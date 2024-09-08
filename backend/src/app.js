@@ -20,6 +20,8 @@ import {
 import { getSockets } from "./helper/socketIo.js";
 import Message from "./models/message.model.js";
 import { socketAuthenticator } from "./middlewares/auth.js";
+import notificationRoute from "./routes/notification.route.js";
+import { sendNotificationToUser } from "./helper/sendPushNotification.js";
 
 const app = express();
 const server = createServer(app);
@@ -57,6 +59,7 @@ app.use("/api/v1/seed", seedRoute);
 app.use("/api/v1/user", userRoute);
 app.use("/api/v1/auth", authRoute);
 app.use("/api/v1/chat", chatRoute);
+app.use("/api/v1/push-notification", notificationRoute);
 
 // Socket.io Authentication Middleware
 io.use((socket, next) => {
@@ -109,6 +112,11 @@ io.on("connection", (socket) => {
       const resMessage = await Message.create(messageForDb);
       if (!resMessage) {
         console.error("Message not saved in DB. Something went wrong!!");
+      } else {
+        // Send push notifications to each member
+        for (const member of members) {
+          await sendNotificationToUser(member);
+        }
       }
     } catch (error) {
       console.error("Message not saved in DB. Something went wrong!!", error);
@@ -143,7 +151,7 @@ app.use((req, res) => {
 // Error handling middleware
 app.use((err, req, res, next) => {
   if (res.headersSent) {
-    return next(err); 
+    return next(err);
   }
 
   if (err.kind === "ObjectId") {

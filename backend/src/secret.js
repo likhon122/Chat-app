@@ -12,8 +12,8 @@ const smtpUsername = process.env.SMTP_USERNAME;
 const smtpPassword = process.env.SMTP_PASSWORD;
 const accessTokenKey = process.env.ACCESS_TOKEN_KEY;
 const refreshTokenKey = process.env.REFRESH_TOKEN_KEY;
-
-
+const pushNotificationPublicKey = process.env.PUBLIC_VAPID_KEY;
+const pushNotificationPrivateKey = process.env.PRIVATE_VAPID_KEY;
 
 export {
   frontendUrl1,
@@ -25,5 +25,7 @@ export {
   smtpPassword,
   smtpUsername,
   accessTokenKey,
-  refreshTokenKey
+  refreshTokenKey,
+  pushNotificationPrivateKey,
+  pushNotificationPublicKey
 };

@@ -26,6 +26,9 @@ import Profile from "./pages/profile/Profile";
 import Friends from "./pages/friends/Friends";
 import MyGroups from "./pages/myGroups/MyGroups";
 import DuelSpinner from "./components/Loaders/DuelSpinner";
+import PushNotificationManager from "./PushNotificationManager";
+
+const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY;
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -62,7 +65,24 @@ const App = () => {
     );
   }
 
-  return !isLoading && <RouterProvider router={router} />;
+  if (isError) {
+    console.error("Error fetching user verification:", error);
+    return (
+      <div className="h-screen dark:bg-darkBg flex items-center justify-center text-red-500">
+        Error loading user data.
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <PushNotificationManager
+        userId={data?.payload?.user?.id}
+        pushNotificationPublicKey={VAPID_PUBLIC_KEY}
+      />
+      <RouterProvider router={router} />
+    </>
+  );
 };
 
 export default App;
