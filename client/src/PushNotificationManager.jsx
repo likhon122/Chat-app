@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import { serverUrl } from "..";
 
 const PushNotificationManager = ({ userId, pushNotificationPublicKey }) => {
   useEffect(() => {
@@ -10,7 +11,7 @@ const PushNotificationManager = ({ userId, pushNotificationPublicKey }) => {
 
           const subscription = await registration.pushManager.subscribe({
             userVisibleOnly: true,
-            applicationServerKey: urlB64ToUint8Array(pushNotificationPublicKey) 
+            applicationServerKey: urlB64ToUint8Array(pushNotificationPublicKey)
           });
 
           console.log("User is subscribed:", subscription);
@@ -22,8 +23,9 @@ const PushNotificationManager = ({ userId, pushNotificationPublicKey }) => {
     };
 
     const sendSubscriptionToServer = async (subscription) => {
+      console.log(`${serverUrl}/api/v1/push-notification`)
       try {
-        const response = await fetch("/api/v1/push-notification", {
+        const response = await fetch(`${serverUrl}/api/v1/push-notification`, {
           method: "POST",
           body: JSON.stringify({
             endpoint: subscription.endpoint,
@@ -65,11 +67,10 @@ const PushNotificationManager = ({ userId, pushNotificationPublicKey }) => {
       return new Uint8Array([...rawData].map((char) => char.charCodeAt(0)));
     };
 
-    
     registerServiceWorker();
   }, [userId, pushNotificationPublicKey]);
 
-  return null; 
+  return null;
 };
 
 export default PushNotificationManager;
