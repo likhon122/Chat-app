@@ -33,7 +33,7 @@ const sendNotificationToUser = async (userId) => {
   if (subscription) {
     const payload = JSON.stringify({
       title: "New Message",
-      body: "You have a new message!"
+      body: "You have a new message from chat app!"
     });
     await sendPushNotification(subscription, payload);
   } else {
