@@ -65,14 +65,7 @@ const App = () => {
     );
   }
 
-  if (isError) {
-    console.error("Error fetching user verification:", error);
-    return (
-      <div className="h-screen dark:bg-darkBg flex items-center justify-center text-red-500">
-        Error loading user data.
-      </div>
-    );
-  }
+
 
   return (
     <>

@@ -77,6 +77,7 @@ chatRoute.get(
   getMessages
 );
 
+
 // Dynamic Route
 chatRoute
   .route("/:id")
@@ -85,3 +86,4 @@ chatRoute
   .delete(deleteChatValidation, runValidation, deleteChat);
 
 export default chatRoute;
+
