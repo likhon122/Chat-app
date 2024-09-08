@@ -25,7 +25,14 @@ const pushNotification = async (req, res, next) => {
     });
 
     if (existingSubscription) {
-      return res.status(409).json({ message: "Subscription already exists" });
+      // Update the existing subscription with new keys or userId if needed
+      existingSubscription.keys = keys;
+      existingSubscription.userId = userId;
+      await existingSubscription.save();
+
+      return res
+        .status(200)
+        .json({ message: "Subscription updated successfully" });
     }
 
     const subscription = new NotificationSubscriptionModel({

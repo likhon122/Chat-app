@@ -65,14 +65,16 @@ const App = () => {
     );
   }
 
-
+  console.log(data?.payload?.user?._id);
 
   return (
     <>
-      <PushNotificationManager
-        userId={data?.payload?.user?.id}
-        pushNotificationPublicKey={VAPID_PUBLIC_KEY}
-      />
+      {data?.payload?.user?._id && (
+        <PushNotificationManager
+          userId={data.payload.user._id}
+          pushNotificationPublicKey={VAPID_PUBLIC_KEY}
+        />
+      )}
       <RouterProvider router={router} />
     </>
   );

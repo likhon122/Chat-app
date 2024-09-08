@@ -22,8 +22,9 @@ const PushNotificationManager = ({ userId, pushNotificationPublicKey }) => {
       }
     };
 
+    console.log(userId);
+
     const sendSubscriptionToServer = async (subscription) => {
-      console.log(`${serverUrl}/api/v1/push-notification`)
       try {
         const response = await fetch(`${serverUrl}/api/v1/push-notification`, {
           method: "POST",
@@ -48,11 +49,13 @@ const PushNotificationManager = ({ userId, pushNotificationPublicKey }) => {
           }
         });
 
-        if (!response.ok) {
+        if (response.status === 409) {
+          console.log("Subscription already exists.");
+        } else if (!response.ok) {
           throw new Error("Failed to send subscription to server");
+        } else {
+          console.log("Subscription sent to server successfully");
         }
-
-        console.log("Subscription sent to server successfully");
       } catch (error) {
         console.error("Error sending subscription to server:", error);
       }
