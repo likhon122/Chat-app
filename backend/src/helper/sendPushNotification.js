@@ -4,6 +4,8 @@ import {
   pushNotificationPrivateKey,
   pushNotificationPublicKey
 } from "../secret.js";
+import User from "../models/user.model.js";
+import Chat from "../models/chat.model.js";
 
 // Set your VAPID keys here if not already set
 const vapidKeys = {
@@ -22,22 +24,26 @@ webpush.setVapidDetails(
 const sendPushNotification = async (subscription, payload) => {
   try {
     await webpush.sendNotification(subscription, payload);
-    console.log("Push notification sent successfully!");
   } catch (error) {
     console.error("Error sending push notification:", error);
   }
 };
 
-const sendNotificationToUser = async (userId) => {
-  const subscription = await NotificationSubscriptionModel.findOne({ userId });
+const sendNotificationToUser = async (notificationData) => {
+  const [subscription, senderName, chatName] = await Promise.all([
+    NotificationSubscriptionModel.findOne({ userId: notificationData.member }),
+    User.findById(notificationData.sender).select("name"),
+    Chat.findById(notificationData.chat).select("chatName")
+  ]);
+
   if (subscription) {
     const payload = JSON.stringify({
-      title: "New Message",
-      body: "You have a new message from chat app!"
+      title: `${senderName.name} sent a message in ${chatName.chatName}`,
+      body: notificationData.content
     });
     await sendPushNotification(subscription, payload);
   } else {
-    console.log(`No subscription found for userId: ${userId}`);
+    console.log(`No subscription found for userId: ${notificationData.member}`);
   }
 };
 

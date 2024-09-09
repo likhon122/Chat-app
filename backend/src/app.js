@@ -1,3 +1,4 @@
+/* eslint-disable no-await-in-loop */
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
@@ -113,9 +114,16 @@ io.on("connection", (socket) => {
       if (!resMessage) {
         console.error("Message not saved in DB. Something went wrong!!");
       } else {
-        // Send push notifications to each member
+        // Send push notification to offline members
         for (const member of members) {
-          await sendNotificationToUser(member);
+          if (!userSocketIds.has(member.toString())) {
+            await sendNotificationToUser({
+              content: message,
+              sender: user._id,
+              chat: chatId,
+              member
+            });
+          }
         }
       }
     } catch (error) {

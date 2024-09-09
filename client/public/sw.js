@@ -1,3 +1,5 @@
+import { notificationImage } from "..";
+
 self.addEventListener("push", function (event) {
   const data = event.data
     ? event.data.json()
@@ -5,8 +7,9 @@ self.addEventListener("push", function (event) {
 
   const options = {
     body: data.body,
-    icon: "icon.png",
-    badge: "badge.png"
+    icon: "https://res.cloudinary.com/dp0meiglf/image/upload/v1725804750/Friends-chat/yru4nbdwrbpjznm8dulc.png",
+    badge:
+      "https://res.cloudinary.com/dp0meiglf/image/upload/v1725804750/Friends-chat/yru4nbdwrbpjznm8dulc.png"
   };
 
   event.waitUntil(self.registration.showNotification(data.title, options));

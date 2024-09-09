@@ -1,4 +1,6 @@
+/* eslint-disable no-await-in-loop */
 import { userSocketIds } from "../app.js";
+import { sendNotificationToUser } from "./sendPushNotification.js";
 
 const getSockets = (members = []) => {
   const sockets =

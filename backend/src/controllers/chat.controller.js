@@ -1,3 +1,5 @@
+/* eslint-disable no-await-in-loop */
+import { userSocketIds } from "../app.js";
 import {
   ALERT,
   NEW_ATTACHMENT,
@@ -11,6 +13,7 @@ import {
   uploadFilesFromCloudinary
 } from "../helper/cloudinary.js";
 import { errorResponse, successResponse } from "../helper/responseHandler.js";
+import { sendNotificationToUser } from "../helper/sendPushNotification.js";
 import { emitEvent } from "../helper/socketIo.js";
 import Chat from "../models/chat.model.js";
 import Message from "../models/message.model.js";
@@ -543,6 +546,26 @@ const sendAttachments = async (req, res, next) => {
       message: messageForRealTime,
       chatId
     });
+
+    const AllMembers = chat.members;
+
+    for (const member of AllMembers) {
+      if (!userSocketIds.has(member.toString())) {
+        // console.log(user);
+        // console.log("sneding data", {
+        //   content: "Send an attachment!!",
+        //   sender: data?.message?.sender._id,
+        //   chat: data?.chatId,
+        //   user
+        // });
+        await sendNotificationToUser({
+          content: "Send an attachment!!",
+          sender: userId,
+          chat: chatId,
+          member
+        });
+      }
+    }
 
     emitEvent(req, NEW_MESSAGE_ALERT, chat.members, { chatId });
 
