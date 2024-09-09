@@ -51,6 +51,7 @@ const Message = ({ chatId }) => {
   const containerRef = useRef(null);
   const bottomRef = useRef(null);
   const emojiRef = useRef(null);
+  const messageInputRef = useRef(null);
 
   const oldMessagesChunk = useGetMessagesQuery({ chatId, page });
 
@@ -122,7 +123,7 @@ const Message = ({ chatId }) => {
 
   const submitHandler = async (e) => {
     e.preventDefault();
-    document.getElementById("messageInput").focus();
+    // document.getElementById("messageInput").focus();
 
     const fileInput = e.target.file;
     const files = submitFile;
@@ -173,8 +174,8 @@ const Message = ({ chatId }) => {
   }, [messages]);
 
   useEffect(() => {
-    document.getElementById("messageInput").focus();
-  }, []);
+    messageInputRef.current?.focus(); // Focus the input box
+  }, [chatId]);
 
   const newMessagesHandler = useCallback(
     (data) => {
@@ -412,7 +413,7 @@ const Message = ({ chatId }) => {
             htmlFor="file"
             className=" relative text-blue-400 hover:text-blue-300 transition-colors duration-200 ease-in-out flex items-center cursor-pointer"
           >
-            <FaUpload className="mr-2"  />
+            <FaUpload className="mr-2" />
             <span className="text-xs hidden sm:block cursor-pointer">
               Select Files
             </span>
@@ -432,8 +433,9 @@ const Message = ({ chatId }) => {
               spellCheck={false}
               placeholder="Type your message..."
               value={message}
-              className="border border-gray-600 bg-gray-700 px-2 py-1 sm:p-2 rounded-lg text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all w-full "
+              className="border border-gray-600 bg-gray-700 px-2 py-1 sm:p-2 rounded-lg text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all w-full"
               onChange={handleMessageChange}
+              ref={messageInputRef}
             />
 
             <button
@@ -443,7 +445,7 @@ const Message = ({ chatId }) => {
               <FaPaperPlane className="text-[18px] sm:text-[22px] text-white" />
             </button>
           </div>
-          <div className="relative flex items-center" ref={emojiRef}>
+          <div className="relative hidden md:flex items-center " ref={emojiRef}>
             <button
               type="button"
               onClick={() => setShowEmojiPicker((prev) => !prev)}

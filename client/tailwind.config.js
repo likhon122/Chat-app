@@ -9,15 +9,15 @@ export default {
         defaultText: "#3A3B3C",
         darkBg: "#222222",
         darkText: "#FFFFFF",
-        "scrollbar-thumb": "#6b7280", // Tailwind's gray-500 or any color you prefer
-        "scrollbar-track": "#1f2937" // Tailwind's gray-800 or any color you prefer
+        "scrollbar-thumb": "#6b7280", 
+        "scrollbar-track": "#1f2937" 
       },
       screens: {
-        sm: "640px", // Small screens
-        md: "768px", // Medium screens
-        lg: "1024px", // Large screens
-        xl: "1280px", // Extra large screens
-        "2xl": "1536px" // 2x extra large screens
+        sm: "640px",
+        md: "768px", 
+        lg: "1024px", 
+        xl: "1280px", 
+        "2xl": "1536px" 
       },
       animation: {
         "spin-reverse": "spin 1s linear infinite reverse",
