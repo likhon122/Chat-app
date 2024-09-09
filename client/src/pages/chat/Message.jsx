@@ -176,18 +176,13 @@ const Message = ({ chatId }) => {
 
   useEffect(() => {
     messageInputRef.current?.focus(); // Focus the input box
-     const handleBlur = () => {
-       // Refocus the input when it loses focus
-       messageInputRef.current.focus();
-     };
+    const handleBlur = () => {
+      // Refocus the input when it loses focus
+      messageInputRef.current.focus();
+    };
 
-     // Add event listener for blur
-     messageInputRef.current.addEventListener("blur", handleBlur);
-
-     return () => {
-       // Clean up the event listener
-       messageInputRef.current.removeEventListener("blur", handleBlur);
-     };
+    // Add event listener for blur
+    messageInputRef.current.addEventListener("blur", handleBlur);
   }, [chatId]);
 
   const newMessagesHandler = useCallback(
@@ -454,7 +449,6 @@ const Message = ({ chatId }) => {
             <button
               className=" bg-[#1230AE] text-[18px]   font-semibold px-[9px] py-[7px] sm:py-[9px]  transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95  absolute right-0 top-[0px] border border-[#1230AE] rounded-e-lg"
               type="submit"
-          
             >
               <FaPaperPlane className="text-[18px] sm:text-[22px] text-white" />
             </button>
