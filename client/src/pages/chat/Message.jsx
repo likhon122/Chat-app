@@ -172,6 +172,10 @@ const Message = ({ chatId }) => {
       bottomRef.current.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  useEffect(() => {
+    document.getElementById("messageInput").focus();
+  }, []);
+
   const newMessagesHandler = useCallback(
     (data) => {
       if (data.message.chatId !== chatId) return;
@@ -408,7 +412,7 @@ const Message = ({ chatId }) => {
             htmlFor="file"
             className=" relative text-blue-400 hover:text-blue-300 transition-colors duration-200 ease-in-out flex items-center cursor-pointer"
           >
-            <FaUpload className="mr-2" cursor-pointer />
+            <FaUpload className="mr-2"  />
             <span className="text-xs hidden sm:block cursor-pointer">
               Select Files
             </span>

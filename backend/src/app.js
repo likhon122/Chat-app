@@ -15,6 +15,7 @@ import { errorResponse } from "./helper/responseHandler.js";
 import {
   NEW_MESSAGE,
   NEW_MESSAGE_ALERT,
+  REFETCH_CHATS,
   START_TYPING,
   STOP_TYPING
 } from "./constants/event.js";
@@ -108,6 +109,7 @@ io.on("connection", (socket) => {
     });
 
     io.to(membersSocket).emit(NEW_MESSAGE_ALERT, { chatId });
+    io.to(membersSocket).emit(REFETCH_CHATS, { chatId });
 
     try {
       const resMessage = await Message.create(messageForDb);

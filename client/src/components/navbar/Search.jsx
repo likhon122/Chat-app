@@ -81,22 +81,23 @@ const Search = () => {
   }, []);
 
   return (
-    <div className="relative w-full max-w-xs mx-auto">
+    <div className="relative w-full  sm:max-w-[400px] mx-auto">
       <form onSubmit={handleSubmit} className="flex items-center">
         <input
           type="search"
-          className="bg-white dark:bg-[#3A3B3C] dark:text-white px-2 py-1 flex-grow border border-[#3A3B3C] rounded-l-md outline-none transition duration-300 hover:shadow-lg focus:shadow-lg text-sm"
+          className="bg-white dark:bg-[#3A3B3C] dark:text-white px-2 py-1 sm:py-1.5 sm:px-3 flex-grow border border-[#3A3B3C] rounded-l-md outline-none transition duration-300 hover:shadow-lg focus:shadow-lg text-sm w-32 sm:w-full"
           onChange={(e) => setSearchValue(e.target.value)}
           spellCheck={false}
           placeholder="Search users..."
         />
         <button
           type="submit"
-          className="dark:bg-[#676767] dark:text-white dark:hover:bg-[#4e4e4e] transition duration-300 px-2 py-1 rounded-r-md flex items-center justify-center" // Smaller button
+          className="dark:bg-[#676767] dark:text-white dark:hover:bg-[#4e4e4e] transition duration-300 px-2 py-1 sm:px-4 rounded-r-md flex items-center justify-center"
         >
           <IoSearch size={20} />
         </button>
       </form>
+
       {searchValue && (
         <div
           ref={searchResultsRef}
@@ -112,13 +113,10 @@ const Search = () => {
             <div className="flex flex-col gap-2">
               {data && !isError && data.payload.length > 0 ? (
                 data.payload.map(({ _id, name, avatar, username }) => {
-                  // console.log(
-                  //   pendingFriendRequestData?.payload?.pendingRequests
-                  // );
                   const isFriend = getFriendsData?.payload?.friends.some(
                     (friend) => friend._id === _id
                   );
-                  console.log(isFriend);
+
                   const isPending =
                     pendingFriendRequestData?.payload?.pendingRequests.some(
                       (request) => request.receiver._id === _id

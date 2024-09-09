@@ -31,6 +31,7 @@ const createGroupChat = async (req, res, next) => {
         nextURl: {}
       });
     }
+
     const allMembers = [...members, userId];
 
     await Chat.create({
@@ -72,27 +73,42 @@ const getMyChats = async (req, res, next) => {
       });
     }
 
-    const allChats = chats.map(({ members, _id, groupChat, chatName }) => {
-      const otherMember = () => {
-        return members.find((member) => {
-          return member._id.toString() !== userId.toString();
+    const allChats = await Promise.all(
+      chats.map(async ({ members, _id, groupChat, chatName }) => {
+        // Finding last message of the chat
+
+        const lastMessage = await Message.findOne({ chat: _id }).sort({
+          createdAt: -1
         });
-      };
 
-      const membersId = members.map((member) => member._id);
+        const otherMember = () => {
+          return members.find((member) => {
+            return member._id.toString() !== userId.toString();
+          });
+        };
 
-      return {
-        chatName,
-        _id,
-        groupChat,
-        avatar: groupChat
-          ? members.slice(0, 3).map((member) => {
-              return member.avatar?.url;
-            })
-          : otherMember()?.avatar?.url,
-        members: membersId
-      };
-    });
+        const membersId = members.map((member) => member._id);
+
+        return {
+          chatName,
+          _id,
+          groupChat,
+          avatar: groupChat
+            ? members.slice(0, 3).map((member) => {
+                return member.avatar?.url;
+              })
+            : otherMember()?.avatar?.url,
+          members: membersId,
+          lastMessage:
+            lastMessage?.content || lastMessage?.attachment
+              ? {
+                  lastMessage: lastMessage?.content,
+                  lastAttachment: lastMessage?.attachment
+                }
+              : "No messages yet"
+        };
+      })
+    );
 
     successResponse(res, {
       statusCode: 200,
@@ -142,6 +158,7 @@ const getMyGroups = async (req, res, next) => {
         };
       }
     );
+
     successResponse(res, {
       statusCode: 200,
       successMessage: "All groups loaded successfully!",
@@ -551,13 +568,6 @@ const sendAttachments = async (req, res, next) => {
 
     for (const member of AllMembers) {
       if (!userSocketIds.has(member.toString())) {
-        // console.log(user);
-        // console.log("sneding data", {
-        //   content: "Send an attachment!!",
-        //   sender: data?.message?.sender._id,
-        //   chat: data?.chatId,
-        //   user
-        // });
         await sendNotificationToUser({
           content: "Send an attachment!!",
           sender: userId,

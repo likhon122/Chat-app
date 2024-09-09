@@ -30,15 +30,18 @@ const sendPushNotification = async (subscription, payload) => {
 };
 
 const sendNotificationToUser = async (notificationData) => {
-  const [subscription, senderName, chatName] = await Promise.all([
+  const [subscription, senderName, chatInfo] = await Promise.all([
     NotificationSubscriptionModel.findOne({ userId: notificationData.member }),
     User.findById(notificationData.sender).select("name"),
-    Chat.findById(notificationData.chat).select("chatName")
+    Chat.findById(notificationData.chat).select("chatName groupChat")
   ]);
+
 
   if (subscription) {
     const payload = JSON.stringify({
-      title: `${senderName.name} sent a message in ${chatName.chatName}`,
+      title: chatInfo.groupChat
+        ? `${senderName.name} send a message in ${chatInfo.chatName}`
+        : `${senderName.name} send you a new message`,
       body: notificationData.content
     });
     await sendPushNotification(subscription, payload);

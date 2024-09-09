@@ -40,13 +40,13 @@ const Navbar = () => {
 
   return (
     <div className="shadow-lg bg-[#FFFFFF] dark:bg-[#1F2937] top-0 left-0 w-full z-10">
-      <div className="container mx-auto flex items-center justify-between py-2 px-2 sm:px-4 sm:py-2 gap-1 sm:gap-2 ">
+      <div className="container mx-auto flex items-center justify-between py-2 sm:px-4 sm:py-2 gap-1 sm:gap-2 ">
         <div className="md:hidden">
           <button
             onClick={toggleMobileMenu}
-            className="text-gray-700 dark:text-white p-2 rounded focus:outline-none hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+            className="text-gray-700 dark:text-white pl-1 py-2 rounded focus:outline-none hover:bg-gray-200 dark:hover:bg-gray-700 transition"
           >
-            <FiMoreHorizontal size={24} />
+            <FiMoreHorizontal className="text-xl" />
           </button>
         </div>
         <ul className="md:flex items-center gap-8 hidden">
@@ -118,7 +118,7 @@ const Navbar = () => {
           <Search />
         </div>
 
-        <div className="flex items-center sm:gap-2 gap-1 z-50" title="Profile">
+        <div className="flex items-center sm:gap-2  z-50 mr-2 " title="Profile">
           {userData && <Notification />}
           {userData?._id && (
             <NavLink

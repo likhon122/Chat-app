@@ -1,5 +1,3 @@
-import { notificationImage } from "..";
-
 self.addEventListener("push", function (event) {
   const data = event.data
     ? event.data.json()

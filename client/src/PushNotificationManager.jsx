@@ -7,22 +7,18 @@ const PushNotificationManager = ({ userId, pushNotificationPublicKey }) => {
       if ("serviceWorker" in navigator && "PushManager" in window) {
         try {
           const registration = await navigator.serviceWorker.register("/sw.js");
-          console.log("Service Worker registered:", registration);
 
           const subscription = await registration.pushManager.subscribe({
             userVisibleOnly: true,
             applicationServerKey: urlB64ToUint8Array(pushNotificationPublicKey)
           });
 
-          console.log("User is subscribed:", subscription);
           await sendSubscriptionToServer(subscription);
         } catch (error) {
           console.error("Failed to subscribe to push notifications:", error);
         }
       }
     };
-
-    console.log(userId);
 
     const sendSubscriptionToServer = async (subscription) => {
       try {
@@ -42,7 +38,7 @@ const PushNotificationManager = ({ userId, pushNotificationPublicKey }) => {
                 )
               )
             },
-            userId: userId // Use the provided user ID
+            userId: userId
           }),
           headers: {
             "Content-Type": "application/json"
@@ -53,8 +49,6 @@ const PushNotificationManager = ({ userId, pushNotificationPublicKey }) => {
           console.log("Subscription already exists.");
         } else if (!response.ok) {
           throw new Error("Failed to send subscription to server");
-        } else {
-          console.log("Subscription sent to server successfully");
         }
       } catch (error) {
         console.error("Error sending subscription to server:", error);

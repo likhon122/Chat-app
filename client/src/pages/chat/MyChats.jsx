@@ -11,6 +11,8 @@ const MyChats = () => {
   const messageNotification = useSelector(
     (state) => state.chat.messageNotification
   );
+  const userName = useSelector((state) => state.auth?.user?.name);
+
   const { data, isError, isLoading, refetch } = useGetChatsQuery();
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -89,14 +91,40 @@ const MyChats = () => {
                       className="w-10 h-10 rounded-full border-2 border-white dark:border-gray-800 sm:w-8 sm:h-8"
                     />
                   )}
-                  <div className="flex flex-col">
-                    <h2 className="text-lg font-medium text-gray-800 dark:text-gray-200 sm:text-base sm:font-normal">
-                      {chat.chatName}
-                    </h2>
-                    <span className="text-sm text-gray-500 dark:text-gray-400 sm:text-xs">
-                      {chat.lastMessage || "No messages yet"}
-                    </span>
-                  </div>
+                  {chat.groupChat ? (
+                    <div className="flex flex-col">
+                      <h2 className="text-lg font-medium text-gray-800 dark:text-gray-200 sm:text-base sm:font-normal">
+                        {chat.chatName}
+                      </h2>
+                      
+                      <span className="text-sm text-gray-500 dark:text-gray-400 sm:text-xs">
+                        {chat.lastMessage.lastMessage
+                          ? chat.lastMessage?.lastMessage
+                            ? chat.lastMessage?.lastMessage
+                            : chat.lastMessage?.lastAttachment?.length &&
+                              "Sent Attachment"
+                          : "No messages yet"}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col">
+                      <h2 className="text-lg font-medium text-gray-800 dark:text-gray-200 sm:text-base sm:font-normal">
+                        {
+                          chat.chatName
+                            .split("-")
+                            .filter((name) => name !== userName)[0]
+                        }
+                      </h2>
+                      <span className="text-sm text-gray-500 dark:text-gray-400 sm:text-xs">
+                        {chat.lastMessage.lastMessage
+                          ? chat.lastMessage?.lastMessage
+                            ? chat.lastMessage?.lastMessage
+                            : chat.lastMessage?.lastAttachment?.length &&
+                              "Sent Attachment"
+                          : "No messages yet"}
+                      </span>
+                    </div>
+                  )}
                 </div>
                 {notificationCount > 0 && (
                   <span className="ml-auto bg-red-500 text-white rounded-full px-3 py-1 text-sm sm:px-2 sm:py-0.5 sm:text-xs">

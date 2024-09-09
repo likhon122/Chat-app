@@ -65,8 +65,6 @@ const App = () => {
     );
   }
 
-  console.log(data?.payload?.user?._id);
-
   return (
     <>
       {data?.payload?.user?._id && (
