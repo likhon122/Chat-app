@@ -23,7 +23,7 @@ const errorResponse = (
     nextURl = {} // Next URL (optional)
   }
 ) => {
-  res.status(statusCode).json({
+  return res.status(statusCode).json({
     error: true,
     errorMessage,
     nextURl

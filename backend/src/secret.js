@@ -14,6 +14,9 @@ const accessTokenKey = process.env.ACCESS_TOKEN_KEY;
 const refreshTokenKey = process.env.REFRESH_TOKEN_KEY;
 const pushNotificationPublicKey = process.env.PUBLIC_VAPID_KEY;
 const pushNotificationPrivateKey = process.env.PRIVATE_VAPID_KEY;
+const adminLoginPath = process.env.ADMIN_LOGIN_PATH;
+const adminLoginPassword = process.env.ADMIN_LOGIN_PASSWORD;
+const adminLoginEmail = process.env.ADMIN_LOGIN_EMAIL;
 
 export {
   frontendUrl1,
@@ -27,5 +30,8 @@ export {
   accessTokenKey,
   refreshTokenKey,
   pushNotificationPrivateKey,
-  pushNotificationPublicKey
+  pushNotificationPublicKey,
+  adminLoginPath,
+  adminLoginPassword,
+  adminLoginEmail
 };

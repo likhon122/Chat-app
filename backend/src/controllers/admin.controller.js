@@ -2,6 +2,48 @@ import { errorResponse, successResponse } from "../helper/responseHandler.js";
 import Chat from "../models/chat.model.js";
 import Message from "../models/message.model.js";
 import User from "../models/user.model.js";
+import { adminLoginEmail, adminLoginPassword } from "../secret.js";
+
+const adminLogin = (req, res, next) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email) {
+      return errorResponse(res, {
+        statusCode: 400,
+        errorMessage: "Email is required!!",
+        nextURl: {}
+      });
+    }
+    if (!password) {
+      return errorResponse(res, {
+        statusCode: 400,
+        errorMessage: "Password is required!!",
+        nextURl: {}
+      });
+    }
+
+    if (email !== adminLoginEmail || password !== adminLoginPassword) {
+      return errorResponse(res, {
+        statusCode: 401,
+        errorMessage:
+          "You are not authorized to access admin panel please contact us or call use !!",
+        nextURl: {
+          home: "/"
+        }
+      });
+    }
+
+    return successResponse(res, {
+      statusCode: 200,
+      successMessage: "Admin login successfully!!",
+      payload: {},
+      nextURl: { adminPanel: "/admin-panel" }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
 const getAllUserDetails = async (req, res, next) => {
   try {
@@ -14,7 +56,7 @@ const getAllUserDetails = async (req, res, next) => {
       .skip(skip);
 
     if (!allUser) {
-      errorResponse(res, {
+      return errorResponse(res, {
         statusCode: 404,
         errorMessage: "Could not found any user!!",
         nextURl: {}
@@ -39,7 +81,7 @@ const getAllUserDetails = async (req, res, next) => {
       })
     );
 
-    successResponse(res, {
+    return successResponse(res, {
       statusCode: 200,
       successMessage: "All user details returned successfully!!",
       payload: { allUsers },
@@ -90,7 +132,7 @@ const getAllMessages = async (req, res, next) => {
       )
     );
 
-    successResponse(res, {
+    return successResponse(res, {
       statusCode: 200,
       successMessage: "All messages returned successfully!!",
       payload: { allMessages },
@@ -132,7 +174,7 @@ const getAllChats = async (req, res, next) => {
         };
       }
     );
-    successResponse(res, {
+    return successResponse(res, {
       statusCode: 200,
       successMessage: "All chats returned successfully!!",
       payload: { chatDetails },
@@ -167,7 +209,7 @@ const getDashBoardStatus = async (req, res, next) => {
     }).select("createdAt");
 
     if (!last7DaysMessages) {
-      errorResponse(res, {
+      return errorResponse(res, {
         statusCode: 404,
         errorMessage:
           "Could not found last 7 day messages!! No one message etch other last 7 days!!",
@@ -194,7 +236,7 @@ const getDashBoardStatus = async (req, res, next) => {
       last7DaysMessagesCount
     };
 
-    successResponse(res, {
+    return successResponse(res, {
       statusCode: 200,
       successMessage: "Dashboard details returned successfully!!",
       payload: { dashBoardDetails },
@@ -205,4 +247,10 @@ const getDashBoardStatus = async (req, res, next) => {
   }
 };
 
-export { getAllUserDetails, getAllMessages, getAllChats, getDashBoardStatus };
+export {
+  getAllUserDetails,
+  getAllMessages,
+  getAllChats,
+  getDashBoardStatus,
+  adminLogin
+};

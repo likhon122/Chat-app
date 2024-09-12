@@ -19,7 +19,7 @@ const getSingleUser = async (req, res, next) => {
     const id = req.params.userId;
 
     if (!id) {
-      errorResponse(res, {
+      return errorResponse(res, {
         statusCode: 400,
         errorMessage: "UserId is required to get a single user",
         nextURl: {
@@ -35,7 +35,7 @@ const getSingleUser = async (req, res, next) => {
       .populate("friends", "name avatar");
 
     if (!withOutObject) {
-      errorResponse(res, {
+      return errorResponse(res, {
         statusCode: 404,
         errorMessage:
           "User not found with this id. Please enter correct id. Or Register and login",
@@ -67,7 +67,7 @@ const getAllUsers = async (req, res, next) => {
     const users = await User.find();
 
     if (!users) {
-      errorResponse(res, {
+      return errorResponse(res, {
         statusCode: 404,
         errorMessage: "Users not found",
         nextURl: {
@@ -98,7 +98,7 @@ const processRegisterController = async (req, res, next) => {
     ]);
 
     if (existUserName) {
-      errorResponse(res, {
+      return errorResponse(res, {
         statusCode: 400,
         errorMessage:
           "Username is already have anyone taken! Please select another username!",
@@ -106,7 +106,7 @@ const processRegisterController = async (req, res, next) => {
       });
     }
     if (existUser) {
-      errorResponse(res, {
+      return errorResponse(res, {
         statusCode: 409,
         errorMessage: "User is already exist please login!",
         nextURl: {}
@@ -188,7 +188,7 @@ const processRegisterController = async (req, res, next) => {
 
     await sendEmailWithNodemailer(emailData);
 
-    successResponse(res, {
+    return successResponse(res, {
       statusCode: 201,
       successMessage: `Please go to your email ${email} and verify your email!`,
       payload: { token },
@@ -217,7 +217,7 @@ const verifyUserController = async (req, res, next) => {
     const { token } = req.body;
 
     if (!token) {
-      errorResponse(res, {
+      return errorResponse(res, {
         statusCode: 400,
         errorMessage: "Please send valid token!",
         nextURl: {
@@ -230,7 +230,7 @@ const verifyUserController = async (req, res, next) => {
     const userData = verifyJsonWebToken(token, jsonWebTokenKey);
 
     if (!userData) {
-      errorResponse(res, {
+      return errorResponse(res, {
         statusCode: 400,
         errorMessage: "Please send valid token!",
         nextURl: {
@@ -243,12 +243,11 @@ const verifyUserController = async (req, res, next) => {
     const existUser = await User.findOne({ email: userData.email });
 
     if (existUser) {
-      errorResponse(res, {
+      return errorResponse(res, {
         statusCode: 409,
         errorMessage: "User is already exist please login!",
         nextURl: { login: "api/v1/login" }
       });
-      return;
     }
 
     const createUser = new User(userData);
@@ -274,7 +273,7 @@ const searchUser = async (req, res, next) => {
     }).select("avatar name username");
 
     if (searchingUsers.length < 1) {
-      errorResponse(res, {
+      return errorResponse(res, {
         statusCode: 404,
         errorMessage: `Could not found any user for ${searchName} name!`,
         nextURl: {}
@@ -287,7 +286,7 @@ const searchUser = async (req, res, next) => {
       }
     );
 
-    successResponse(res, {
+    return successResponse(res, {
       statusCode: 200,
       successMessage: "Search result returned successfully!!",
       payload: [...searchResult],
@@ -307,7 +306,7 @@ const sendRequest = async (req, res, next) => {
     );
 
     if (!validUserCheck) {
-      errorResponse(res, {
+      return errorResponse(res, {
         statusCode: 404,
         errorMessage:
           "Make sure you send friend request for valid person!! Please send friend request for valid person! This person is not found!!",
@@ -316,7 +315,7 @@ const sendRequest = async (req, res, next) => {
     }
 
     if (sender !== req.userId) {
-      errorResponse(res, {
+      return errorResponse(res, {
         statusCode: 400,
         errorMessage:
           "Only you can send friend request for your id! Please logged in your id and send friend request!",
@@ -325,7 +324,7 @@ const sendRequest = async (req, res, next) => {
     }
 
     if (receiver === req.userId) {
-      errorResponse(res, {
+      return errorResponse(res, {
         statusCode: 400,
         errorMessage: "You can not send friend request itself!!",
         nextURl: {}
@@ -382,7 +381,7 @@ const getFriends = async (req, res, next) => {
   try {
     const { userId } = req.params;
     if (!userId) {
-      errorResponse(res, {
+      return errorResponse(res, {
         statusCode: 400,
         errorMessage:
           "userId is required on params!! You don't send any userId on params!! Make sure you send userId on params!!",
@@ -406,7 +405,7 @@ const getFriends = async (req, res, next) => {
       });
 
     if (!allFriends) {
-      errorResponse(res, {
+      return errorResponse(res, {
         statusCode: 404,
         errorMessage:
           "You don't have any friends! Please add any friend's and enjoy chat!!",
@@ -441,7 +440,7 @@ const acceptRequest = async (req, res, next) => {
     );
 
     if (!requestDetails) {
-      errorResponse(res, {
+      return errorResponse(res, {
         statusCode: 404,
         errorMessage:
           "You can accept friend request for valid person!! Please make sure this request is valid!! This friend request is not found!!",
@@ -484,7 +483,7 @@ const acceptRequest = async (req, res, next) => {
 
     emitEvent(req, REFETCH_CHATS, members);
 
-    successResponse(res, {
+    return successResponse(res, {
       statusCode: 200,
       successMessage: "Accept friend Request successfully!!",
       payload: {},
@@ -505,7 +504,7 @@ const deleteRequest = async (req, res, next) => {
     );
 
     if (!requestDetails) {
-      errorResponse(res, {
+      return errorResponse(res, {
         statusCode: 404,
         errorMessage:
           "You can delete friend request for valid person!! Please make sure this request is valid!! This friend request is not found!!",
@@ -515,7 +514,7 @@ const deleteRequest = async (req, res, next) => {
 
     await Request.findOneAndDelete({ _id: deleteId });
 
-    successResponse(res, {
+    return successResponse(res, {
       statusCode: 200,
       successMessage: "Friend Request deleted successfully!!",
       payload: {},
@@ -538,7 +537,7 @@ const getFriendRequestNotifications = async (req, res, next) => {
       });
 
     if (!requests) {
-      errorResponse(res, {
+      return errorResponse(res, {
         statusCode: 404,
         errorMessage: "You don't have any friend request!!",
         nextURl: {}
@@ -557,7 +556,7 @@ const getFriendRequestNotifications = async (req, res, next) => {
       };
     });
 
-    successResponse(res, {
+    return successResponse(res, {
       statusCode: 200,
       successMessage: "Friend Request notifications returned successfully!!",
       payload: { friendRequests },
@@ -576,7 +575,15 @@ const getPendingFriendRequests = async (req, res, next) => {
       .select("receiver")
       .populate("receiver", "avatar name");
 
-    successResponse(res, {
+    if (!pendingRequests) {
+      return errorResponse(res, {
+        statusCode: 404,
+        errorMessage: "You don't have any pending friend request!!",
+        nextURl: {}
+      });
+    }
+
+    return successResponse(res, {
       statusCode: 200,
       successMessage: "Pending friend request returned successfully!!",
       payload: { pendingRequests },

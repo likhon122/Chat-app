@@ -24,6 +24,7 @@ import Message from "./models/message.model.js";
 import { socketAuthenticator } from "./middlewares/auth.js";
 import notificationRoute from "./routes/notification.route.js";
 import { sendNotificationToUser } from "./helper/sendPushNotification.js";
+import adminRoute from "./routes/admin.route.js";
 
 const app = express();
 const server = createServer(app);
@@ -61,6 +62,7 @@ app.use("/api/v1/seed", seedRoute);
 app.use("/api/v1/user", userRoute);
 app.use("/api/v1/auth", authRoute);
 app.use("/api/v1/chat", chatRoute);
+app.use("/api/v1/admin", adminRoute);
 app.use("/api/v1/push-notification", notificationRoute);
 
 // Socket.io Authentication Middleware

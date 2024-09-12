@@ -25,7 +25,7 @@ const createGroupChat = async (req, res, next) => {
     const { userId } = req;
 
     if (!members || members.length < 2) {
-      errorResponse(res, {
+      return errorResponse(res, {
         statusCode: 400,
         errorMessage: "Group chat will able to make at least 3 members!",
         nextURl: {}
@@ -44,7 +44,7 @@ const createGroupChat = async (req, res, next) => {
     emitEvent(req, ALERT, allMembers, `Welcome to ${chatName} group`);
     emitEvent(req, REFETCH_CHATS, members);
 
-    successResponse(res, {
+    return successResponse(res, {
       statusCode: 201,
       successMessage: "New chat created successfully!",
       nextURl: {}
@@ -64,7 +64,7 @@ const getMyChats = async (req, res, next) => {
     );
 
     if (!chats) {
-      errorResponse(res, {
+      return errorResponse(res, {
         statusCode: 400,
         errorMessage: "No Chats found please make any conversion or group!",
         nextURl: {
@@ -110,7 +110,7 @@ const getMyChats = async (req, res, next) => {
       })
     );
 
-    successResponse(res, {
+    return successResponse(res, {
       statusCode: 200,
       successMessage: "All chat loaded successfully!",
       payload: { allChats },
@@ -130,7 +130,7 @@ const getMyGroups = async (req, res, next) => {
     );
 
     if (!groups) {
-      errorResponse(res, {
+      return errorResponse(res, {
         statusCode: 400,
         errorMessage: "No groups found that you are admin!",
         nextURl: {
@@ -159,12 +159,12 @@ const getMyGroups = async (req, res, next) => {
       }
     );
 
-    successResponse(res, {
-      statusCode: 200,
-      successMessage: "All groups loaded successfully!",
-      payload: { allGroups },
-      nextURl: {}
-    });
+   return successResponse(res, {
+     statusCode: 200,
+     successMessage: "All groups loaded successfully!",
+     payload: { allGroups },
+     nextURl: {}
+   });
   } catch (error) {
     next(error);
   }
@@ -176,7 +176,7 @@ const addGroupMember = async (req, res, next) => {
     const { groupId, members } = req.body;
 
     if (!members || !Array.isArray(members) || members.length < 1) {
-      errorResponse(res, {
+      return errorResponse(res, {
         statusCode: 400,
         errorMessage:
           "Add to member any group to send member id is required! Members is always an array type! Please sent data on array type and add at least one member on the group!",
@@ -191,7 +191,7 @@ const addGroupMember = async (req, res, next) => {
     const group = await Chat.findById(groupId);
 
     if (!group) {
-      errorResponse(res, {
+      return errorResponse(res, {
         statusCode: 404,
         errorMessage: "Group not found!",
         nextURl: {
@@ -207,7 +207,7 @@ const addGroupMember = async (req, res, next) => {
     const allNewMembersName = await Promise.all(allNewMembersNamePromise);
 
     if (!allNewMembersName) {
-      errorResponse(res, {
+      return errorResponse(res, {
         statusCode: 404,
         errorMessage: "User not found!",
         nextURl: {
@@ -225,7 +225,7 @@ const addGroupMember = async (req, res, next) => {
     });
 
     if (group.members.length > 100) {
-      errorResponse(res, {
+      return errorResponse(res, {
         statusCode: 400,
         errorMessage:
           "Reach the group members! Please remove some member first!",
@@ -250,7 +250,7 @@ const addGroupMember = async (req, res, next) => {
 
     await group.save();
 
-    successResponse(res, {
+    return successResponse(res, {
       statusCode: 200,
       successMessage: "Group member added successfully",
       payload: {
@@ -268,7 +268,7 @@ const removeMember = async (req, res, next) => {
   try {
     const { members, groupId } = req.body;
     if (!members || !Array.isArray(members) || members.length < 1) {
-      errorResponse(res, {
+      return errorResponse(res, {
         statusCode: 400,
         errorMessage:
           "Remove to member any group to send member id is required! Members is always an array type! Please sent data on array type and add at least one member on the group!",
@@ -279,7 +279,7 @@ const removeMember = async (req, res, next) => {
     const chat = await Chat.findById(groupId);
 
     if (!chat) {
-      errorResponse(res, {
+      return errorResponse(res, {
         statusCode: 404,
         errorMessage: "Group not found!",
         nextURl: {
@@ -295,20 +295,20 @@ const removeMember = async (req, res, next) => {
     const allNewMembersName = await Promise.all(allNewMembersNamePromise);
 
     if (!allNewMembersName) {
-      errorResponse(res, {
-        statusCode: 404,
-        errorMessage: "User not found!",
-        nextURl: {
-          registerUser: "/api/v1/user/process-register",
-          login: "/api/v1/auth/login"
-        }
-      });
+     return errorResponse(res, {
+       statusCode: 404,
+       errorMessage: "User not found!",
+       nextURl: {
+         registerUser: "/api/v1/user/process-register",
+         login: "/api/v1/auth/login"
+       }
+     });
     }
 
     const creatorName = await User.findById(chat.creator, "name");
 
     if (!creatorName) {
-      errorResponse(res, {
+      return errorResponse(res, {
         statusCode: 404,
         errorMessage: "Creator is not found!",
         nextURl: {
@@ -318,7 +318,7 @@ const removeMember = async (req, res, next) => {
     }
 
     if (!chat.groupChat) {
-      errorResponse(res, {
+      return errorResponse(res, {
         statusCode: 400,
         errorMessage: "Group This is not a group chat!",
         nextURl: {
@@ -328,13 +328,12 @@ const removeMember = async (req, res, next) => {
     }
 
     if (chat.creator.toString().includes(members)) {
-      errorResponse(res, {
+      return errorResponse(res, {
         statusCode: 400,
         errorMessage:
           "Admin can leave this group or delete this group but Admin not remove itself for this group!",
         nextURl: {}
       });
-      return;
     }
 
     const filteredMembers = chat.members.filter(
@@ -344,7 +343,7 @@ const removeMember = async (req, res, next) => {
     chat.members = filteredMembers;
 
     if (chat.members.length < 3) {
-      errorResponse(res, {
+      return errorResponse(res, {
         statusCode: 400,
         errorMessage:
           "Member is not sufficient to remove this group. Please add some member then remove the member! Because every group must have 3 members! Or delete this group!",
@@ -352,7 +351,6 @@ const removeMember = async (req, res, next) => {
           addMember: "/api/v1/chat/add-group-member"
         }
       });
-      return;
     }
 
     await chat.save();
@@ -373,7 +371,7 @@ const removeMember = async (req, res, next) => {
     );
     emitEvent(req, REFETCH_CHATS, chat.members);
 
-    successResponse(res, {
+    return successResponse(res, {
       statusCode: 200,
       successMessage: `${uniqueNames.map((name) => name)} removed from the group ${creatorName.name}`,
       payload: {},
@@ -394,7 +392,7 @@ const leaveGroup = async (req, res, next) => {
     const leftUserName = await User.findById(leavedUserId, "name");
 
     if (!chat) {
-      errorResponse(res, {
+      return errorResponse(res, {
         statusCode: 404,
         errorMessage: "Chat not found!",
         nextURl: {
@@ -404,7 +402,7 @@ const leaveGroup = async (req, res, next) => {
     }
 
     if (!chat.groupChat) {
-      errorResponse(res, {
+      return errorResponse(res, {
         statusCode: 400,
         errorMessage: "Group This is not a group chat!",
         nextURl: {
@@ -414,7 +412,7 @@ const leaveGroup = async (req, res, next) => {
     }
 
     if (!chat.members.includes(leavedUserId)) {
-      errorResponse(res, {
+      return errorResponse(res, {
         statusCode: 404,
         errorMessage: "You are not member with this group! Please join first!",
         nextURl: {
@@ -443,7 +441,7 @@ const leaveGroup = async (req, res, next) => {
         `${leftUserName.name} is left the group!`
       );
       emitEvent(req, REFETCH_CHATS, chat.members);
-      successResponse(res, {
+      return successResponse(res, {
         statusCode: 200,
         successMessage: "Leave and new group admin make successfully!",
         payload: {},
@@ -458,7 +456,7 @@ const leaveGroup = async (req, res, next) => {
     try {
       if (chat.members.length < 3) {
         await deleteChatWithId(res, groupId);
-        successResponse(res, {
+        return successResponse(res, {
           statusCode: 200,
           successMessage: "Leave and delete group successfully!",
           payload: {},
@@ -479,7 +477,7 @@ const leaveGroup = async (req, res, next) => {
     );
     emitEvent(req, REFETCH_CHATS, chat.members);
 
-    successResponse(res, {
+    return successResponse(res, {
       statusCode: 200,
       successMessage: `${leftUserName.name} is left the group!`,
       payload: { chat },
@@ -499,14 +497,14 @@ const sendAttachments = async (req, res, next) => {
     const { files } = req;
 
     if (files.length < 0) {
-      errorResponse(res, {
+      return errorResponse(res, {
         statusCode: 400,
         errorMessage: "Please provide any attachments at least 1 and upto 5!!",
         nextURl: {}
       });
     }
     if (files.length > 5) {
-      errorResponse(res, {
+      return errorResponse(res, {
         statusCode: 400,
         errorMessage: "Please provide any attachments at least 1 and upto 5!!",
         nextURl: {}
@@ -519,7 +517,7 @@ const sendAttachments = async (req, res, next) => {
     ]);
 
     if (!chat) {
-      errorResponse(res, {
+      return errorResponse(res, {
         statusCode: 404,
         errorMessage: "Chat not found!",
         nextURl: {
@@ -551,12 +549,12 @@ const sendAttachments = async (req, res, next) => {
     const message = await Message.create(dbMessage);
 
     if (!message) {
-      errorResponse(res, {
-        statusCode: 400,
-        errorMessage:
-          "Send attachments failed! Please provide correct information!",
-        nextURl: {}
-      });
+     return errorResponse(res, {
+       statusCode: 400,
+       errorMessage:
+         "Send attachments failed! Please provide correct information!",
+       nextURl: {}
+     });
     }
 
     emitEvent(req, NEW_MESSAGE, chat.members, {
@@ -579,7 +577,7 @@ const sendAttachments = async (req, res, next) => {
 
     emitEvent(req, NEW_MESSAGE_ALERT, chat.members, { chatId });
 
-    successResponse(res, {
+    return successResponse(res, {
       statusCode: 200,
       successMessage: "Send attachments successfully!",
       payload: { message },
@@ -610,7 +608,7 @@ const getChatDetails = async (req, res, next) => {
         name,
         avatar: avatar?.url
       }));
-      successResponse(res, {
+      return successResponse(res, {
         statusCode: 200,
         successMessage: "Chat details with populate returned successfully!",
         payload: { chat },
@@ -629,7 +627,7 @@ const getChatDetails = async (req, res, next) => {
         });
       }
 
-      successResponse(res, {
+      return successResponse(res, {
         statusCode: 200,
         successMessage: "Chat details without populate returned successfully!",
         payload: { chat },
@@ -657,7 +655,7 @@ const renameGroupChat = async (req, res, next) => {
 
     const chat = await Chat.findById(chatId);
     if (!chat) {
-      errorResponse(res, {
+      return errorResponse(res, {
         statusCode: 404,
         errorMessage: "Chat not found!",
         nextURl: {
@@ -667,7 +665,7 @@ const renameGroupChat = async (req, res, next) => {
     }
 
     if (!chat.groupChat) {
-      errorResponse(res, {
+      return errorResponse(res, {
         statusCode: 400,
         errorMessage: "Group This is not a group chat!",
         nextURl: {
@@ -677,7 +675,7 @@ const renameGroupChat = async (req, res, next) => {
     }
 
     if (!chat.members.includes(userId)) {
-      errorResponse(res, {
+      return errorResponse(res, {
         statusCode: 404,
         errorMessage:
           "You are not a member with this group! Please join first and rename this group!",
@@ -688,20 +686,20 @@ const renameGroupChat = async (req, res, next) => {
     }
 
     if (!chat.creator.toString() === userId.toString()) {
-      errorResponse(res, {
-        statusCode: 400,
-        errorMessage: "Admin can rename this group! You are not an admin!",
-        nextURl: {}
-      });
+     return errorResponse(res, {
+       statusCode: 400,
+       errorMessage: "Admin can rename this group! You are not an admin!",
+       nextURl: {}
+     });
     }
 
     if (name === chat.chatName) {
-      errorResponse(res, {
-        statusCode: 400,
-        errorMessage:
-          "Chat old name or new name is same! Please make this different!",
-        nextURl: {}
-      });
+     return errorResponse(res, {
+       statusCode: 400,
+       errorMessage:
+         "Chat old name or new name is same! Please make this different!",
+       nextURl: {}
+     });
     }
 
     chat.chatName = name;
@@ -710,12 +708,12 @@ const renameGroupChat = async (req, res, next) => {
 
     emitEvent(req, REFETCH_CHATS, chat.members, name);
 
-    successResponse(res, {
-      statusCode: 200,
-      successMessage: "Group name changed successfully!",
-      payload: { chat },
-      nextURl: {}
-    });
+   return successResponse(res, {
+     statusCode: 200,
+     successMessage: "Group name changed successfully!",
+     payload: { chat },
+     nextURl: {}
+   });
   } catch (error) {
     next(error);
   }
@@ -728,13 +726,13 @@ const deleteChat = async (req, res, next) => {
     const chat = await Chat.findById(chatId);
 
     if (!chat) {
-      errorResponse(res, {
-        statusCode: 404,
-        errorMessage: "Chat not found!",
-        nextURl: {
-          createGroup: "/api/v1/chat/new"
-        }
-      });
+     return errorResponse(res, {
+       statusCode: 404,
+       errorMessage: "Chat not found!",
+       nextURl: {
+         createGroup: "/api/v1/chat/new"
+       }
+     });
     }
 
     if (!chat.groupChat) {
@@ -764,13 +762,12 @@ const deleteChat = async (req, res, next) => {
       }).select("-password");
 
       if (!deletedFriendDetails) {
-        errorResponse(res, {
+        return errorResponse(res, {
           statusCode: 404,
           errorMessage:
             "Friend not found!! Please provide correct information!!",
           nextURl: {}
         });
-        return;
       }
 
       const newFriends = user.friends.filter(
@@ -792,27 +789,26 @@ const deleteChat = async (req, res, next) => {
 
       emitEvent(req, REFETCH_CHATS, chat.members);
 
-      successResponse(res, {
+      return successResponse(res, {
         statusCode: 200,
         successMessage: "Chat delete and unfriend successfully!",
         payload: {},
         nextURl: {}
       });
-      return;
     }
 
     const isAdmin = checkIsChatAdmin(res, userId, chat);
 
     if (!isAdmin) {
-      errorResponse(res, {
-        statusCode: 403,
-        errorMessage:
-          "Your are not able to delete this group chat! Because you are not admin!",
-        nextURl: {
-          createChat: "/api/v1/chat/new",
-          allGroupsThatYouAdmin: "api/v1/chat/my-groups"
-        }
-      });
+     return errorResponse(res, {
+       statusCode: 403,
+       errorMessage:
+         "Your are not able to delete this group chat! Because you are not admin!",
+       nextURl: {
+         createChat: "/api/v1/chat/new",
+         allGroupsThatYouAdmin: "api/v1/chat/my-groups"
+       }
+     });
     }
 
     const messageWithAttachments = await Message.find({
@@ -864,7 +860,7 @@ const getMessages = async (req, res, next) => {
     ]);
 
     if (!messages) {
-      errorResponse(res, {
+      return errorResponse(res, {
         statusCode: 404,
         errorMessage: "Messages not found!",
         nextURl: {}

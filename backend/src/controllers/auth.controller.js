@@ -14,30 +14,28 @@ const getUser = async (req, res, next) => {
     const { accessToken } = req.cookies;
 
     if (!accessToken) {
-      errorResponse(res, {
+      return errorResponse(res, {
         statusCode: 401,
         errorMessage: "Access token not found please login again!",
         nextURl: {
           login: "/api/v1/login"
         }
       });
-      return;
     }
 
     const user = verifyJsonWebToken(accessToken, accessTokenKey);
 
     if (!user) {
-      errorResponse(res, {
+      return errorResponse(res, {
         statusCode: 401,
         errorMessage: "Access token not valid please login again!",
         nextURl: {
           login: "/api/v1/login"
         }
       });
-      return;
     }
 
-    successResponse(res, {
+    return successResponse(res, {
       statusCode: 200,
       successMessage: "User logged in successfully!",
       payload: { user },
@@ -54,7 +52,7 @@ const loginUser = async (req, res, next) => {
 
     const existUser = await User.findOne({ email });
     if (!existUser) {
-      errorResponse(res, {
+      return errorResponse(res, {
         statusCode: 404,
         errorMessage:
           "User is not registered with this email please register first!",
@@ -71,7 +69,7 @@ const loginUser = async (req, res, next) => {
       existUser.password
     );
     if (!comparePassword) {
-      errorResponse(res, {
+      return errorResponse(res, {
         statusCode: 404,
         errorMessage: "User email or password is incorrect!",
         nextURl: {
@@ -91,7 +89,7 @@ const loginUser = async (req, res, next) => {
     createAccessToken(res, user);
     createRefreshToken(res, user);
 
-    successResponse(res, {
+    return successResponse(res, {
       statusCode: 200,
       successMessage: "User logged in successfully!",
       payload: { user },
@@ -107,7 +105,7 @@ const logOutUser = async (req, res, next) => {
     const { accessToken, refreshToken } = req.cookies;
 
     if (!accessToken || !refreshToken) {
-      errorResponse(res, {
+      return errorResponse(res, {
         statusCode: 401,
         errorMessage: "You are already logged out please login first!",
         nextURl: {
@@ -128,7 +126,7 @@ const logOutUser = async (req, res, next) => {
       sameSite: "none"
     });
 
-    successResponse(res, {
+    return successResponse(res, {
       statusCode: 200,
       successMessage: "User logged out successfully!",
       payload: {},
