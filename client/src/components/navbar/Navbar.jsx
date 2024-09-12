@@ -96,7 +96,9 @@ const Navbar = () => {
               </li>
             </>
           )}
-          {userData && (
+        </ul>
+        {userData && (
+          <ul className="md:flex items-center gap-8 hidden">
             <li>
               <NavLink
                 to="/chat/"
@@ -111,8 +113,22 @@ const Navbar = () => {
                 Chat
               </NavLink>
             </li>
-          )}
-        </ul>
+            <li>
+              <NavLink
+                to="/dashboard"
+                className={({ isActive }) =>
+                  `text-lg font-medium transition-colors ${
+                    isActive
+                      ? "text-[#7D8ABC] dark:text-[#7D8ABC]"
+                      : "text-gray-700 dark:text-white"
+                  } hover:text-gray-900 dark:hover:text-gray-300`
+                }
+              >
+                Dashboard
+              </NavLink>
+            </li>
+          </ul>
+        )}
 
         <div className="flex-grow flex justify-center">
           <Search />

@@ -1,3 +1,5 @@
+import { useInfiniteScrollTop } from "6pp";
+import EmojiPicker from "emoji-picker-react";
 import React, {
   useCallback,
   useEffect,
@@ -5,30 +7,26 @@ import React, {
   useRef,
   useState
 } from "react";
+import { FaFilePdf, FaPaperPlane, FaTimes, FaUpload } from "react-icons/fa";
+import { useDispatch, useSelector } from "react-redux";
 import { getSocket } from "../../Socket";
+import {
+  useGetMessagesQuery,
+  useSendAttachmentsMutation
+} from "../../app/api/api";
+import {
+  resetMessageNotification,
+  setMessageNotification
+} from "../../app/features/chatSlice";
 import {
   NEW_MESSAGE,
   NEW_MESSAGE_ALERT,
   START_TYPING,
   STOP_TYPING
 } from "../../constants/event";
-import { useDispatch, useSelector } from "react-redux";
-import { useSocketHook } from "../../hooks/useSocketHook";
-import {
-  useGetMessagesQuery,
-  useSendAttachmentsMutation
-} from "../../app/api/api";
-import { useInfiniteScrollTop } from "6pp";
-import { toast } from "react-toastify";
-import { FaFilePdf, FaUpload, FaTimes, FaPaperPlane } from "react-icons/fa";
 import { useAsyncMutation } from "../../hooks/useAsyncMutationHook";
-import {
-  resetMessageNotification,
-  setMessageNotification
-} from "../../app/features/chatSlice";
-import SingleSpinner from "../../components/Loaders/SingleSpinner";
-import EmojiPicker from "emoji-picker-react";
 import useClickOutside from "../../hooks/useClickOutsideHook";
+import { useSocketHook } from "../../hooks/useSocketHook";
 
 const Message = ({ chatId }) => {
   const members = useSelector((state) => state.other.members);

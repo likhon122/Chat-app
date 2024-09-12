@@ -1,7 +1,11 @@
 self.addEventListener("push", function (event) {
   const data = event.data
     ? event.data.json()
-    : { title: "Default Title", body: "Default Body" };
+    : {
+        title: "Default Title",
+        body: "Default Body",
+        url: "https://friends-adda.netlify.app/"
+      }; // Add the URL here
 
   const options = {
     body: data.body,
@@ -11,4 +15,11 @@ self.addEventListener("push", function (event) {
   };
 
   event.waitUntil(self.registration.showNotification(data.title, options));
+});
+
+self.addEventListener("notificationclick", function (event) {
+  event.notification.close(); // Close the notification
+  event.waitUntil(
+    clients.openWindow("https://friends-adda.netlify.app/") // Open the URL
+  );
 });

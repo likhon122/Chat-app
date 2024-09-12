@@ -36,9 +36,10 @@ const Login = () => {
   };
 
   useEffect(() => {
-    if (userData || data) {
-      navigate("/chat");
-    }
+    // if (userData || data) {
+    //   navigate("/chat");
+    // }
+    
     if (data) {
       dispatch(setUser(data?.payload?.user));
     }
