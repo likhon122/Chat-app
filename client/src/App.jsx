@@ -94,14 +94,14 @@ const App = () => {
             </CheckUserIsLoggedIn>
           }
         />
-        <Route
+        {/* <Route
           path="dashboard"
           element={
             <ProtectedRoute user={user} isLoading={isLoading}>
               <MainLayout />
             </ProtectedRoute>
           }
-        />
+        /> */}
         <Route
           path="sign-up"
           element={
