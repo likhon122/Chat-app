@@ -12,6 +12,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { getSocket } from "../../Socket";
 import {
   useGetMessagesQuery,
+  useMakeNotificationMutation,
   useSendAttachmentsMutation
 } from "../../app/api/api";
 import {
@@ -27,6 +28,7 @@ import {
 import { useAsyncMutation } from "../../hooks/useAsyncMutationHook";
 import useClickOutside from "../../hooks/useClickOutsideHook";
 import { useSocketHook } from "../../hooks/useSocketHook";
+import { setChatId } from "../../app/features/otherSlice";
 
 const Message = ({ chatId }) => {
   const members = useSelector((state) => state.other.members);
@@ -183,6 +185,10 @@ const Message = ({ chatId }) => {
     messageInputRef.current.addEventListener("blur", handleBlur);
   }, [chatId]);
 
+  useEffect(() => {
+    dispatch(setChatId(chatId));
+  }, [chatId, dispatch]);
+
   const newMessagesHandler = useCallback(
     (data) => {
       if (data.message.chatId !== chatId) return;
@@ -194,6 +200,7 @@ const Message = ({ chatId }) => {
   const newMessageAlertHandler = useCallback(
     (data) => {
       if (data.chatId === chatId) return;
+
       dispatch(setMessageNotification(data));
     },
     [chatId, dispatch]

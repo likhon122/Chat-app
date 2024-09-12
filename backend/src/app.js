@@ -1,30 +1,20 @@
 /* eslint-disable no-await-in-loop */
-import express from "express";
-import cors from "cors";
 import cookieParser from "cookie-parser";
-import { Server } from "socket.io";
+import cors from "cors";
+import express from "express";
 import { createServer } from "http";
-import { v4 as uuid } from "uuid";
+import { Server } from "socket.io";
 
-import { frontendUrl1, frontendUrl2, frontendUrl3 } from "./secret.js";
-import seedRoute from "./seeders/seed.route.js";
-import userRoute from "./routes/user.route.js";
+import { errorResponse } from "./helper/responseHandler.js";
+import { handleSocketEvents } from "./helper/socketIo.js";
+import { socketAuthenticator } from "./middlewares/auth.js";
+import adminRoute from "./routes/admin.route.js";
 import authRoute from "./routes/auth.route.js";
 import chatRoute from "./routes/chat.route.js";
-import { errorResponse } from "./helper/responseHandler.js";
-import {
-  NEW_MESSAGE,
-  NEW_MESSAGE_ALERT,
-  REFETCH_CHATS,
-  START_TYPING,
-  STOP_TYPING
-} from "./constants/event.js";
-import { getSockets } from "./helper/socketIo.js";
-import Message from "./models/message.model.js";
-import { socketAuthenticator } from "./middlewares/auth.js";
 import notificationRoute from "./routes/notification.route.js";
-import { sendNotificationToUser } from "./helper/sendPushNotification.js";
-import adminRoute from "./routes/admin.route.js";
+import userRoute from "./routes/user.route.js";
+import { frontendUrl1, frontendUrl2, frontendUrl3 } from "./secret.js";
+import seedRoute from "./seeders/seed.route.js";
 
 const app = express();
 const server = createServer(app);
@@ -63,7 +53,7 @@ app.use("/api/v1/user", userRoute);
 app.use("/api/v1/auth", authRoute);
 app.use("/api/v1/chat", chatRoute);
 app.use("/api/v1/admin", adminRoute);
-app.use("/api/v1/push-notification", notificationRoute);
+app.use("/api/v1/notification", notificationRoute);
 
 // Socket.io Authentication Middleware
 io.use((socket, next) => {
@@ -78,79 +68,7 @@ io.use((socket, next) => {
 // Map for storing user socket IDs
 export const userSocketIds = new Map();
 
-io.on("connection", (socket) => {
-  const { user } = socket;
-  userSocketIds.set(user._id.toString(), socket.id);
-
-  // Handle new message
-  socket.on(NEW_MESSAGE, async ({ chatId, members, message }) => {
-    const messageForRealTime = {
-      content: message,
-      _id: uuid(),
-      sender: {
-        _id: user._id,
-        name: user.name,
-        avatar: user?.avatar?.url
-      },
-      chatId,
-      createdAt: new Date().toISOString()
-    };
-
-    const messageForDb = {
-      content: message,
-      sender: user._id,
-      chat: chatId
-    };
-
-    const membersSocket = getSockets(members);
-
-    // Emit message in real-time
-    io.to(membersSocket).emit(NEW_MESSAGE, {
-      chatId,
-      message: messageForRealTime
-    });
-
-    io.to(membersSocket).emit(NEW_MESSAGE_ALERT, { chatId });
-    io.to(membersSocket).emit(REFETCH_CHATS, { chatId });
-
-    try {
-      const resMessage = await Message.create(messageForDb);
-      if (!resMessage) {
-        console.error("Message not saved in DB. Something went wrong!!");
-      } else {
-        // Send push notification to offline members
-        for (const member of members) {
-          if (!userSocketIds.has(member.toString())) {
-            await sendNotificationToUser({
-              content: message,
-              sender: user._id,
-              chat: chatId,
-              member
-            });
-          }
-        }
-      }
-    } catch (error) {
-      console.error("Message not saved in DB. Something went wrong!!", error);
-    }
-  });
-
-  // Handle typing events
-  socket.on(START_TYPING, async ({ members, chatId }) => {
-    const membersSocket = getSockets(members);
-    socket.to(membersSocket).emit(START_TYPING, { chatId });
-  });
-
-  socket.on(STOP_TYPING, async ({ members, chatId }) => {
-    const membersSocket = getSockets(members);
-    socket.to(membersSocket).emit(STOP_TYPING, { chatId });
-  });
-
-  socket.on("disconnect", () => {
-    userSocketIds.delete(user._id.toString());
-    console.log("User disconnected");
-  });
-});
+handleSocketEvents(io);
 
 // 404 Handler
 app.use((req, res) => {

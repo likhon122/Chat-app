@@ -22,28 +22,31 @@ const PushNotificationManager = ({ userId, pushNotificationPublicKey }) => {
 
     const sendSubscriptionToServer = async (subscription) => {
       try {
-        const response = await fetch(`${serverUrl}/api/v1/push-notification`, {
-          method: "POST",
-          body: JSON.stringify({
-            endpoint: subscription.endpoint,
-            keys: {
-              auth: btoa(
-                String.fromCharCode(
-                  ...new Uint8Array(subscription.getKey("auth"))
+        const response = await fetch(
+          `${serverUrl}/api/v1/notification/make-push-notification`,
+          {
+            method: "POST",
+            body: JSON.stringify({
+              endpoint: subscription.endpoint,
+              keys: {
+                auth: btoa(
+                  String.fromCharCode(
+                    ...new Uint8Array(subscription.getKey("auth"))
+                  )
+                ),
+                p256dh: btoa(
+                  String.fromCharCode(
+                    ...new Uint8Array(subscription.getKey("p256dh"))
+                  )
                 )
-              ),
-              p256dh: btoa(
-                String.fromCharCode(
-                  ...new Uint8Array(subscription.getKey("p256dh"))
-                )
-              )
-            },
-            userId: userId
-          }),
-          headers: {
-            "Content-Type": "application/json"
+              },
+              userId: userId
+            }),
+            headers: {
+              "Content-Type": "application/json"
+            }
           }
-        });
+        );
 
         if (response.status === 409) {
           console.log("Subscription already exists.");

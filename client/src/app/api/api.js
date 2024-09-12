@@ -77,6 +77,13 @@ const api = createApi({
       }),
       providesTags: ["Chat"]
     }),
+    getNotifications: builder.query({
+      query: (userId) => ({
+        url: `notification/get-chat-notification?userId=${userId}`,
+        credentials: "include"
+      }),
+      providesTags: ["Chat"]
+    }),
 
     getPendingFriendRequest: builder.query({
       query: () => ({
@@ -125,6 +132,15 @@ const api = createApi({
       }),
       invalidatesTags: ["Chat"]
     }),
+    readNotification: builder.mutation({
+      query: (data) => ({
+        url: "notification/read-notification",
+        method: "PUT",
+        credentials: "include",
+        body: data
+      }),
+      invalidatesTags: ["Chat"]
+    }),
 
     addGroupMembers: builder.mutation({
       query: (data) => ({
@@ -159,6 +175,16 @@ const api = createApi({
     makeGroupChat: builder.mutation({
       query: (data) => ({
         url: "chat/create-group",
+        method: "POST",
+        credentials: "include",
+        body: data
+      }),
+      invalidatesTags: ["Chat"]
+    }),
+
+    makeNotification: builder.mutation({
+      query: (data) => ({
+        url: "notification/make-chat-notification",
         method: "POST",
         credentials: "include",
         body: data
@@ -218,5 +244,8 @@ export const {
   useRemoveGroupMembersMutation,
   useDeleteGroupMutation,
   useLeaveGroupMutation,
-  useGetPendingFriendRequestQuery
+  useGetPendingFriendRequestQuery,
+  useMakeNotificationMutation,
+  useGetNotificationsQuery,
+  useReadNotificationMutation
 } = api;

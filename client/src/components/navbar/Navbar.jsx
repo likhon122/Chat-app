@@ -113,7 +113,7 @@ const Navbar = () => {
                 Chat
               </NavLink>
             </li>
-            <li>
+            {/* <li>
               <NavLink
                 to="/dashboard"
                 className={({ isActive }) =>
@@ -126,7 +126,7 @@ const Navbar = () => {
               >
                 Dashboard
               </NavLink>
-            </li>
+            </li> */}
           </ul>
         )}
 

@@ -29,8 +29,6 @@ const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY;
 
 // Protected Route component for authentication
 const ProtectedRoute = ({ user, isLoading, children }) => {
-  console.log("ProtectedRoute - User:", user);
-
   if (isLoading) {
     return (
       <div className="h-screen dark:bg-darkBg flex items-center justify-center">
@@ -47,8 +45,6 @@ const ProtectedRoute = ({ user, isLoading, children }) => {
 };
 
 const CheckUserIsLoggedIn = ({ user, isLoading, children }) => {
-  console.log("CheckUserIsLoggedIn - User:", user);
-
   if (isLoading) {
     return (
       <div className="h-screen dark:bg-darkBg flex items-center justify-center">

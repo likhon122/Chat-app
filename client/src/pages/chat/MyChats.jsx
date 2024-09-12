@@ -1,25 +1,48 @@
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { getSocket } from "../../Socket";
-import { useGetChatsQuery } from "../../app/api/api";
+import {
+  useGetChatsQuery,
+  useGetNotificationsQuery,
+  useMakeNotificationMutation,
+  useReadNotificationMutation
+} from "../../app/api/api";
 import { setMembers } from "../../app/features/otherSlice";
-import { REFETCH_CHATS } from "../../constants/event";
+import { NEW_MESSAGE_ALERT, REFETCH_CHATS } from "../../constants/event";
 import SingleSpinner from "../../components/Loaders/SingleSpinner";
+import { useSocketHook } from "../../hooks/useSocketHook";
 
 const MyChats = () => {
   const messageNotification = useSelector(
     (state) => state.chat.messageNotification
   );
   const userName = useSelector((state) => state.auth?.user?.name);
+  const userId = useSelector((state) => state.auth?.user?._id);
+  const isHasChatId = useSelector((state) => state.other.chatId);
 
   const { data, isError, isLoading, refetch } = useGetChatsQuery();
+  const {
+    data: getNotificationData,
+    isError: getNotificationError,
+    isLoading: getNotificationLoading,
+    refetch: refetchNotification
+  } = useGetNotificationsQuery(userId);
+  const [makeNotificationHandler] = useMakeNotificationMutation();
+  const [readNotificationHandler] = useReadNotificationMutation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const socket = getSocket();
 
   const handleClick = (chat) => {
     dispatch(setMembers(chat.members));
+
+    getNotificationData?.payload.length &&
+      getNotificationData.payload.forEach((notification) => {
+        notification.chatId === chat._id &&
+          notification.count > 0 &&
+          readNotificationHandler({ userId, chatId: chat._id });
+      });
     navigate(`/chat/${chat._id}?group-chat=${chat.groupChat}`);
   };
 
@@ -30,19 +53,41 @@ const MyChats = () => {
     return notification ? notification.count : 0;
   };
 
-  useEffect(() => {
-    const handleRefetch = (data) => {
-      refetch();
-    };
+  // useEffect(() => {
+  //   const handleRefetch = (data) => {
+  //     refetch();
+  //   };
 
-    socket.on(REFETCH_CHATS, handleRefetch);
+  //   socket.on(REFETCH_CHATS, handleRefetch);
+  //   socket.on(NEW_MESSAGE_ALERT, handleNewMessageAlert);
 
-    return () => {
-      socket.off(REFETCH_CHATS, handleRefetch);
-    };
-  }, [socket, refetch]);
+  //   return () => {
+  //     socket.off(REFETCH_CHATS, handleRefetch);
+  //   };
+  // }, [socket, refetch]);
 
-  if (isLoading) {
+  const refetchHandler = useCallback(() => {
+    refetch();
+  }, []);
+
+  const newMessageAlertHandler = useCallback(
+    (data) => {
+      if (isHasChatId === data.chatId) return;
+      if (data.sender.toString() !== userId.toString()) {
+        makeNotificationHandler({ userId, chatId: data.chatId });
+      }
+    },
+    [isHasChatId]
+  );
+
+  const eventHandlers = {
+    [REFETCH_CHATS]: refetchHandler,
+    [NEW_MESSAGE_ALERT]: newMessageAlertHandler
+  };
+
+  useSocketHook(socket, eventHandlers);
+
+  if (isLoading || getNotificationLoading) {
     return (
       <div className="h-full dark:bg-gray-900">
         <div className="pt-20">
@@ -96,7 +141,7 @@ const MyChats = () => {
                       <h2 className="text-lg font-medium text-gray-800 dark:text-gray-200 sm:text-base sm:font-normal">
                         {chat.chatName}
                       </h2>
-                      
+
                       <span className="text-sm text-gray-500 dark:text-gray-400 sm:text-xs">
                         {chat.lastMessage.lastMessage
                           ? chat.lastMessage?.lastMessage
@@ -115,22 +160,28 @@ const MyChats = () => {
                             .filter((name) => name !== userName)[0]
                         }
                       </h2>
+
                       <span className="text-sm text-gray-500 dark:text-gray-400 sm:text-xs">
                         {chat.lastMessage.lastMessage
                           ? chat.lastMessage?.lastMessage
-                            ? chat.lastMessage?.lastMessage
-                            : chat.lastMessage?.lastAttachment?.length &&
-                              "Sent Attachment"
+                          : chat.lastMessage?.lastAttachment?.length
+                          ? "Sent Attachment"
                           : "No messages yet"}
                       </span>
                     </div>
                   )}
                 </div>
-                {notificationCount > 0 && (
-                  <span className="ml-auto bg-red-500 text-white rounded-full px-3 py-1 text-sm sm:px-2 sm:py-0.5 sm:text-xs">
-                    {notificationCount}
-                  </span>
-                )}
+                {getNotificationData?.payload?.length >0 &&
+                  getNotificationData.payload
+                    .filter((notification) => notification.chatId === chat._id)
+                    .map((notification, index) => (
+                      <span
+                        key={index}
+                        className="ml-auto bg-red-500 text-white rounded-full px-3 py-1 text-sm sm:px-2 sm:py-0.5 sm:text-xs"
+                      >
+                        {notification.count ? notification.count : ""}
+                      </span>
+                    ))}
               </div>
             </article>
           );

@@ -39,7 +39,7 @@ const Login = () => {
     // if (userData || data) {
     //   navigate("/chat");
     // }
-    
+
     if (data) {
       dispatch(setUser(data?.payload?.user));
     }
@@ -79,8 +79,9 @@ const Login = () => {
           <button
             type="submit"
             className="w-full py-2 mt-4 text-white bg-indigo-600 rounded-lg hover:bg-indigo-500 dark:bg-purple-600 dark:hover:bg-purple-500 transition duration-300"
+            disabled={isLoading}
           >
-            Login
+            {isLoading ? "Loading..." : "Login"}
           </button>
         </form>
       </div>

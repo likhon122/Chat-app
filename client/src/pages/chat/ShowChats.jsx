@@ -1,11 +1,9 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import MyChats from "./MyChats";
 import { setMessageNotification } from "../../app/features/chatSlice";
 import { getSocket } from "../../Socket";
-import DuelSpinner from "../../components/Loaders/DuelSpinner";
-import SingleSpinner from "../../components/Loaders/SingleSpinner";
 
 const ShowChat = () => {
   const userData = useSelector((state) => state.auth.user);
