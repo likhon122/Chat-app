@@ -8,16 +8,36 @@ import { useSocketHook } from "../../hooks/useSocketHook";
 import { NEW_FRIEND_REQUEST } from "../../constants/event";
 import { setRequestNotificationCount } from "../../app/features/chatSlice";
 import useClickOutside from "../../hooks/useClickOutsideHook";
+import {
+  useGetFriendRequestNotificationCountQuery,
+  useReadFriendRequestNotificationMutation
+} from "../../app/api/api";
 
 const Notification = () => {
   const drawerToggle = useSelector((state) => state.other.notificationDrawer);
-  const { requestNotification } = useSelector((state) => state.chat);
+  const userId = useSelector((state) => state.auth.user?._id);
+
+  const { data, refetch } = useGetFriendRequestNotificationCountQuery(
+    undefined,
+    {
+      refetchOnFocus: true,
+      refetchOnReconnect: true
+    }
+  );
+
+  const [readFriendRequestNotification] =
+    useReadFriendRequestNotificationMutation();
+
   const dispatch = useDispatch();
   const socket = getSocket();
   const drawerRef = useRef(null);
 
   const newRequestHandler = useCallback(() => {
     dispatch(setRequestNotificationCount());
+    if (userId) {
+      readFriendRequestNotification({ userId });
+      refetch();
+    }
   }, [dispatch]);
 
   const eventHandlers = { [NEW_FRIEND_REQUEST]: newRequestHandler };
@@ -26,6 +46,9 @@ const Notification = () => {
 
   const handleClick = () => {
     dispatch(setNotificationDrawer(!drawerToggle));
+    if (userId) {
+      readFriendRequestNotification({ userId });
+    }
   };
 
   useClickOutside(drawerRef, () => {
@@ -42,12 +65,12 @@ const Notification = () => {
         aria-label="Notifications"
       >
         <div className="relative">
-          {requestNotification > 0 && (
+          {data?.payload.count > 0 && (
             <div className="absolute top-[-10px]  right-[-10px] bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-              {requestNotification}
+              {data.payload.count}
             </div>
           )}
-          <IoMdNotifications  className="text-xl sm:text-2xl"/>
+          <IoMdNotifications className="text-xl sm:text-2xl" />
         </div>
       </div>
 

@@ -1,11 +1,14 @@
 import express from "express";
 import {
   deleteChatNotification,
-  deleteUserFromNotification,
+  deleteUserFromChatNotification,
   getChatNotification,
+  getFriendRequestNotificationCount,
   makeChatNotification,
+  makeFriendRequestNotification,
   pushNotification,
-  readNotification,
+  readChatNotification,
+  readFriendRequestNotification,
   unsubscribeNotification
 } from "../controllers/notification.controller.js";
 import { isLoggedIn } from "../middlewares/auth.js";
@@ -39,14 +42,14 @@ notificationRoute.put(
   "/read-notification",
   notificationValidation,
   runValidation,
-  readNotification
+  readChatNotification
 );
 
 notificationRoute.delete(
   "/delete-user-from-notification",
   notificationValidation,
   runValidation,
-  deleteUserFromNotification
+  deleteUserFromChatNotification
 );
 
 notificationRoute.delete(
@@ -62,6 +65,21 @@ notificationRoute.post(
   validateSubscription,
   runValidation,
   pushNotification
+);
+
+notificationRoute.get(
+  "/get-friend-request-notification-count",
+  getFriendRequestNotificationCount
+);
+
+notificationRoute.put(
+  "/read-friend-request-notification",
+  readFriendRequestNotification
+);
+
+notificationRoute.post(
+  "/make-friend-request-notification",
+  makeFriendRequestNotification
 );
 
 notificationRoute.delete("/delete-push-notification", unsubscribeNotification);

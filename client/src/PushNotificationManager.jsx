@@ -15,7 +15,7 @@ const PushNotificationManager = ({ userId, pushNotificationPublicKey }) => {
 
           await sendSubscriptionToServer(subscription);
         } catch (error) {
-          console.error("Failed to subscribe to push notifications:", error);
+          return;
         }
       }
     };
@@ -48,13 +48,17 @@ const PushNotificationManager = ({ userId, pushNotificationPublicKey }) => {
           }
         );
 
-        if (response.status === 409) {
-          console.log("Subscription already exists.");
+        if (!response.ok) {
+          return;
+        }
+
+        if (response.status === 401) {
+          return;
         } else if (!response.ok) {
-          throw new Error("Failed to send subscription to server");
+          return;
         }
       } catch (error) {
-        console.error("Error sending subscription to server:", error);
+        return;
       }
     };
 

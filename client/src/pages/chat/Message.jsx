@@ -175,10 +175,10 @@ const Message = ({ chatId }) => {
   }, [messages]);
 
   useEffect(() => {
-    messageInputRef.current?.focus(); // Focus the input box
+    messageInputRef?.current?.focus(); // Focus the input box
     const handleBlur = () => {
       // Refocus the input when it loses focus
-      messageInputRef.current.focus();
+      messageInputRef?.current?.focus();
     };
 
     // Add event listener for blur

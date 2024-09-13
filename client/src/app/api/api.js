@@ -4,7 +4,7 @@ import { serverUrl } from "../../..";
 const api = createApi({
   reducerPath: "api",
   baseQuery: fetchBaseQuery({ baseUrl: `${serverUrl}/api/v1/` }),
-  tagTypes: ["Chat", "User", "Auth", "Message"],
+  tagTypes: ["Chat", "User", "Auth", "Message", "FriendRequestNotification"],
   endpoints: (builder) => ({
     verifyUser: builder.query({
       query: () => ({
@@ -19,7 +19,10 @@ const api = createApi({
         url: "chat/my-chats",
         credentials: "include"
       }),
-      providesTags: ["Chat"]
+      providesTags: (result) =>
+        result && Array.isArray(result)
+          ? [...result.map(({ id }) => ({ type: "Chat", id })), "Chat"]
+          : ["Chat"]
     }),
 
     searchUser: builder.query({
@@ -27,7 +30,10 @@ const api = createApi({
         url: `user/search-user?name=${name}`,
         credentials: "include"
       }),
-      providesTags: ["User"]
+      providesTags: (result) =>
+        result && Array.isArray(result)
+          ? [...result.map(({ id }) => ({ type: "User", id })), "User"]
+          : ["User"]
     }),
 
     friendRequestNotification: builder.query({
@@ -35,7 +41,10 @@ const api = createApi({
         url: "user/friend-requests",
         credentials: "include"
       }),
-      providesTags: ["User"] // <-- Add this line to provide "User" tags
+      providesTags: (result) =>
+        result && Array.isArray(result)
+          ? [...result.map(({ id }) => ({ type: "User", id })), "User"]
+          : ["User"]
     }),
 
     getMessages: builder.query({
@@ -43,6 +52,9 @@ const api = createApi({
         url: `chat/message/${chatId}?page=${page}`,
         credentials: "include"
       }),
+      providesTags: (result, error, { chatId }) => [
+        { type: "Message", id: chatId }
+      ],
       keepUnusedDataFor: 0
     }),
 
@@ -51,7 +63,7 @@ const api = createApi({
         url: `user/single-user/${id}`,
         credentials: "include"
       }),
-      providesTags: ["User"]
+      providesTags: (result, error, id) => [{ type: "User", id }]
     }),
 
     getFriends: builder.query({
@@ -59,7 +71,7 @@ const api = createApi({
         url: `user/get-friends/${id}`,
         credentials: "include"
       }),
-      providesTags: ["User"]
+      providesTags: (result, error, id) => [{ type: "User", id }]
     }),
 
     getMyGroups: builder.query({
@@ -75,8 +87,9 @@ const api = createApi({
         url: `/chat/${id}?populate=${populate}`,
         credentials: "include"
       }),
-      providesTags: ["Chat"]
+      providesTags: (result, error, id) => [{ type: "Chat", id }]
     }),
+
     getNotifications: builder.query({
       query: (userId) => ({
         url: `notification/get-chat-notification?userId=${userId}`,
@@ -90,7 +103,15 @@ const api = createApi({
         url: "/user/pending-requests",
         credentials: "include"
       }),
-      keepUnusedDataFor: ["User"]
+      providesTags: ["User"]
+    }),
+
+    getFriendRequestNotificationCount: builder.query({
+      query: () => ({
+        url: "notification/get-friend-request-notification-count",
+        credentials: "include"
+      }),
+      providesTags: ["FriendRequestNotification"]
     }),
 
     sendFriendRequest: builder.mutation({
@@ -120,7 +141,7 @@ const api = createApi({
         credentials: "include",
         body: data
       }),
-      invalidatesTags: ["User"] // <-- Invalidate "User" tag so that it refetches
+      invalidatesTags: ["User"]
     }),
 
     renameGroupChat: builder.mutation({
@@ -130,8 +151,11 @@ const api = createApi({
         credentials: "include",
         body: { name: data.name }
       }),
-      invalidatesTags: ["Chat"]
+      invalidatesTags: (result, error, { chatId }) => [
+        { type: "Chat", id: chatId }
+      ]
     }),
+
     readNotification: builder.mutation({
       query: (data) => ({
         url: "notification/read-notification",
@@ -142,6 +166,16 @@ const api = createApi({
       invalidatesTags: ["Chat"]
     }),
 
+    readFriendRequestNotification: builder.mutation({
+      query: (data) => ({
+        url: "notification/read-friend-request-notification",
+        method: "PUT",
+        credentials: "include",
+        body: data
+      }),
+      invalidatesTags: ["FriendRequestNotification", "User"]
+    }),
+
     addGroupMembers: builder.mutation({
       query: (data) => ({
         url: `chat/add-group-member`,
@@ -149,7 +183,9 @@ const api = createApi({
         credentials: "include",
         body: data
       }),
-      invalidatesTags: ["Chat"]
+      invalidatesTags: (result, error, { chatId }) => [
+        { type: "Chat", id: chatId }
+      ]
     }),
 
     removeGroupMembers: builder.mutation({
@@ -159,7 +195,9 @@ const api = createApi({
         credentials: "include",
         body: data
       }),
-      invalidatesTags: ["Chat"]
+      invalidatesTags: (result, error, { chatId }) => [
+        { type: "Chat", id: chatId }
+      ]
     }),
 
     sendAttachments: builder.mutation({
@@ -169,6 +207,9 @@ const api = createApi({
         credentials: "include",
         body: data
       }),
+      invalidatesTags: (result, error, { chatId }) => [
+        { type: "Message", id: chatId }
+      ],
       keepUnusedDataFor: 0
     }),
 
@@ -192,6 +233,16 @@ const api = createApi({
       invalidatesTags: ["Chat"]
     }),
 
+    makeFriendRequestNotification: builder.mutation({
+      query: (data) => ({
+        url: "notification/make-friend-request-notification",
+        method: "POST",
+        credentials: "include",
+        body: data
+      }),
+      invalidatesTags: ["FriendRequestNotification", "User"]
+    }),
+
     rejectFriendRequest: builder.mutation({
       query: (data) => ({
         url: "user/delete-request",
@@ -199,7 +250,7 @@ const api = createApi({
         credentials: "include",
         body: data
       }),
-      invalidatesTags: ["User"] // <-- Invalidate "User" tag so that it refetches
+      invalidatesTags: ["User"]
     }),
 
     deleteGroup: builder.mutation({
@@ -208,15 +259,16 @@ const api = createApi({
         method: "DELETE",
         credentials: "include"
       }),
-      invalidatesTags: ["Chat"]
+      invalidatesTags: (result, error, chatId) => [{ type: "Chat", id: chatId }]
     }),
+
     leaveGroup: builder.mutation({
       query: (chatId) => ({
         url: `chat/leave-group/${chatId}`,
         method: "DELETE",
         credentials: "include"
       }),
-      invalidatesTags: ["Chat"]
+      invalidatesTags: (result, error, chatId) => [{ type: "Chat", id: chatId }]
     })
   })
 });
@@ -247,5 +299,8 @@ export const {
   useGetPendingFriendRequestQuery,
   useMakeNotificationMutation,
   useGetNotificationsQuery,
-  useReadNotificationMutation
+  useReadNotificationMutation,
+  useMakeFriendRequestNotificationMutation,
+  useGetFriendRequestNotificationCountQuery,
+  useReadFriendRequestNotificationMutation
 } = api;

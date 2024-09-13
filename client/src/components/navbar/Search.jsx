@@ -4,6 +4,7 @@ import {
   useGetFriendsQuery,
   useGetPendingFriendRequestQuery,
   useLazySearchUserQuery,
+  useMakeFriendRequestNotificationMutation,
   useSendFriendRequestMutation
 } from "../../app/api/api";
 import { useSelector } from "react-redux";
@@ -20,6 +21,7 @@ const Search = () => {
 
   const [searchUser, { isLoading, data, isError, error }] =
     useLazySearchUserQuery();
+
   const {
     data: getFriendsData,
     error: getFriendsError,
@@ -33,6 +35,8 @@ const Search = () => {
   } = useGetPendingFriendRequestQuery();
 
   const [sendFriendRequest] = useAsyncMutation(useSendFriendRequestMutation);
+  const [makeFriendRequestNotification] =
+    useMakeFriendRequestNotificationMutation();
   const searchResultsRef = useRef(null);
 
   const handleSubmit = (e) => {
@@ -45,6 +49,7 @@ const Search = () => {
   const handleSendFriendRequest = async (receiver) => {
     try {
       await sendFriendRequest("Sending Friend Request!!", { sender, receiver });
+      makeFriendRequestNotification({ friendId: receiver });
     } catch (err) {
       console.log(err);
     }

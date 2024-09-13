@@ -2,6 +2,7 @@ import { validationResult } from "express-validator";
 import NotificationSubscriptionModel from "../models/notificationSubscription.model.js";
 import { errorResponse, successResponse } from "../helper/responseHandler.js";
 import ChatNotification from "../models/chatNotification.model.js";
+import SendFriendRequestNotification from "../models/sendFriendRequestNotification.js";
 
 // Middleware for validating subscription data
 
@@ -133,8 +134,6 @@ const makeChatNotification = async (req, res, next) => {
 
     const newChatNotification = await chatNotification.save();
 
-
-
     successResponse(res, {
       statusCode: 201,
       successMessage: "Chat notification created successfully",
@@ -146,7 +145,7 @@ const makeChatNotification = async (req, res, next) => {
   }
 };
 
-const readNotification = async (req, res, next) => {
+const readChatNotification = async (req, res, next) => {
   try {
     const { chatId, userId } = req.body;
 
@@ -177,7 +176,7 @@ const readNotification = async (req, res, next) => {
   }
 };
 
-const deleteUserFromNotification = async (req, res, next) => {
+const deleteUserFromChatNotification = async (req, res, next) => {
   try {
     const { chatId, userId } = req.body;
 
@@ -242,12 +241,110 @@ const deleteChatNotification = async (req, res, next) => {
   }
 };
 
+const makeFriendRequestNotification = async (req, res, next) => {
+  try {
+    const { friendId } = req.body;
+
+    const friendNotification = await SendFriendRequestNotification.findOne({
+      userId: friendId
+    });
+
+    if (!friendNotification) {
+      const newFriendNotification = await SendFriendRequestNotification.create({
+        userId: friendId,
+        count: 1
+      });
+
+      return successResponse(res, {
+        statusCode: 201,
+        successMessage: "Friend request notification sent successfully",
+        payload: newFriendNotification,
+        nextURl: {}
+      });
+    }
+
+    friendNotification.count += 1;
+
+    const newFriendNotification = await friendNotification.save();
+
+    successResponse(res, {
+      statusCode: 200,
+      successMessage: "Friend request notification update successfully",
+      payload: newFriendNotification,
+      nextURl: {}
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getFriendRequestNotificationCount = async (req, res, next) => {
+  try {
+    const { userId } = req;
+
+    const friendNotification = await SendFriendRequestNotification.findOne({
+      userId
+    });
+
+    if (!friendNotification) {
+      return errorResponse(res, {
+        statusCode: 404,
+        errorMessage: "Friend request notification not found",
+        nextURl: {}
+      });
+    }
+
+    successResponse(res, {
+      statusCode: 200,
+      successMessage: "Friend request notification count fetched successfully",
+      payload: friendNotification,
+      nextURl: {}
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const readFriendRequestNotification = async (req, res, next) => {
+  try {
+    const { userId } = req.body;
+
+    const friendNotification = await SendFriendRequestNotification.findOne({
+      userId
+    });
+
+    if (!friendNotification) {
+      return errorResponse(res, {
+        statusCode: 404,
+        errorMessage: "Friend request notification not found",
+        nextURl: {}
+      });
+    }
+
+    friendNotification.count = 0;
+
+    const newFriendNotification = await friendNotification.save();
+
+    successResponse(res, {
+      statusCode: 200,
+      successMessage: "Friend request notification read successfully",
+      payload: newFriendNotification,
+      nextURl: {}
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export {
   pushNotification,
   unsubscribeNotification,
   getChatNotification,
   makeChatNotification,
-  readNotification,
-  deleteUserFromNotification,
-  deleteChatNotification
+  readChatNotification,
+  deleteUserFromChatNotification,
+  deleteChatNotification,
+  makeFriendRequestNotification,
+  getFriendRequestNotificationCount,
+  readFriendRequestNotification
 };

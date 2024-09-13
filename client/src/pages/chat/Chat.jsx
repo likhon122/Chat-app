@@ -8,11 +8,13 @@ import { getSocket } from "../../Socket";
 import Message from "./Message";
 import GroupChatNav from "./GroupChatNav";
 import GroupInfo from "./GroupInfo";
+import { useGetGroupDetailsQuery } from "../../app/api/api";
 // import Demo from "../../components/Demo";
 
 const Chat = () => {
   const userData = useSelector((state) => state.auth.user);
   const { groupInfoDrawer } = useSelector((state) => state.other);
+
 
   const navigate = useNavigate();
   const params = useParams();

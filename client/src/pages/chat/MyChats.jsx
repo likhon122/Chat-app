@@ -46,25 +46,15 @@ const MyChats = () => {
     navigate(`/chat/${chat._id}?group-chat=${chat.groupChat}`);
   };
 
+  // console.log(getNotificationData);
+
   const getNotificationCount = (chatId) => {
-    const notification = messageNotification.find(
-      (notification) => notification.chatId === chatId
+    const notification = getNotificationData?.payload.find((notification) =>
+      chatId === notification.chatId ? notification : null
     );
-    return notification ? notification.count : 0;
+
+    return notification?.count;
   };
-
-  // useEffect(() => {
-  //   const handleRefetch = (data) => {
-  //     refetch();
-  //   };
-
-  //   socket.on(REFETCH_CHATS, handleRefetch);
-  //   socket.on(NEW_MESSAGE_ALERT, handleNewMessageAlert);
-
-  //   return () => {
-  //     socket.off(REFETCH_CHATS, handleRefetch);
-  //   };
-  // }, [socket, refetch]);
 
   const refetchHandler = useCallback(() => {
     refetch();
@@ -142,7 +132,13 @@ const MyChats = () => {
                         {chat.chatName}
                       </h2>
 
-                      <span className="text-sm text-gray-500 dark:text-gray-400 sm:text-xs">
+                      <span
+                        className={`text-sm ${
+                          notificationCount
+                            ? "dark:text-white font-semibold"
+                            : "dark:text-gray-400"
+                        } dark:text-gray-400 sm:text-xs`}
+                      >
                         {chat.lastMessage.lastMessage
                           ? chat.lastMessage?.lastMessage
                             ? chat.lastMessage?.lastMessage
@@ -161,7 +157,13 @@ const MyChats = () => {
                         }
                       </h2>
 
-                      <span className="text-sm text-gray-500 dark:text-gray-400 sm:text-xs">
+                      <span
+                        className={`text-sm ${
+                          notificationCount
+                            ? "dark:text-white font-semibold"
+                            : "dark:text-gray-400"
+                        }  sm:text-xs`}
+                      >
                         {chat.lastMessage.lastMessage
                           ? chat.lastMessage?.lastMessage
                           : chat.lastMessage?.lastAttachment?.length
@@ -171,17 +173,11 @@ const MyChats = () => {
                     </div>
                   )}
                 </div>
-                {getNotificationData?.payload?.length >0 &&
-                  getNotificationData.payload
-                    .filter((notification) => notification.chatId === chat._id)
-                    .map((notification, index) => (
-                      <span
-                        key={index}
-                        className="ml-auto bg-red-500 text-white rounded-full px-3 py-1 text-sm sm:px-2 sm:py-0.5 sm:text-xs"
-                      >
-                        {notification.count ? notification.count : ""}
-                      </span>
-                    ))}
+                {notificationCount && (
+                  <span className="ml-auto bg-red-500 text-white rounded-full px-3 py-1 text-sm sm:px-2 sm:py-0.5 sm:text-xs">
+                    {getNotificationCount(chat._id)}
+                  </span>
+                )}
               </div>
             </article>
           );
