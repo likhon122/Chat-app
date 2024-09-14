@@ -212,7 +212,7 @@ const Navbar = () => {
           {userData && (
             <li>
               <NavLink
-                to="/chat/"
+                to="/chat"
                 onClick={handleNavLinkClick}
                 className={({ isActive }) =>
                   `text-lg font-medium transition-colors ${

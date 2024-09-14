@@ -1,20 +1,17 @@
+/* Tailwind CSS directives */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* Custom scrollbar styles */
 .scrollbar-thin {
   scroll-behavior: smooth;
-}
-
-/* Global styles for custom scrollbar */
-/* Global styles for custom scrollbar with animations */
-.scrollbar-thin {
   scrollbar-width: thin;
-  scrollbar-color: #4b5563 #1f2937;
+  scrollbar-color: #4b5563 #1f2937; /* Firefox */
 }
 
 .scrollbar-thin::-webkit-scrollbar {
-  width: 12px;
+  width: 12px; /* Chrome, Safari */
 }
 
 .scrollbar-thin::-webkit-scrollbar-thumb {
@@ -36,7 +33,7 @@
   border-radius: 10px;
 }
 
-/* styles.css */
+/* Global styles for section animations */
 .section {
   opacity: 0;
   transform: translateY(20px);
@@ -48,3 +45,47 @@
   transform: translateY(0);
 }
 
+/* Fade-in animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+/* Keyframes for swipe animations */
+@keyframes swipe-left {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+}
+
+@keyframes swipe-right {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+.animate-swipe-left {
+  animation: swipe-left 0.3s ease forwards;
+}
+
+.animate-swipe-right {
+  animation: swipe-right 0.3s ease forwards;
+}

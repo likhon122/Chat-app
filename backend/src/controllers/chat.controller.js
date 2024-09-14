@@ -1,4 +1,5 @@
 /* eslint-disable no-await-in-loop */
+import { v4 as uuid } from "uuid";
 import { userSocketIds } from "../app.js";
 import {
   ALERT,
@@ -354,7 +355,6 @@ const removeMember = async (req, res, next) => {
 
     chat.members = filteredMembers;
 
-    console.log(chat); // For debugging
 
     await chat.save();
 
@@ -527,22 +527,25 @@ const sendAttachments = async (req, res, next) => {
 
     const attachments = await uploadFilesFromCloudinary(files);
 
-    const dbMessage = {
-      sender: userId,
-      content: formMessage ? formMessage : "",
-      attachment: attachments,
-      chat: chatId
-    };
+
     const messageForRealTime = {
-      sender: userId,
       content: formMessage ? formMessage : "",
       attachment: attachments,
       chatId,
+      realTimeId: uuid(),
       sender: {
         _id: userId,
         name: userInfo.name,
         avatar: userInfo.avatar
       }
+    };
+
+    const dbMessage = {
+      sender: userId,
+      content: formMessage ? formMessage : "",
+      attachment: attachments,
+      chat: chatId,
+      realTimeId: messageForRealTime.realTimeId
     };
 
     const message = await Message.create(dbMessage);
@@ -840,6 +843,12 @@ const deleteChat = async (req, res, next) => {
   }
 };
 
+const fetchOriginalMessagesByUUID = async (uuids) => {
+  return Message.find({ realTimeId: { $in: uuids } })
+    .populate("sender", "name avatar")
+    .lean();
+};
+
 const getMessages = async (req, res, next) => {
   try {
     const chatId = req.params.id;
@@ -858,7 +867,7 @@ const getMessages = async (req, res, next) => {
       Message.countDocuments({ chat: chatId })
     ]);
 
-    if (!messages) {
+    if (!messages.length) {
       return errorResponse(res, {
         statusCode: 404,
         errorMessage: "Messages not found!",
@@ -866,11 +875,48 @@ const getMessages = async (req, res, next) => {
       });
     }
 
+    const replyToUUIDs = messages
+      .filter((message) => message.replyTo)
+      .map((message) => message.replyTo);
+
+    // Fetch original messages based on UUIDs (if you have a way to do that)
+    // Here we assume you have some function to get messages by UUIDs
+    const originalMessages = await fetchOriginalMessagesByUUID(replyToUUIDs);
+
+    // Create a lookup for original messages
+    const originalMessagesMap = originalMessages.reduce(
+      (acc, originalMessage) => {
+        acc[originalMessage.realTimeId] = {
+          _id: originalMessage._id,
+          content: originalMessage.content,
+          attachment: originalMessage.attachment,
+          sender: {
+            _id: originalMessage.sender._id,
+            name: originalMessage.sender.name,
+            avatar: originalMessage.sender.avatar.url
+          },
+          createdAt: originalMessage.createdAt
+        };
+        return acc;
+      },
+      {}
+    );
+
+    // Map original messages to the messages array, including replyTo details
+    messages.forEach((message) => {
+      if (message.replyTo && originalMessagesMap[message.replyTo]) {
+        message.replyTo = originalMessagesMap[message.replyTo];
+      } else {
+        // If replyTo is not found, you can either set it to null or keep it as is
+        message.replyTo = null; // or keep it unchanged
+      }
+    });
+
     const totalPages = Math.ceil(totalMessagesCount / limit);
 
     successResponse(res, {
       statusCode: 200,
-      successMessage: "Message returned successfully!",
+      successMessage: "Messages returned successfully!",
       payload: {
         messages,
         pagination: {

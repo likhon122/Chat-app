@@ -97,7 +97,7 @@ const Search = () => {
         />
         <button
           type="submit"
-          className="dark:bg-[#676767] dark:text-white dark:hover:bg-[#4e4e4e] transition duration-300 px-2 py-1 sm:px-4 rounded-r-md flex items-center justify-center"
+          className="dark:bg-[#676767] dark:text-white dark:hover:bg-[#4e4e4e] transition duration-300 px-2 py-[5px] sm:py-[7px] sm:px-4 rounded-r-md flex items-center justify-center"
         >
           <IoSearch size={20} />
         </button>

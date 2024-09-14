@@ -52,9 +52,7 @@ const api = createApi({
         url: `chat/message/${chatId}?page=${page}`,
         credentials: "include"
       }),
-      providesTags: (result, error, { chatId }) => [
-        { type: "Message", id: chatId }
-      ],
+      
       keepUnusedDataFor: 0
     }),
 

@@ -5,7 +5,7 @@ import { useSelector } from "react-redux";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import MyChats from "./MyChats";
 import { getSocket } from "../../Socket";
-import Message from "./Message";
+import Message from "./message/Message";
 import GroupChatNav from "./GroupChatNav";
 import GroupInfo from "./GroupInfo";
 import { useGetGroupDetailsQuery } from "../../app/api/api";
@@ -14,7 +14,6 @@ import { useGetGroupDetailsQuery } from "../../app/api/api";
 const Chat = () => {
   const userData = useSelector((state) => state.auth.user);
   const { groupInfoDrawer } = useSelector((state) => state.other);
-
 
   const navigate = useNavigate();
   const params = useParams();

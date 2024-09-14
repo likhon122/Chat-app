@@ -42,60 +42,98 @@ const handleSocketEvents = (io) => {
     userSocketIds.set(user._id.toString(), socket.id);
 
     // Handle new message
-    socket.on(NEW_MESSAGE, async ({ chatId, members, message }) => {
-      const messageForRealTime = {
-        content: message,
-        _id: uuid(),
-        sender: {
-          _id: user._id,
-          name: user.name,
-          avatar: user?.avatar?.url
-        },
-        chatId,
-        createdAt: new Date().toISOString()
-      };
+    socket.on(
+      NEW_MESSAGE,
+      async ({ chatId, members, message, replyTo = null }) => {
+        let replyToMessageDetails = null;
 
-      const messageForDb = {
-        content: message,
-        sender: user._id,
-        chat: chatId
-      };
+        if (replyTo) {
+          try {
+            const originalMessage = await Message.findOne({
+              realTimeId: replyTo
+            }).populate("sender", "name avatar");
 
-      const membersSocket = getSockets(members);
-
-      // Emit message in real-time
-      io.to(membersSocket).emit(NEW_MESSAGE, {
-        chatId,
-        message: messageForRealTime
-      });
-
-      io.to(membersSocket).emit(NEW_MESSAGE_ALERT, {
-        chatId,
-        sender: user._id
-      });
-      io.to(membersSocket).emit(REFETCH_CHATS, { chatId });
-
-      try {
-        const resMessage = await Message.create(messageForDb);
-        if (!resMessage) {
-          console.error("Message not saved in DB. Something went wrong!!");
-        } else {
-          // Send push notification to offline members
-          for (const member of members) {
-            if (!userSocketIds.has(member.toString())) {
-              await sendNotificationToUser({
-                content: message,
-                sender: user._id,
-                chat: chatId,
-                member
-              });
+            if (originalMessage) {
+              replyToMessageDetails = {
+                _id: originalMessage._id,
+                realTimeId: originalMessage.realTimeId,
+                content: originalMessage.content,
+                attachment: originalMessage.attachment,
+                sender: {
+                  _id: originalMessage.sender._id,
+                  name: originalMessage.sender.name,
+                  avatar: originalMessage.sender.avatar.url
+                },
+                createdAt: originalMessage.createdAt
+              };
+            } else {
+              replyTo = null;
             }
+          } catch (error) {
+            console.log("Do not found any message with this realTimeId");
           }
         }
-      } catch (error) {
-        console.error("Message not saved in DB. Something went wrong!!", error);
+
+        const messageForRealTime = {
+          content: message,
+          replyTo: replyToMessageDetails,
+          realTimeId: uuid(),
+          sender: {
+            _id: user._id,
+            name: user.name,
+            avatar: user?.avatar
+          },
+          chatId,
+          createdAt: new Date().toISOString()
+        };
+
+        const messageForDb = {
+          content: message,
+          sender: user._id,
+          chat: chatId,
+          replyTo: replyTo ? replyTo : null,
+          realTimeId: messageForRealTime.realTimeId
+        };
+
+        const membersSocket = getSockets(members);
+
+        // Emit message in real-time
+        io.to(membersSocket).emit(NEW_MESSAGE, {
+          chatId,
+          message: messageForRealTime
+        });
+
+        io.to(membersSocket).emit(NEW_MESSAGE_ALERT, {
+          chatId,
+          sender: user._id
+        });
+        io.to(membersSocket).emit(REFETCH_CHATS, { chatId });
+
+        try {
+          const resMessage = await Message.create(messageForDb);
+          if (!resMessage) {
+            console.error("Message not saved in DB. Something went wrong!!");
+          } else {
+            // Send push notification to offline members
+            for (const member of members) {
+              if (!userSocketIds.has(member.toString())) {
+                await sendNotificationToUser({
+                  content: message,
+                  sender: user._id,
+                  chat: chatId,
+                  member
+                });
+              }
+            }
+          }
+        } catch (error) {
+          console.error(
+            "Message not saved in DB. Something went wrong!!",
+            error
+          );
+        }
       }
-    });
+    );
 
     // Handle typing events
     socket.on(START_TYPING, async ({ members, chatId }) => {
@@ -112,7 +150,7 @@ const handleSocketEvents = (io) => {
     // Handle disconnect
     socket.on("disconnect", () => {
       userSocketIds.delete(user._id.toString());
-      console.log("User disconnected");
+      // console.log("User disconnected");
     });
   });
 };

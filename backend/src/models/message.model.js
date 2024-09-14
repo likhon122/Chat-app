@@ -27,6 +27,14 @@ const messageModel = new mongoose.Schema(
       type: mongoose.Types.ObjectId,
       ref: "Chat",
       required: [true, "Chat is required!"]
+    },
+    replyTo: {
+      type: String,
+      default: null
+    },
+    realTimeId: {
+      type: String,
+      required: [true, "Real time id is required!"]
     }
   },
   { timestamps: true }
