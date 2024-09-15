@@ -1,7 +1,12 @@
 language: node_js
 
 node_js:
-  - "16" # You can specify the Node.js version, adjust as per your requirement
+  - "16" # Specify Node.js version
+
+# Specify that CI should run only on the 'developer' branch
+branches:
+  only:
+    - developer
 
 # Install dependencies for both backend and client
 install:
