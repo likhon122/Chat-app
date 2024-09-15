@@ -1,0 +1,22 @@
+language: node_js
+
+node_js:
+  - "16" # You can specify the Node.js version, adjust as per your requirement
+
+# Install dependencies for both backend and client
+install:
+  # Install backend dependencies
+  - cd backend
+  - npm install
+  # Install client dependencies
+  - cd ../client
+  - npm install
+
+# Run tests or build for both backend and client
+script:
+  # Run backend tests
+  - cd ../backend
+  - npm test
+  # Run client build
+  - cd ../client
+  - npm run build
