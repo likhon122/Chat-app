@@ -10,6 +10,7 @@ import React, {
 import { useDispatch, useSelector } from "react-redux";
 import { getSocket } from "../../../Socket";
 import {
+  useGetGroupDetailsQuery,
   useGetMessagesQuery,
   useSendAttachmentsMutation
 } from "../../../app/api/api";
@@ -31,6 +32,9 @@ import MessageInputBox from "./MessageInputBox";
 import ShowMessages from "./ShowMessages";
 import TypingIndicator from "./TypingIndicator";
 import { FaXmark } from "react-icons/fa6";
+import CallButtons from "./CallButtons";
+import CallWindow from "./CallWindow";
+import { useWebRTC } from "../../../hooks/useWebRTC";
 
 const Message = ({ chatId }) => {
   const members = useSelector((state) => state.other.members);
@@ -49,6 +53,7 @@ const Message = ({ chatId }) => {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [replyMessage, setReplyMessage] = useState(null);
   const [highlightedMessageId, setHighlightedMessageId] = useState(null);
+  const [inCall, setInCall] = useState(false);
 
   const typingTimeOut = useRef(null);
   const containerRef = useRef(null);
@@ -60,6 +65,11 @@ const Message = ({ chatId }) => {
   const getItemClasses = () => "w-16 h-16";
 
   const oldMessagesChunk = useGetMessagesQuery({ chatId, page });
+  // const {
+  //   data: groupDetails,
+  //   error: groupDetailsError,
+  //   isLoading: groupDetailsIsLoading
+  // } = useGetGroupDetailsQuery(chatId);
 
   const [sendAttachmentHandler, isLoading, setAttachmentData] =
     useAsyncMutation(useSendAttachmentsMutation);
@@ -85,6 +95,34 @@ const Message = ({ chatId }) => {
       setShowEmojiPicker(false);
     }
   });
+
+  const {
+    localStream,
+    remoteStream,
+    startCall,
+    handleAnswerCall, // Expose the answer handler
+    handleEndCall, // Expose the end call handler
+    isRinging,
+    isInCall,
+    isVideoCall
+  } = useWebRTC(socket, chatId, members);
+
+  const [isCallStarted, setIsCallStarted] = useState(false);
+
+  const handleAudioCall = () => {
+    startCall(false);
+    setIsCallStarted(true);
+  };
+
+  const handleVideoCall = () => {
+    startCall(true); // Start video call (with video)
+    setIsCallStarted(true);
+  };
+
+  // const handleEndCall = () => {
+  //   endCall();
+  //   setIsCallStarted(false);
+  // };
 
   const handleMessageChange = (e) => {
     setMessage(e.target.value);
@@ -268,70 +306,97 @@ const Message = ({ chatId }) => {
 
   useSocketHook(socket, eventHandlers);
 
+  const isAnswering = true;
+
   return (
-    <div
-      className={`flex flex-col h-[calc(100vh-90px)] sm:h-[calc(100vh-90px)] bg-gray-800 text-gray-100 scrollbar-thin scrollbar-thumb-rounded-lg`}
-    >
-      <ShowMessages
-        bottomRef={bottomRef}
-        containerRef={containerRef}
-        handleReplyMessage={handleReplyMessage}
-        handleShowReplyMessage={handleShowReplyMessage}
-        messageRefs={messageRefs}
-        allMessages={allMessages}
-        replyMessage={replyMessage?.realTimeId}
-        userId={userId}
-        highlightedMessageId={highlightedMessageId}
+    <>
+      <CallButtons
+        onAudioCall={handleAudioCall}
+        onVideoCall={handleVideoCall}
       />
 
-      <TypingIndicator userTyping={userTyping} />
-
-      {replyMessage && (
-        <div className="shadow-md p-1 sm:p-2 flex items-start bg-gray-800 border border-gray-700">
-          <div className="ml-1 sm:ml-3 flex-1">
-            <h1 className=" text-xs sm:text-md font-medium text-gray-200 font-sans">
-              Replying to{" "}
-              {userId === replyMessage.sender._id
-                ? "Yourself"
-                : replyMessage.sender.name}
-            </h1>
-            <div className="p-1 rounded-md italic">
-              {!replyMessage.attachment?.length && replyMessage.content ? (
-                <p className="text-gray-300">
-                  {replyMessage.content.length > 20
-                    ? replyMessage.content.slice(0, 20) + "..."
-                    : replyMessage.content}
-                </p>
-              ) : (
-                <p className="text-gray-400 italic">Attachment</p>
-              )}
-            </div>
-          </div>
-          <div
-            className="ml-3 cursor-pointer text-gray-400 hover:text-red-500 transition duration-200"
-            onClick={() => setReplyMessage(null)}
-          >
-            <FaXmark className="h-5 w-5" />
-          </div>
+      {isRinging && (
+        <div className="ringing-notification">
+          <p>
+            {isVideoCall ? "Incoming video call..." : "Incoming audio call..."}
+          </p>
+          <button onClick={handleAnswerCall}>Answer</button>
+          <button onClick={handleEndCall}>Reject</button>
         </div>
       )}
 
-      <MessageInputBox
-        selectedImage={selectedImage}
-        emojiRef={emojiRef}
-        getItemClasses={getItemClasses}
-        getGridClasses={getGridClasses}
-        handleEmojiClick={handleEmojiClick}
-        handleFileChange={handleFileChange}
-        message={message}
-        messageInputRef={messageInputRef}
-        submitHandler={submitHandler}
-        showEmojiPicker={showEmojiPicker}
-        setShowEmojiPicker={setShowEmojiPicker}
-        handleRemoveImage={handleRemoveImage}
-        handleMessageChange={handleMessageChange}
-      />
-    </div>
+      {isInCall && (
+        <CallWindow
+          localStream={localStream}
+          remoteStream={remoteStream}
+          onEndCall={handleEndCall}
+          isVideoCall={isVideoCall} // Pass to CallWindow to handle video/audio UI
+        />
+      )}
+      <div
+        className={`flex flex-col h-[calc(100vh-90px)] sm:h-[calc(100vh-90px)] bg-gray-800 text-gray-100 scrollbar-thin scrollbar-thumb-rounded-lg`}
+      >
+        <ShowMessages
+          bottomRef={bottomRef}
+          containerRef={containerRef}
+          handleReplyMessage={handleReplyMessage}
+          handleShowReplyMessage={handleShowReplyMessage}
+          messageRefs={messageRefs}
+          allMessages={allMessages}
+          replyMessage={replyMessage?.realTimeId}
+          userId={userId}
+          highlightedMessageId={highlightedMessageId}
+        />
+
+        <TypingIndicator userTyping={userTyping} />
+
+        {replyMessage && (
+          <div className="shadow-md p-1 sm:p-2 flex items-start bg-gray-800 border border-gray-700">
+            <div className="ml-1 sm:ml-3 flex-1">
+              <h1 className=" text-xs sm:text-md font-medium text-gray-200 font-sans">
+                Replying to{" "}
+                {userId === replyMessage.sender._id
+                  ? "Yourself"
+                  : replyMessage.sender.name}
+              </h1>
+              <div className="p-1 rounded-md italic">
+                {!replyMessage.attachment?.length && replyMessage.content ? (
+                  <p className="text-gray-300">
+                    {replyMessage.content.length > 20
+                      ? replyMessage.content.slice(0, 20) + "..."
+                      : replyMessage.content}
+                  </p>
+                ) : (
+                  <p className="text-gray-400 italic">Attachment</p>
+                )}
+              </div>
+            </div>
+            <div
+              className="ml-3 cursor-pointer text-gray-400 hover:text-red-500 transition duration-200"
+              onClick={() => setReplyMessage(null)}
+            >
+              <FaXmark className="h-5 w-5" />
+            </div>
+          </div>
+        )}
+
+        <MessageInputBox
+          selectedImage={selectedImage}
+          emojiRef={emojiRef}
+          getItemClasses={getItemClasses}
+          getGridClasses={getGridClasses}
+          handleEmojiClick={handleEmojiClick}
+          handleFileChange={handleFileChange}
+          message={message}
+          messageInputRef={messageInputRef}
+          submitHandler={submitHandler}
+          showEmojiPicker={showEmojiPicker}
+          setShowEmojiPicker={setShowEmojiPicker}
+          handleRemoveImage={handleRemoveImage}
+          handleMessageChange={handleMessageChange}
+        />
+      </div>
+    </>
   );
 };
 

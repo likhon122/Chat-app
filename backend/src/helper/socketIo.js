@@ -3,6 +3,9 @@ import { v4 as uuid } from "uuid";
 
 import { userSocketIds } from "../app.js";
 import {
+  CALL_ANSWER,
+  CALL_REJECT,
+  CALL_USER,
   NEW_MESSAGE,
   NEW_MESSAGE_ALERT,
   REFETCH_CHATS,
@@ -40,7 +43,6 @@ const handleSocketEvents = (io) => {
   io.on("connection", (socket) => {
     const { user } = socket;
     userSocketIds.set(user._id.toString(), socket.id);
-
     // Handle new message
     socket.on(
       NEW_MESSAGE,
@@ -145,6 +147,62 @@ const handleSocketEvents = (io) => {
     socket.on(STOP_TYPING, async ({ members, chatId }) => {
       const membersSocket = getSockets(members);
       socket.to(membersSocket).emit(STOP_TYPING, { chatId });
+    });
+
+    // Call user (audio/video)
+    socket.on("CALL_USER", ({ to, offer, callType, chatId }) => {
+      const targetSocketId = getSockets(to);
+
+      if (targetSocketId) {
+        io.to(targetSocketId).emit("INCOMING_CALL", {
+          from: user._id,
+          offer,
+          callType,
+          fromName: user.name,
+          chatId
+        });
+      } else {
+        console.warn(`User ${to} is not connected.`);
+      }
+    });
+
+    // Answer call
+    socket.on("ANSWER_CALL", ({ to, answer, chatId }) => {
+      const targetSocketId = getSockets(to);
+
+      if (targetSocketId) {
+        console.log(
+          `User ${user._id} answered the call from ${to}. Chat ID: ${chatId}`
+        );
+        io.to(targetSocketId).emit("CALL_ANSWERED", { answer, chatId });
+      } else {
+        console.warn(`User ${to} is not connected.`);
+      }
+    });
+
+    // Handle ICE candidate exchange
+    socket.on("ICE_CANDIDATE", ({ to, candidate }) => {
+      const targetSocketId = getSockets(to);
+
+      if (targetSocketId && candidate) {
+        io.to(targetSocketId).emit("ICE_CANDIDATE", { candidate });
+      } else {
+        console.warn(
+          `ICE candidate not sent. User ${to} not connected or invalid candidate.`
+        );
+      }
+    });
+
+    // Call rejection
+    socket.on("REJECT_CALL", ({ to }) => {
+      const targetSocketId = getSockets(to);
+
+      if (targetSocketId) {
+        console.log(`User ${user._id} rejected the call from ${to}`);
+        io.to(targetSocketId).emit("CALL_REJECTED");
+      } else {
+        console.warn(`User ${to} is not connected. Call rejection failed.`);
+      }
     });
 
     // Handle disconnect
