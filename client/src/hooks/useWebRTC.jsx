@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useSelector } from "react-redux";
 
 export const useWebRTC = (socket, chatId, members, isVideoCall) => {
+  console.log(isVideoCall);
   const user = useSelector((state) => state.auth.user);
 
   const [localStream, setLocalStream] = useState(null);
@@ -34,7 +35,7 @@ export const useWebRTC = (socket, chatId, members, isVideoCall) => {
 
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: true,
-        video: false
+        video: isVideoCall // Use video only if it's a video call
       });
 
       stream.getTracks().forEach((track) => {
@@ -47,23 +48,21 @@ export const useWebRTC = (socket, chatId, members, isVideoCall) => {
 
   const startCall = async () => {
     if (isInCall) return;
-    peerConnectionRef.current = null;
 
-    console.log(peerConnectionRef.current);
-
+    // Initialize peer connection if it doesn't exist
     if (!peerConnectionRef.current) {
       await initializePeerConnection();
     }
 
+    // Create an offer
     const offerDescription = await peerConnectionRef.current.createOffer();
 
-    peerConnectionRef.current;
-
-    // try {
-    //   await peerConnectionRef.current.setLocalDescription(offerDescription);
-    // } catch (error) {
-    //   console.log("Error is here ", error);
-    // }
+    try {
+      await peerConnectionRef.current.setLocalDescription(offerDescription);
+    } catch (error) {
+      console.error("Error setting local description", error);
+      return; // Prevent further execution on error
+    }
 
     const membersWithoutMe = members.filter((member) => member !== user?._id);
 
@@ -86,6 +85,7 @@ export const useWebRTC = (socket, chatId, members, isVideoCall) => {
         await initializePeerConnection();
       }
 
+      // Set remote description
       await peerConnectionRef.current.setRemoteDescription(
         new RTCSessionDescription(incomingOffer)
       );
@@ -127,7 +127,6 @@ export const useWebRTC = (socket, chatId, members, isVideoCall) => {
 
     socket.on("CALL_ANSWERED", async (answer) => {
       if (peerConnectionRef.current.signalingState !== "stable") {
-        console.log(answer.answer);
         await peerConnectionRef.current.setRemoteDescription(
           new RTCSessionDescription(answer.answer)
         );
