@@ -4,6 +4,8 @@ import { useWebRTC } from "../../../hooks/useWebRTC";
 import { useSelector } from "react-redux";
 import { getSocket } from "../../../SocketHelper";
 import { useEffect } from "react";
+import { useGetGroupDetailsQuery } from "../../../app/api/api";
+import { toast } from "react-toastify";
 
 const CallWindowPage = () => {
   const { chatId } = useParams();
@@ -12,15 +14,20 @@ const CallWindowPage = () => {
   const queryParams = new URLSearchParams(location.search);
   const callType = queryParams.get("type");
 
-  const members = useSelector((state) => state.other.members);
+  const { data, isLoading } = useGetGroupDetailsQuery(chatId, false);
+
+  const members = [];
+  if (data?.payload?.chat?.members.length > 1) {
+    data.payload.chat.members.forEach((member) => members.push(member._id));
+  }
+
+  if (!isLoading && members.length < 1) {
+    toast.error("No members found");
+  }
 
   const callStarted = useSelector((state) => state.other.isCallStarted);
-
   const socket = getSocket();
-
-  // Determine if the call is video or audio
-  const isVideoCall = callType === "video" ? true : false;
-  console.log("Is Video Call:", isVideoCall);
+  const isVideoCall = callType === "video";
 
   const {
     localStream,
@@ -32,15 +39,17 @@ const CallWindowPage = () => {
     isInCall
   } = useWebRTC(socket, chatId, members, isVideoCall);
 
-  if (callStarted) {
-    (async () => {
-      await startCall();
-    })();
-  }
+  useEffect(() => {
+    if (callStarted) {
+      (async () => {
+        await startCall();
+      })();
+    }
+  }, [callStarted, startCall]);
 
   const initiateCall = async () => {
     if (!isInCall && !isRinging) {
-      await startCall(); // Initiate the call
+      await startCall();
     }
   };
 
@@ -49,34 +58,9 @@ const CallWindowPage = () => {
     console.log("Remote Stream:", remoteStream);
   }, [localStream, remoteStream]);
 
-  useEffect(() => {
-    let localAudioElement = null;
-
-    if (localStream && remoteStream) {
-      localAudioElement = document.createElement("audio");
-      localAudioElement.srcObject = localStream;
-      localAudioElement.muted = false; // Ensure audio is not muted
-      localAudioElement.autoplay = true; // Automatically start playing
-      localAudioElement.style.display = "none"; // Hide the audio element
-      document.body.appendChild(localAudioElement); // Add it to the DOM
-
-      // Play the audio (in case autoplay fails due to browser policy)
-      localAudioElement.play().catch((err) => {
-        console.error("Error playing local audio stream", err);
-      });
-    }
-
-    return () => {
-      // Cleanup on component unmount or localStream change
-      if (localAudioElement) {
-        localAudioElement.pause();
-        localAudioElement.srcObject = null;
-        document.body.removeChild(localAudioElement); // Remove from DOM
-      }
-    };
-  }, [localStream, remoteStream]);
-
-  return (
+  return isLoading ? (
+    <div>Loading....</div>
+  ) : (
     <div className="call-page">
       <CallWindow
         localStream={localStream}
@@ -88,6 +72,39 @@ const CallWindowPage = () => {
         handleAnswerCall={handleAnswerCall}
         initiateCall={initiateCall}
       />
+      {isVideoCall ? (
+        <div className="video-container">
+          {/* Video elements are here if needed for video calls */}
+        </div>
+      ) : (
+        <div className="audio-container">
+          {/* Audio elements for remote audio */}
+          {remoteStream && (
+            <audio
+              autoPlay
+              ref={(audio) => {
+                if (audio) {
+                  audio.srcObject = remoteStream;
+                }
+              }}
+              style={{ display: "none" }} // Hide the audio element
+            />
+          )}
+          {/* Local audio */}
+          {localStream && (
+            <audio
+              autoPlay
+              muted
+              ref={(audio) => {
+                if (audio) {
+                  audio.srcObject = localStream;
+                }
+              }}
+              style={{ display: "none" }} // Hide the audio element
+            />
+          )}
+        </div>
+      )}
     </div>
   );
 };

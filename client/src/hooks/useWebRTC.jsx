@@ -84,12 +84,9 @@ export const useWebRTC = (socket, chatId, members, isVideoCall) => {
 
     // Create an offer
     if (!isInCall) {
-      console.log(peerConnectionRef.current);
       const offerDescription = await peerConnectionRef.current.createOffer();
-      console.log(peerConnectionRef.current);
 
       if (peerConnectionRef.current.localDescription) {
-        console.log("first");
         await peerConnectionRef.current.setLocalDescription(offerDescription);
       }
 
@@ -126,10 +123,11 @@ export const useWebRTC = (socket, chatId, members, isVideoCall) => {
     });
 
     socket.on("CALL_ANSWERED", async (answer) => {
-      console.log("Received answer:", answer);
-
       // Proceed only if the signaling state allows setting remote description
+      console.log(answer);
+      console.log(peerConnectionRef.current);
       if (peerConnectionRef.current.signalingState !== "stable") {
+        console.log(answer);
         try {
           await peerConnectionRef.current.setRemoteDescription(
             new RTCSessionDescription(answer.answer)
@@ -137,6 +135,8 @@ export const useWebRTC = (socket, chatId, members, isVideoCall) => {
         } catch (error) {
           console.error("Error setting remote description:", error);
         }
+      } else {
+        console.log("Signaling state is stable");
       }
     });
 

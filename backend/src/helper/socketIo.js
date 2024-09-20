@@ -171,15 +171,16 @@ const handleSocketEvents = (io) => {
 
     // Answer call
     socket.on("ANSWER_CALL", ({ to, answer, chatId }) => {
-      const targetSocketId = getSockets(to);
+      const memberIds = to.filter((id) => id !== user._id);
+      const targetSocketId = getSockets(memberIds);
 
       if (targetSocketId) {
         console.log(
-          `User ${user._id} answered the call from ${to}. Chat ID: ${chatId}`
+          `User ${user._id} answered the call from ${memberIds}. Chat ID: ${chatId}`
         );
         io.to(targetSocketId).emit("CALL_ANSWERED", { answer, chatId });
       } else {
-        console.warn(`User ${to} is not connected.`);
+        console.warn(`User ${memberIds} is not connected.`);
       }
     });
 
