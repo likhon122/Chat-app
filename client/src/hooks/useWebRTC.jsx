@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from "react";
 import { useSelector } from "react-redux";
 
 export const useWebRTC = (socket, chatId, members, isVideoCall) => {
-  console.log(isVideoCall);
   const user = useSelector((state) => state.auth.user);
 
   const [localStream, setLocalStream] = useState(null);
@@ -12,6 +11,8 @@ export const useWebRTC = (socket, chatId, members, isVideoCall) => {
   const [incomingOffer, setIncomingOffer] = useState(null);
   const peerConnectionRef = useRef(null);
   const iceCandidatesQueue = useRef([]); // Queue for storing ICE candidates
+
+  // console.log(localStream, remoteStream);
 
   const initializePeerConnection = async () => {
     if (!peerConnectionRef.current) {
@@ -41,6 +42,8 @@ export const useWebRTC = (socket, chatId, members, isVideoCall) => {
       stream.getTracks().forEach((track) => {
         peerConnectionRef.current.addTrack(track, stream);
       });
+
+      console.log(stream);
 
       setLocalStream(stream);
     }
@@ -85,13 +88,18 @@ export const useWebRTC = (socket, chatId, members, isVideoCall) => {
         await initializePeerConnection();
       }
 
-      // Set remote description
+      // Set remote description first
       await peerConnectionRef.current.setRemoteDescription(
         new RTCSessionDescription(incomingOffer)
       );
 
+      // Then create the answer
       const answerDescription = await peerConnectionRef.current.createAnswer();
+
+      // Set local description with the created answer
       await peerConnectionRef.current.setLocalDescription(answerDescription);
+
+      console.log("Answering call", answerDescription);
 
       socket.emit("ANSWER_CALL", {
         answer: answerDescription,
@@ -114,10 +122,13 @@ export const useWebRTC = (socket, chatId, members, isVideoCall) => {
     socket.emit("END_CALL", { to: members, chatId });
   };
 
+  // ... (rest of your code)
+
   useEffect(() => {
     socket.on("INCOMING_CALL", (data) => {
-      setIsRinging(true);
       setIncomingOffer(data.offer);
+      console.log(incomingOffer);
+      setIsRinging(true);
     });
 
     socket.on("CALL_USER", async () => {
@@ -126,10 +137,17 @@ export const useWebRTC = (socket, chatId, members, isVideoCall) => {
     });
 
     socket.on("CALL_ANSWERED", async (answer) => {
+      console.log("Received answer:", answer);
+
+      // Proceed only if the signaling state allows setting remote description
       if (peerConnectionRef.current.signalingState !== "stable") {
-        await peerConnectionRef.current.setRemoteDescription(
-          new RTCSessionDescription(answer.answer)
-        );
+        try {
+          await peerConnectionRef.current.setRemoteDescription(
+            new RTCSessionDescription(answer.answer)
+          );
+        } catch (error) {
+          console.error("Error setting remote description:", error);
+        }
       }
     });
 
@@ -159,7 +177,9 @@ export const useWebRTC = (socket, chatId, members, isVideoCall) => {
       socket.off("CALL_ANSWERED");
       socket.off("ICE_CANDIDATE");
     };
-  }, [socket]);
+  }, [socket, incomingOffer]); // Added incomingOffer as a dependency
+
+  // ... (rest of your code)
 
   return {
     localStream,

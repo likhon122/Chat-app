@@ -39,6 +39,8 @@ const CallWindowPage = () => {
     }
   };
 
+  console.log(localStream, remoteStream);
+
   useEffect(() => {
     let localAudioElement = null;
 
