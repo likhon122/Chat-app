@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useSelector } from "react-redux";
 
 export const useWebRTC = (socket, chatId, members, isVideoCall) => {
+
   const user = useSelector((state) => state.auth.user);
 
   const [localStream, setLocalStream] = useState(null);
@@ -47,6 +48,7 @@ export const useWebRTC = (socket, chatId, members, isVideoCall) => {
 
     // Create an offer
     const offerDescription = await peerConnectionRef.current.createOffer();
+    console.log(offerDescription);
 
     try {
       await peerConnectionRef.current.setLocalDescription(offerDescription);

@@ -5,19 +5,22 @@ import { useSelector } from "react-redux";
 import { getSocket } from "../../../SocketHelper";
 import { useEffect } from "react";
 
-const CallWindowPage = () => {
+const CallWindowPage =  () => {
   const { chatId } = useParams();
   const location = useLocation();
+
   const queryParams = new URLSearchParams(location.search);
   const callType = queryParams.get("type");
 
   const members = useSelector((state) => state.other.members);
 
   const callStarted = useSelector((state) => state.other.isCallStarted);
+
   const socket = getSocket();
 
   // Determine if the call is video or audio
-  const isVideoCall = callType === "video";
+  const isVideoCall = callType === "video" ? true : false;
+  console.log("Is Video Call:", isVideoCall);
 
   const {
     localStream,
@@ -30,7 +33,9 @@ const CallWindowPage = () => {
   } = useWebRTC(socket, chatId, members, isVideoCall);
 
   if (callStarted) {
-    startCall();
+   (async () => {
+      await startCall();
+    })();
   }
 
   const initiateCall = async () => {
