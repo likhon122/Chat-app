@@ -5,7 +5,7 @@ import { useSelector } from "react-redux";
 import { getSocket } from "../../../SocketHelper";
 import { useEffect } from "react";
 
-const CallWindowPage =  () => {
+const CallWindowPage = () => {
   const { chatId } = useParams();
   const location = useLocation();
 
@@ -33,7 +33,7 @@ const CallWindowPage =  () => {
   } = useWebRTC(socket, chatId, members, isVideoCall);
 
   if (callStarted) {
-   (async () => {
+    (async () => {
       await startCall();
     })();
   }
@@ -44,8 +44,10 @@ const CallWindowPage =  () => {
     }
   };
 
-  console.log("Local Stream Tracks:", localStream?.getTracks());
-  console.log("Remote Stream Tracks:", remoteStream?.getTracks());
+  useEffect(() => {
+    console.log("Local Stream:", localStream);
+    console.log("Remote Stream:", remoteStream);
+  }, [localStream, remoteStream]);
 
   useEffect(() => {
     let localAudioElement = null;

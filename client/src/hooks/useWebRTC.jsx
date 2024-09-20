@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from "react";
 import { useSelector } from "react-redux";
 
 export const useWebRTC = (socket, chatId, members, isVideoCall) => {
-
   const user = useSelector((state) => state.auth.user);
 
   const [localStream, setLocalStream] = useState(null);
@@ -16,7 +15,14 @@ export const useWebRTC = (socket, chatId, members, isVideoCall) => {
   const initializePeerConnection = async () => {
     // Create peer connection
     peerConnectionRef.current = new RTCPeerConnection({
-      iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
+      iceServers: [
+        { urls: "stun:stun.l.google.com:19302" },
+        {
+          urls: "turn:your-turn-server.com",
+          username: "user",
+          credential: "password"
+        }
+      ]
     });
 
     // Get user media
@@ -54,7 +60,7 @@ export const useWebRTC = (socket, chatId, members, isVideoCall) => {
       await peerConnectionRef.current.setLocalDescription(offerDescription);
     } catch (error) {
       console.error("Error setting local description", error);
-      return; // Prevent further execution on error
+      // return;
     }
 
     const membersWithoutMe = members.filter((member) => member !== user?._id);
