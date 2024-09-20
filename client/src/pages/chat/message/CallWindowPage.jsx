@@ -74,11 +74,19 @@ const CallWindowPage = () => {
       />
       {isVideoCall ? (
         <div className="video-container">
-          {/* Video elements are here if needed for video calls */}
+          {remoteStream && (
+            <video
+              autoPlay
+              ref={(video) => {
+                if (video) {
+                  video.srcObject = remoteStream;
+                }
+              }}
+            />
+          )}
         </div>
       ) : (
         <div className="audio-container">
-          {/* Audio elements for remote audio */}
           {remoteStream && (
             <audio
               autoPlay
@@ -90,23 +98,9 @@ const CallWindowPage = () => {
               style={{ display: "none" }} // Hide the audio element
             />
           )}
-          {/* Local audio */}
-          {localStream && (
-            <audio
-              autoPlay
-              muted
-              ref={(audio) => {
-                if (audio) {
-                  audio.srcObject = localStream;
-                }
-              }}
-              style={{ display: "none" }} // Hide the audio element
-            />
-          )}
         </div>
       )}
     </div>
   );
 };
-
 export default CallWindowPage;
