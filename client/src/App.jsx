@@ -24,6 +24,7 @@ import DuelSpinner from "./components/Loaders/DuelSpinner";
 import PushNotificationManager from "./PushNotificationManager";
 import Dashboard from "./pages/admin/Dashboard";
 import MainLayout from "./pages/admin/MainLayout";
+import CallWindowPage from "./pages/chat/message/CallWindowPage";
 
 const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY;
 
@@ -152,6 +153,14 @@ const App = () => {
           element={
             <ProtectedRoute user={user} isLoading={isLoading}>
               <MyGroups />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="call/:chatId"
+          element={
+            <ProtectedRoute user={user} isLoading={isLoading}>
+              <CallWindowPage />
             </ProtectedRoute>
           }
         />

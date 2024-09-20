@@ -3,13 +3,14 @@ import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import MyChats from "./MyChats";
 import { setMessageNotification } from "../../app/features/chatSlice";
-import { getSocket } from "../../Socket";
+import { getSocket } from "../../SocketHelper";
 
 const ShowChat = () => {
   const userData = useSelector((state) => state.auth.user);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const socket = getSocket();
+
 
   useEffect(() => {
     if (!userData) {

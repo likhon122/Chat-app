@@ -8,7 +8,10 @@ const initialState = {
   groupId: "",
   theme: "dark",
   editGroup: false,
-  chatId: ""
+  chatId: "",
+  isRinging: false,
+  callInfo: null,
+  isCallStarted: false
 };
 
 const otherSlice = createSlice({
@@ -31,7 +34,6 @@ const otherSlice = createSlice({
       state.groupId = action.payload;
     },
     setTheme: (state) => {
-      console.log(state.theme);
       state.theme = state.theme === "light" ? "dark" : "light";
     },
     setEditGroup: (state, action) => {
@@ -39,6 +41,17 @@ const otherSlice = createSlice({
     },
     setChatId: (state, action) => {
       state.chatId = action.payload;
+    },
+    setRinging: (state, action) => {
+      state.isRinging = action.payload?.isRinging;
+      state.callInfo = action.payload?.callInfo || null;
+    },
+    endRinging: (state) => {
+      state.isRinging = false;
+      state.callInfo = null;
+    },
+    callStarted: (state, action) => {
+      state.isCallStarted = action.payload;
     }
   }
 });
@@ -51,7 +64,10 @@ export const {
   setGroupId,
   setTheme,
   setEditGroup,
-  setChatId
+  setChatId,
+  setRinging,
+  endRinging,
+  callStarted
 } = otherSlice.actions;
 
 export default otherSlice.reducer;

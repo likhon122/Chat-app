@@ -1,7 +1,7 @@
 import { useEffect, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { getSocket } from "../../Socket";
+import { getSocket } from "../../SocketHelper";
 import {
   useGetChatsQuery,
   useGetNotificationsQuery,

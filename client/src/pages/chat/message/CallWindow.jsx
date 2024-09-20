@@ -1,35 +1,41 @@
-import React, { useEffect, useRef } from "react";
+import React from "react";
 
-const CallWindow = ({ localStream, remoteStream, onEndCall, isVideoCall }) => {
-  const localVideoRef = useRef(null);
-  const remoteVideoRef = useRef(null);
-
-  useEffect(() => {
-    if (localVideoRef.current && localStream) {
-      localVideoRef.current.srcObject = localStream;
-    }
-
-    if (remoteVideoRef.current && remoteStream) {
-      remoteVideoRef.current.srcObject = remoteStream;
-    }
-  }, [localStream, remoteStream]);
-
+const CallWindow = ({
+  localStream,
+  remoteStream,
+  onEndCall,
+  isVideoCall,
+  isRinging,
+  isInCall,
+  handleAnswerCall
+}) => {
   return (
     <div className="call-window">
-      <div className="videos">
-        {/* Handle both video and audio calls */}
-        {isVideoCall ? (
-          <>
-            <video ref={localVideoRef} autoPlay muted className="local-video" />
-            <video ref={remoteVideoRef} autoPlay className="remote-video" />
-          </>
-        ) : (
-          <audio ref={remoteVideoRef} autoPlay className="remote-audio" />
-        )}
-      </div>
-      <button className="end-call-button" onClick={onEndCall}>
-        End Call
-      </button>
+      {isRinging && !isInCall && (
+        <div>
+          <div>Incoming Call...</div>
+          <button onClick={handleAnswerCall}>Answer Call</button>
+        </div>
+      )}
+      {isInCall && (
+        <>
+          <div>
+            {isVideoCall ? (
+              <video
+                autoPlay
+                playsInline
+                ref={(video) => video && (video.srcObject = remoteStream)}
+              />
+            ) : (
+              <div>Audio Call</div>
+            )}
+          </div>
+          <button onClick={onEndCall}>End Call</button>
+        </>
+      )}
+      {!isInCall && !isRinging && (
+        <button onClick={handleAnswerCall}>Answer Call</button>
+      )}
     </div>
   );
 };

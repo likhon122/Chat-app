@@ -42,6 +42,7 @@ const emitEvent = (req, event, users, data = "") => {
 const handleSocketEvents = (io) => {
   io.on("connection", (socket) => {
     const { user } = socket;
+
     userSocketIds.set(user._id.toString(), socket.id);
     // Handle new message
     socket.on(
@@ -150,16 +151,18 @@ const handleSocketEvents = (io) => {
     });
 
     // Call user (audio/video)
-    socket.on("CALL_USER", ({ to, offer, callType, chatId }) => {
+    socket.on("CALL_USER", ({ to, offer, callType, chatId, members }) => {
       const targetSocketId = getSockets(to);
 
       if (targetSocketId) {
+        console.log("Emiting INCOMING_CALL event");
         io.to(targetSocketId).emit("INCOMING_CALL", {
           from: user._id,
           offer,
           callType,
           fromName: user.name,
-          chatId
+          chatId,
+          members
         });
       } else {
         console.warn(`User ${to} is not connected.`);
@@ -208,7 +211,7 @@ const handleSocketEvents = (io) => {
     // Handle disconnect
     socket.on("disconnect", () => {
       userSocketIds.delete(user._id.toString());
-      // console.log("User disconnected");
+      console.log("User disconnected");
     });
   });
 };

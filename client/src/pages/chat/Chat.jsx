@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import MyChats from "./MyChats";
-import { getSocket } from "../../Socket";
+// import { getSocket } from "../../Socket";
 import Message from "./message/Message";
 import GroupChatNav from "./GroupChatNav";
 import GroupInfo from "./GroupInfo";
@@ -45,7 +45,7 @@ const Chat = () => {
           )}
         </div>
       </div>
-      <div className="md:block hidden">
+      <div className="hidden md:block ">
         <div
           className={` ${
             groupInfoDrawer

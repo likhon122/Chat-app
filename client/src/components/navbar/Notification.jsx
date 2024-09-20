@@ -3,7 +3,7 @@ import { IoMdNotifications } from "react-icons/io";
 import { useDispatch, useSelector } from "react-redux";
 import { setNotificationDrawer } from "../../app/features/otherSlice";
 import NotificationDrawer from "../notification/NotificationDrawer";
-import { getSocket } from "../../Socket";
+import { getSocket } from "../../SocketHelper";
 import { useSocketHook } from "../../hooks/useSocketHook";
 import { NEW_FRIEND_REQUEST } from "../../constants/event";
 import { setRequestNotificationCount } from "../../app/features/chatSlice";

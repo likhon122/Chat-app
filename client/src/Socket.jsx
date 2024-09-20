@@ -1,16 +1,9 @@
+// SocketProvider.js
 import { io } from "socket.io-client";
 import { serverUrl } from "..";
-import { createContext, useContext, useMemo } from "react";
+import { createContext, useMemo } from "react";
 
-const SocketContext = createContext();
-
-export const getSocket = () => {
-  const socket = useContext(SocketContext);
-  if (!socket) {
-    throw new Error("useSocket must be used within a SocketProvider");
-  }
-  return socket;
-};
+export const SocketContext = createContext();
 
 const SocketProvider = ({ children }) => {
   const socket = useMemo(() => io(serverUrl, { withCredentials: true }), []);

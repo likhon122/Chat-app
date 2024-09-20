@@ -8,7 +8,7 @@ import React, {
   useState
 } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { getSocket } from "../../../Socket";
+import { getSocket } from "../../../SocketHelper";
 import {
   useGetGroupDetailsQuery,
   useGetMessagesQuery,
@@ -95,29 +95,6 @@ const Message = ({ chatId }) => {
       setShowEmojiPicker(false);
     }
   });
-
-  const {
-    localStream,
-    remoteStream,
-    startCall,
-    handleAnswerCall, // Expose the answer handler
-    handleEndCall, // Expose the end call handler
-    isRinging,
-    isInCall,
-    isVideoCall
-  } = useWebRTC(socket, chatId, members);
-
-  const [isCallStarted, setIsCallStarted] = useState(false);
-
-  const handleAudioCall = () => {
-    startCall(false);
-    setIsCallStarted(true);
-  };
-
-  const handleVideoCall = () => {
-    startCall(true); // Start video call (with video)
-    setIsCallStarted(true);
-  };
 
   // const handleEndCall = () => {
   //   endCall();
@@ -306,33 +283,8 @@ const Message = ({ chatId }) => {
 
   useSocketHook(socket, eventHandlers);
 
-  const isAnswering = true;
-
   return (
     <>
-      <CallButtons
-        onAudioCall={handleAudioCall}
-        onVideoCall={handleVideoCall}
-      />
-
-      {isRinging && (
-        <div className="ringing-notification">
-          <p>
-            {isVideoCall ? "Incoming video call..." : "Incoming audio call..."}
-          </p>
-          <button onClick={handleAnswerCall}>Answer</button>
-          <button onClick={handleEndCall}>Reject</button>
-        </div>
-      )}
-
-      {isInCall && (
-        <CallWindow
-          localStream={localStream}
-          remoteStream={remoteStream}
-          onEndCall={handleEndCall}
-          isVideoCall={isVideoCall} // Pass to CallWindow to handle video/audio UI
-        />
-      )}
       <div
         className={`flex flex-col h-[calc(100vh-90px)] sm:h-[calc(100vh-90px)] bg-gray-800 text-gray-100 scrollbar-thin scrollbar-thumb-rounded-lg`}
       >
