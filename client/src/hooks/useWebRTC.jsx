@@ -88,8 +88,10 @@ export const useWebRTC = (socket, chatId, members, isVideoCall) => {
       const offerDescription = await peerConnectionRef.current.createOffer();
       console.log(peerConnectionRef.current);
 
-      await peerConnectionRef.current.setLocalDescription(offerDescription);
-      console.log(peerConnectionRef.current);
+      if (peerConnectionRef.current.localDescription) {
+        console.log("first");
+        await peerConnectionRef.current.setLocalDescription(offerDescription);
+      }
 
       socket.emit("CALL_USER", {
         offer: offerDescription,
