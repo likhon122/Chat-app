@@ -37,8 +37,6 @@ export const useWebRTC = (socket, chatId, members, isVideoCall) => {
         video: false
       });
 
-      console.log("Local stream tracks:", stream.getTracks());
-
       stream.getTracks().forEach((track) => {
         peerConnectionRef.current.addTrack(track, stream);
       });
@@ -48,7 +46,10 @@ export const useWebRTC = (socket, chatId, members, isVideoCall) => {
   };
 
   const startCall = async () => {
-    if (isInCall) return; // Prevent starting a new call if already in one
+    if (isInCall) return;
+    peerConnectionRef.current = null;
+
+    console.log(peerConnectionRef.current);
 
     if (!peerConnectionRef.current) {
       await initializePeerConnection();
@@ -56,11 +57,13 @@ export const useWebRTC = (socket, chatId, members, isVideoCall) => {
 
     const offerDescription = await peerConnectionRef.current.createOffer();
 
-    try {
-      await peerConnectionRef.current.setLocalDescription(offerDescription);
-    } catch (error) {
-      console.log("Error is here ", error);
-    }
+    peerConnectionRef.current;
+
+    // try {
+    //   await peerConnectionRef.current.setLocalDescription(offerDescription);
+    // } catch (error) {
+    //   console.log("Error is here ", error);
+    // }
 
     const membersWithoutMe = members.filter((member) => member !== user?._id);
 
