@@ -50,10 +50,12 @@ export const useWebRTC = (socket, chatId, members, isVideoCall) => {
   const startCall = async () => {
     if (isInCall) return; // Prevent starting a new call if already in one
 
-    await initializePeerConnection();
+    // Only initialize if we don't have an existing peer connection
+    if (!peerConnectionRef.current) {
+      await initializePeerConnection();
+    }
 
     const offerDescription = await peerConnectionRef.current.createOffer();
-    console.log(offerDescription);
     await peerConnectionRef.current.setLocalDescription(offerDescription);
 
     const membersWithoutMe = members.filter((member) => member !== user?._id);
@@ -72,24 +74,17 @@ export const useWebRTC = (socket, chatId, members, isVideoCall) => {
   const handleAnswerCall = async () => {
     if (incomingOffer) {
       setIsRinging(false);
-      await initializePeerConnection();
+
+      // Initialize only if we don't have an existing peer connection
+      if (!peerConnectionRef.current) {
+        await initializePeerConnection();
+      }
 
       await peerConnectionRef.current.setRemoteDescription(
         new RTCSessionDescription(incomingOffer)
       );
 
-      // Add queued ICE candidates once remote description is set
-      iceCandidatesQueue.current.forEach(async (candidate) => {
-        try {
-          await peerConnectionRef.current.addIceCandidate(candidate);
-        } catch (error) {
-          console.error("Error adding ICE candidate from queue", error);
-        }
-      });
-      iceCandidatesQueue.current = []; // Clear the queue after adding candidates
-
       const answerDescription = await peerConnectionRef.current.createAnswer();
-      console.log(answerDescription);
       await peerConnectionRef.current.setLocalDescription(answerDescription);
 
       socket.emit("ANSWER_CALL", {
