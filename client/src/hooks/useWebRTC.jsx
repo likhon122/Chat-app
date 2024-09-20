@@ -55,7 +55,12 @@ export const useWebRTC = (socket, chatId, members, isVideoCall) => {
     }
 
     const offerDescription = await peerConnectionRef.current.createOffer();
-    await peerConnectionRef.current.setLocalDescription(offerDescription);
+
+    try {
+      await peerConnectionRef.current.setLocalDescription(offerDescription);
+    } catch (error) {
+      console.log("Error is here ", error);
+    }
 
     const membersWithoutMe = members.filter((member) => member !== user?._id);
 
