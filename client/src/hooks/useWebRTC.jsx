@@ -50,7 +50,6 @@ export const useWebRTC = (socket, chatId, members, isVideoCall) => {
   const startCall = async () => {
     if (isInCall) return; // Prevent starting a new call if already in one
 
-    // Only initialize if we don't have an existing peer connection
     if (!peerConnectionRef.current) {
       await initializePeerConnection();
     }
@@ -75,7 +74,6 @@ export const useWebRTC = (socket, chatId, members, isVideoCall) => {
     if (incomingOffer) {
       setIsRinging(false);
 
-      // Initialize only if we don't have an existing peer connection
       if (!peerConnectionRef.current) {
         await initializePeerConnection();
       }
