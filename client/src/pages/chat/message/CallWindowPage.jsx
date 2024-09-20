@@ -39,7 +39,8 @@ const CallWindowPage = () => {
     }
   };
 
-  console.log(localStream, remoteStream);
+  console.log("Local Stream Tracks:", localStream?.getTracks());
+  console.log("Remote Stream Tracks:", remoteStream?.getTracks());
 
   useEffect(() => {
     let localAudioElement = null;
