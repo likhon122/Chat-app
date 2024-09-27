@@ -151,7 +151,7 @@ const handleSocketEvents = (io) => {
     });
 
     // Call user (audio/video)
-    socket.on("CALL_USER", ({ to, offer, callType, chatId, members }) => {
+    socket.on("CALL_USER", ({ to, offer, callType, chatId }) => {
       const targetSocketId = getSockets(to);
 
       if (targetSocketId) {
@@ -162,7 +162,7 @@ const handleSocketEvents = (io) => {
           callType,
           fromName: user.name,
           chatId,
-          members
+          members: to
         });
       } else {
         console.warn(`User ${to} is not connected.`);
