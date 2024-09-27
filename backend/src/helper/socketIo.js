@@ -154,10 +154,15 @@ const handleSocketEvents = (io) => {
     socket.on("CALL_USER", ({ to, offer, callType, chatId }) => {
       const memberIds = to.filter((id) => id !== user._id);
 
+      console.log(user._id);
+
+      console.log(memberIds);
+
       const targetSocketId = getSockets(memberIds);
 
+      console.log(targetSocketId);
+
       if (targetSocketId) {
-        console.log("Emiting INCOMING_CALL event");
         io.to(targetSocketId).emit("INCOMING_CALL", {
           from: user._id,
           offer,
