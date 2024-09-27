@@ -152,7 +152,9 @@ const handleSocketEvents = (io) => {
 
     // Call user (audio/video)
     socket.on("CALL_USER", ({ to, offer, callType, chatId }) => {
-      const targetSocketId = getSockets(to);
+      const memberIds = to.filter((id) => id !== user._id);
+
+      const targetSocketId = getSockets(memberIds);
 
       if (targetSocketId) {
         console.log("Emiting INCOMING_CALL event");
