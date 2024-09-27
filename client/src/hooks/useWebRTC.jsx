@@ -10,15 +10,15 @@ export const useWebRTC = (socket, chatId, members, isVideoCall) => {
   const [isInCall, setIsInCall] = useState(false);
   const [incomingOffer, setIncomingOffer] = useState(null);
   const peerConnectionRef = useRef(null);
-  const iceCandidatesQueue = useRef([]); // Queue for storing ICE candidates
+  const iceCandidatesQueue = useRef([]);
 
   const initializePeerConnection = async () => {
+    // Ensure peer connection is not created multiple times
     if (!peerConnectionRef.current) {
       peerConnectionRef.current = new RTCPeerConnection({
         iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
       });
 
-      // Send ICE candidates to the remote peer
       peerConnectionRef.current.onicecandidate = (event) => {
         if (event.candidate) {
           socket.emit("ICE_CANDIDATE", {
@@ -29,18 +29,15 @@ export const useWebRTC = (socket, chatId, members, isVideoCall) => {
         }
       };
 
-      // Handle remote stream tracks
       peerConnectionRef.current.ontrack = (event) => {
-        setRemoteStream(event.streams[0]); // Set the remote stream for rendering
+        setRemoteStream(event.streams[0]);
       };
 
-      // Get the local stream
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: true,
         video: isVideoCall
       });
 
-      // Add local tracks to the peer connection
       stream.getTracks().forEach((track) => {
         peerConnectionRef.current.addTrack(track, stream);
       });
@@ -52,7 +49,6 @@ export const useWebRTC = (socket, chatId, members, isVideoCall) => {
   const handleAnswerCall = async () => {
     if (incomingOffer) {
       setIsRinging(false);
-
       await initializePeerConnection();
 
       await peerConnectionRef.current.setRemoteDescription(
@@ -98,6 +94,7 @@ export const useWebRTC = (socket, chatId, members, isVideoCall) => {
     setLocalStream(null);
     setRemoteStream(null);
     setIsInCall(false);
+    setIsRinging(false); // Reset ringing state
 
     socket.emit("END_CALL", { to: members, chatId });
   };
@@ -119,7 +116,7 @@ export const useWebRTC = (socket, chatId, members, isVideoCall) => {
           new RTCSessionDescription(answer.answer)
         );
 
-        // Process queued ICE candidates after remote description is set
+        // Process queued ICE candidates
         while (iceCandidatesQueue.current.length > 0) {
           const candidate = iceCandidatesQueue.current.shift();
           await peerConnectionRef.current.addIceCandidate(candidate);
@@ -138,7 +135,6 @@ export const useWebRTC = (socket, chatId, members, isVideoCall) => {
             new RTCIceCandidate(candidate)
           );
         } else {
-          // Queue the ICE candidate if remote description is not ready
           iceCandidatesQueue.current.push(new RTCIceCandidate(candidate));
         }
       }
