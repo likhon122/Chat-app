@@ -13,37 +13,38 @@ export const useWebRTC = (socket, chatId, members, isVideoCall) => {
   const iceCandidatesQueue = useRef([]);
 
   const initializePeerConnection = async () => {
-    // Ensure peer connection is not created multiple times
-    if (!peerConnectionRef.current) {
-      peerConnectionRef.current = new RTCPeerConnection({
-        iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
-      });
-
-      peerConnectionRef.current.onicecandidate = (event) => {
-        if (event.candidate) {
-          socket.emit("ICE_CANDIDATE", {
-            candidate: event.candidate,
-            to: members,
-            chatId
-          });
-        }
-      };
-
-      peerConnectionRef.current.ontrack = (event) => {
-        setRemoteStream(event.streams[0]);
-      };
-
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
-        video: isVideoCall
-      });
-
-      stream.getTracks().forEach((track) => {
-        peerConnectionRef.current.addTrack(track, stream);
-      });
-
-      setLocalStream(stream);
+    if (peerConnectionRef.current) {
+      peerConnectionRef.current.close(); // Close previous connection if it exists
     }
+
+    peerConnectionRef.current = new RTCPeerConnection({
+      iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
+    });
+
+    peerConnectionRef.current.onicecandidate = (event) => {
+      if (event.candidate) {
+        socket.emit("ICE_CANDIDATE", {
+          candidate: event.candidate,
+          to: members,
+          chatId
+        });
+      }
+    };
+
+    peerConnectionRef.current.ontrack = (event) => {
+      setRemoteStream(event.streams[0]);
+    };
+
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: true,
+      video: isVideoCall
+    });
+
+    stream.getTracks().forEach((track) => {
+      peerConnectionRef.current.addTrack(track, stream);
+    });
+
+    setLocalStream(stream);
   };
 
   const handleAnswerCall = async () => {
@@ -94,7 +95,7 @@ export const useWebRTC = (socket, chatId, members, isVideoCall) => {
     setLocalStream(null);
     setRemoteStream(null);
     setIsInCall(false);
-    setIsRinging(false); // Reset ringing state
+    setIsRinging(false);
 
     socket.emit("END_CALL", { to: members, chatId });
   };
