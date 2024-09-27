@@ -105,10 +105,22 @@ export const useWebRTC = (socket, chatId, members, isVideoCall) => {
 
   useEffect(() => {
     socket.on("INCOMING_CALL", (data) => {
+      console.log("Incoming call data:", data);
       setIncomingOffer(data.offer);
-      console.log(data);
       setIsRinging(true);
     });
+
+    return () => {
+      socket.off("INCOMING_CALL");
+    };
+  }, [socket]);
+
+  useEffect(() => {
+    // socket.on("INCOMING_CALL", (data) => {
+    //   setIncomingOffer(data.offer);
+    //   console.log(data);
+    //   setIsRinging(true);
+    // });
 
     socket.on("CALL_USER", async () => {
       setIsRinging(false);
