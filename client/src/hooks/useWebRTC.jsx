@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useSelector } from "react-redux";
 
 export const useWebRTC = (socket, chatId, members, isVideoCall) => {
@@ -14,7 +14,7 @@ export const useWebRTC = (socket, chatId, members, isVideoCall) => {
 
   const initializePeerConnection = async () => {
     if (peerConnectionRef.current) {
-      peerConnectionRef.current.close(); // Close previous connection if it exists
+      peerConnectionRef.current.close();
     }
 
     peerConnectionRef.current = new RTCPeerConnection({
@@ -40,11 +40,14 @@ export const useWebRTC = (socket, chatId, members, isVideoCall) => {
       video: isVideoCall
     });
 
+    // Only set localStream if it's different
+    if (!localStream) {
+      setLocalStream(stream);
+    }
+
     stream.getTracks().forEach((track) => {
       peerConnectionRef.current.addTrack(track, stream);
     });
-
-    setLocalStream(stream);
   };
 
   const handleAnswerCall = async () => {
@@ -117,7 +120,6 @@ export const useWebRTC = (socket, chatId, members, isVideoCall) => {
           new RTCSessionDescription(answer.answer)
         );
 
-        // Process queued ICE candidates
         while (iceCandidatesQueue.current.length > 0) {
           const candidate = iceCandidatesQueue.current.shift();
           await peerConnectionRef.current.addIceCandidate(candidate);
@@ -149,8 +151,11 @@ export const useWebRTC = (socket, chatId, members, isVideoCall) => {
     };
   }, [socket, incomingOffer]);
 
+  // Memoize localStream if necessary
+  const memoizedLocalStream = useMemo(() => localStream, [localStream]);
+
   return {
-    localStream,
+    localStream: memoizedLocalStream,
     remoteStream,
     startCall,
     handleAnswerCall,
