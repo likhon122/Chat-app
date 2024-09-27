@@ -80,14 +80,14 @@ export const useWebRTC = (socket, chatId, members, isVideoCall) => {
     const offerDescription = await peerConnectionRef.current.createOffer();
     await peerConnectionRef.current.setLocalDescription(offerDescription);
 
+    setIsInCall(true);
+
     socket.emit("CALL_USER", {
       offer: offerDescription,
       to: members,
       chatId,
       callType: isVideoCall ? "video" : "audio"
     });
-
-    setIsInCall(true);
   };
 
   const endCall = () => {

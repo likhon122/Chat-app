@@ -161,11 +161,11 @@ const handleSocketEvents = (io) => {
         chatId
       });
 
-      const targetSocketId = getSockets(memberIds);
-      console.log("Target Socket ID:", targetSocketId);
+      const targetSocketIds = getSockets(memberIds);
 
-      if (targetSocketId) {
-        io.to(targetSocketId).emit("INCOMING_CALL", {
+      // Emit the call to all valid socket IDs
+      targetSocketIds.forEach((socketId) => {
+        io.to(socketId).emit("INCOMING_CALL", {
           from: user._id,
           offer,
           callType,
@@ -173,8 +173,10 @@ const handleSocketEvents = (io) => {
           chatId,
           members: to
         });
-      } else {
-        console.warn(`User ${to} is not connected.`);
+      });
+
+      if (!targetSocketIds.length) {
+        console.warn(`No connected users found for ${to}`);
       }
     });
 
