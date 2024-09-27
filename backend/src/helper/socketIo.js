@@ -153,14 +153,16 @@ const handleSocketEvents = (io) => {
     // Call user (audio/video)
     socket.on("CALL_USER", ({ to, offer, callType, chatId }) => {
       const memberIds = to.filter((id) => id !== user._id);
-
-      console.log(user._id);
-
-      console.log(memberIds);
+      console.log("Emitting CALL_USER event:", {
+        to,
+        memberIds,
+        offer,
+        callType,
+        chatId
+      });
 
       const targetSocketId = getSockets(memberIds);
-
-      console.log(targetSocketId);
+      console.log("Target Socket ID:", targetSocketId);
 
       if (targetSocketId) {
         io.to(targetSocketId).emit("INCOMING_CALL", {
