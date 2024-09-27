@@ -9,6 +9,16 @@ const CallWindow = ({
   isInCall,
   handleAnswerCall
 }) => {
+  console.log({
+    localStream,
+    remoteStream,
+    onEndCall,
+    isVideoCall,
+    isRinging,
+    isInCall,
+    handleAnswerCall
+  });
+
   return (
     <div className="call-window">
       {isRinging && !isInCall && (
