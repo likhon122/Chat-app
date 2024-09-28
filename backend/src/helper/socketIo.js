@@ -153,31 +153,28 @@ const handleSocketEvents = (io) => {
     // Call user (audio/video)
     socket.on("CALL_USER", ({ to, offer, callType, chatId }) => {
       const memberIds = to.filter((id) => id !== user._id);
-      console.log("Emitting CALL_USER event:", {
-        to,
-        memberIds,
-        offer,
-        callType,
-        chatId
-      });
 
       const targetSocketIds = getSockets(memberIds);
 
       // Emit the call to all valid socket IDs
-      targetSocketIds.forEach((socketId) => {
-        io.to(socketId).emit("INCOMING_CALL", {
-          from: user._id,
-          offer,
-          callType,
-          fromName: user.name,
-          chatId,
-          members: to
-        });
-      });
-
       if (!targetSocketIds.length) {
         console.warn(`No connected users found for ${to}`);
       }
+
+      console.log(
+        "Emiting INCOMING_CALL event to:",
+        userSocketIds,
+        targetSocketIds
+      );
+
+      io.to(targetSocketIds).emit("INCOMING_CALL", {
+        from: user._id,
+        offer,
+        callType,
+        fromName: user.name,
+        chatId,
+        members: to
+      });
     });
 
     // Answer call
@@ -186,9 +183,6 @@ const handleSocketEvents = (io) => {
       const targetSocketId = getSockets(memberIds);
 
       if (targetSocketId) {
-        console.log(
-          `User ${user._id} answered the call from ${memberIds}. Chat ID: ${chatId}`
-        );
         io.to(targetSocketId).emit("CALL_ANSWERED", { answer, chatId });
       } else {
         console.warn(`User ${memberIds} is not connected.`);
@@ -213,7 +207,6 @@ const handleSocketEvents = (io) => {
       const targetSocketId = getSockets(to);
 
       if (targetSocketId) {
-        console.log(`User ${user._id} rejected the call from ${to}`);
         io.to(targetSocketId).emit("CALL_REJECTED");
       } else {
         console.warn(`User ${to} is not connected. Call rejection failed.`);

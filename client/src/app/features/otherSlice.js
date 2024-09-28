@@ -11,7 +11,8 @@ const initialState = {
   chatId: "",
   isRinging: false,
   callInfo: null,
-  isCallStarted: false
+  isCallStarted: false,
+  incomingOffer: null
 };
 
 const otherSlice = createSlice({
@@ -52,6 +53,9 @@ const otherSlice = createSlice({
     },
     callStarted: (state, action) => {
       state.isCallStarted = action.payload;
+    },
+    setIncomingOffer: (state, action) => {
+      state.incomingOffer = action.payload;
     }
   }
 });
@@ -67,7 +71,8 @@ export const {
   setChatId,
   setRinging,
   endRinging,
-  callStarted
+  callStarted,
+  setIncomingOffer
 } = otherSlice.actions;
 
 export default otherSlice.reducer;

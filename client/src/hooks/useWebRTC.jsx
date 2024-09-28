@@ -3,12 +3,13 @@ import { useSelector } from "react-redux";
 
 export const useWebRTC = (socket, chatId, members, isVideoCall) => {
   const user = useSelector((state) => state.auth.user);
+  const { incomingOffer } = useSelector((state) => state.other);
 
   const [localStream, setLocalStream] = useState(null);
   const [remoteStream, setRemoteStream] = useState(null);
   const [isRinging, setIsRinging] = useState(false);
   const [isInCall, setIsInCall] = useState(false);
-  const [incomingOffer, setIncomingOffer] = useState(null);
+  // const [incomingOffer, setIncomingOffer] = useState(null);
   const peerConnectionRef = useRef(null);
   const iceCandidatesQueue = useRef([]);
 
@@ -49,6 +50,8 @@ export const useWebRTC = (socket, chatId, members, isVideoCall) => {
       peerConnectionRef.current.addTrack(track, stream);
     });
   };
+
+  console.log(incomingOffer);
 
   const handleAnswerCall = async () => {
     if (incomingOffer) {
@@ -103,17 +106,23 @@ export const useWebRTC = (socket, chatId, members, isVideoCall) => {
     socket.emit("END_CALL", { to: members, chatId });
   };
 
-  useEffect(() => {
-    socket.on("INCOMING_CALL", (data) => {
-      console.log("Incoming call data:", data);
-      setIncomingOffer(data.offer);
-      setIsRinging(true);
-    });
+  // useEffect(() => {
+  //   socket.on("INCOMING_CALL", (data) => {
+  //     console.log("Incoming call data:", data);
+  //     // setIncomingOffer(data.offer);
+  //     setIsRinging(true);
+  //   });
 
-    return () => {
-      socket.off("INCOMING_CALL");
-    };
-  }, [socket]);
+  //   return () => {
+  //     socket.off("INCOMING_CALL");
+  //   };
+  // }, [socket]);
+
+  useEffect(() => {
+    if (incomingOffer) {
+      setIsRinging(true);
+    }
+  }, [incomingOffer]);
 
   useEffect(() => {
     // socket.on("INCOMING_CALL", (data) => {
