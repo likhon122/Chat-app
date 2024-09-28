@@ -12,7 +12,8 @@ const initialState = {
   isRinging: false,
   callInfo: null,
   isCallStarted: false,
-  incomingOffer: null
+  incomingOffer: null,
+  callerDetails: null
 };
 
 const otherSlice = createSlice({
@@ -56,6 +57,9 @@ const otherSlice = createSlice({
     },
     setIncomingOffer: (state, action) => {
       state.incomingOffer = action.payload;
+    },
+    setCallerDetails: (state, action) => {
+      state.callerDetails = action.payload;
     }
   }
 });
@@ -72,7 +76,8 @@ export const {
   setRinging,
   endRinging,
   callStarted,
-  setIncomingOffer
+  setIncomingOffer,
+  setCallerDetails
 } = otherSlice.actions;
 
 export default otherSlice.reducer;

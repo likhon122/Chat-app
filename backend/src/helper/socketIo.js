@@ -14,6 +14,7 @@ import {
 } from "../constants/event.js";
 import { sendNotificationToUser } from "./sendPushNotification.js";
 import Message from "../models/message.model.js";
+import User from "../models/user.model.js";
 
 const getSockets = (members = []) => {
   const sockets =
@@ -151,31 +152,33 @@ const handleSocketEvents = (io) => {
     });
 
     // Call user (audio/video)
-    socket.on("CALL_USER", ({ to, offer, callType, chatId }) => {
-      const memberIds = to.filter((id) => id !== user._id);
+    socket.on(
+      "CALL_USER",
+      async ({ to, offer, callType, chatId, callerInfo }) => {
+        const memberIds = to.filter((id) => id !== user._id);
 
-      const targetSocketIds = getSockets(memberIds);
+        // const membersInfo = await User.find({ _id: { $in: memberIds } }).select(
+        //   "name avatar"
+        // );
 
-      // Emit the call to all valid socket IDs
-      if (!targetSocketIds.length) {
-        console.warn(`No connected users found for ${to}`);
+        const targetSocketIds = getSockets(memberIds);
+
+        // Emit the call to all valid socket IDs
+        if (!targetSocketIds.length) {
+          console.warn(`No connected users found for ${to}`);
+        }
+
+        io.to(targetSocketIds).emit("INCOMING_CALL", {
+          from: user._id,
+          offer,
+          callType,
+          fromName: user.name,
+          chatId,
+          members: to,
+          callerInfo
+        });
       }
-
-      console.log(
-        "Emiting INCOMING_CALL event to:",
-        userSocketIds,
-        targetSocketIds
-      );
-
-      io.to(targetSocketIds).emit("INCOMING_CALL", {
-        from: user._id,
-        offer,
-        callType,
-        fromName: user.name,
-        chatId,
-        members: to
-      });
-    });
+    );
 
     // Answer call
     socket.on("ANSWER_CALL", ({ to, answer, chatId }) => {

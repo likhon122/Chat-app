@@ -1,4 +1,4 @@
-import { useParams, useLocation } from "react-router-dom";
+import { useParams, useLocation, useNavigate } from "react-router-dom";
 import CallWindow from "../message/CallWindow";
 import { useWebRTC } from "../../../hooks/useWebRTC";
 import { useDispatch, useSelector } from "react-redux";
@@ -12,11 +12,13 @@ const CallWindowPage = () => {
   const { chatId } = useParams();
   const location = useLocation();
   const dispatch = useDispatch();
-
-  const [offer, setOffer] = useState(null);
+  const navigate = useNavigate();
 
   const queryParams = new URLSearchParams(location.search);
   const callType = queryParams.get("type");
+  const to = queryParams.get("to");
+  const toName = queryParams.get("toName");
+  const toImage = queryParams.get("toImage");
 
   const { data, isLoading } = useGetGroupDetailsQuery(chatId, false);
 
@@ -40,20 +42,12 @@ const CallWindowPage = () => {
     handleAnswerCall,
     endCall,
     isRinging,
-    isInCall
+    isInCall,
+    muteAudio,
+    toggleVideo,
+    isMuted,
+    isVideoEnabled
   } = useWebRTC(socket, chatId, members, isVideoCall);
-
-  // useEffect(() => {
-  //   // Parse the query string from the URL
-  //   const params = new URLSearchParams(location.search);
-
-  //   // Extract and parse the offer from the URL
-  //   const offerParam = params.get("offer");
-  //   if (offerParam) {
-  //     const parsedOffer = JSON.parse(decodeURIComponent(offerParam));
-
-  //   }
-  // }, [location]);
 
   useEffect(() => {
     if (callStarted) {
@@ -69,15 +63,20 @@ const CallWindowPage = () => {
     }
   };
 
-  useEffect(() => {
-    console.log("Local Stream:", localStream);
-    console.log("Remote Stream:", remoteStream);
-  }, [localStream, remoteStream]);
+  const handleRejectCall = () => {
+    endCall();
+    navigate(`/chat`);
+  };
+
+  // useEffect(() => {
+  //   console.log("Local Stream:", localStream);
+  //   console.log("Remote Stream:", remoteStream);
+  // }, [localStream, remoteStream]);
 
   return isLoading ? (
-    <div>Loading....</div>
+    <div className="text-center text-white bg-gray-900">Loading....</div>
   ) : (
-    <div className="call-page">
+    <div className="call-page bg-gray-900 text-white h-full flex justify-center items-center">
       <CallWindow
         localStream={localStream}
         remoteStream={remoteStream}
@@ -87,12 +86,21 @@ const CallWindowPage = () => {
         isInCall={isInCall}
         handleAnswerCall={handleAnswerCall}
         initiateCall={initiateCall}
+        muteAudio={muteAudio}
+        toggleVideo={toggleVideo}
+        isMuted={isMuted}
+        isVideoEnabled={isVideoEnabled}
+        toName={toName}
+        toImage={toImage}
+        to={to}
+        handleRejectCall={handleRejectCall}
       />
       {isVideoCall ? (
-        <div className="video-container">
+        <div className="video-container p-4">
           {remoteStream && (
             <video
               autoPlay
+              className="rounded-lg shadow-lg border border-gray-800"
               ref={(video) => {
                 if (video) {
                   video.srcObject = remoteStream;
@@ -111,7 +119,7 @@ const CallWindowPage = () => {
                   audio.srcObject = remoteStream;
                 }
               }}
-              style={{ display: "none" }} // Hide the audio element
+              style={{ display: "none" }}
             />
           )}
         </div>
@@ -119,4 +127,5 @@ const CallWindowPage = () => {
     </div>
   );
 };
+
 export default CallWindowPage;

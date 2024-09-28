@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 export const useWebRTC = (socket, chatId, members, isVideoCall) => {
   const user = useSelector((state) => state.auth.user);
@@ -9,9 +11,10 @@ export const useWebRTC = (socket, chatId, members, isVideoCall) => {
   const [remoteStream, setRemoteStream] = useState(null);
   const [isRinging, setIsRinging] = useState(false);
   const [isInCall, setIsInCall] = useState(false);
-  // const [incomingOffer, setIncomingOffer] = useState(null);
   const peerConnectionRef = useRef(null);
   const iceCandidatesQueue = useRef([]);
+
+  const navigate = useNavigate();
 
   const initializePeerConnection = async () => {
     if (peerConnectionRef.current) {
@@ -51,8 +54,6 @@ export const useWebRTC = (socket, chatId, members, isVideoCall) => {
     });
   };
 
-  console.log(incomingOffer);
-
   const handleAnswerCall = async () => {
     if (incomingOffer) {
       setIsRinging(false);
@@ -89,7 +90,12 @@ export const useWebRTC = (socket, chatId, members, isVideoCall) => {
       offer: offerDescription,
       to: members,
       chatId,
-      callType: isVideoCall ? "video" : "audio"
+      callType: isVideoCall ? "video" : "audio",
+      callerInfo: {
+        from: user._id,
+        fromName: user.name,
+        avatar: user.avatar
+      }
     });
   };
 
@@ -98,25 +104,24 @@ export const useWebRTC = (socket, chatId, members, isVideoCall) => {
       peerConnectionRef.current.close();
       peerConnectionRef.current = null;
     }
-    setLocalStream(null);
-    setRemoteStream(null);
+
+    // Stop all tracks in the local stream
+    if (localStream) {
+      localStream.getTracks().forEach((track) => track.stop());
+      setLocalStream(null);
+    }
+
+    // Also stop the remote stream if necessary
+    if (remoteStream) {
+      remoteStream.getTracks().forEach((track) => track.stop());
+      setRemoteStream(null);
+    }
+
     setIsInCall(false);
     setIsRinging(false);
 
-    socket.emit("END_CALL", { to: members, chatId });
+    socket.emit("REJECT_CALL", { to: members, chatId });
   };
-
-  // useEffect(() => {
-  //   socket.on("INCOMING_CALL", (data) => {
-  //     console.log("Incoming call data:", data);
-  //     // setIncomingOffer(data.offer);
-  //     setIsRinging(true);
-  //   });
-
-  //   return () => {
-  //     socket.off("INCOMING_CALL");
-  //   };
-  // }, [socket]);
 
   useEffect(() => {
     if (incomingOffer) {
@@ -125,12 +130,32 @@ export const useWebRTC = (socket, chatId, members, isVideoCall) => {
   }, [incomingOffer]);
 
   useEffect(() => {
-    // socket.on("INCOMING_CALL", (data) => {
-    //   setIncomingOffer(data.offer);
-    //   console.log(data);
-    //   setIsRinging(true);
-    // });
+    const handleCallRejected = () => {
+      if (peerConnectionRef.current) {
+        peerConnectionRef.current.close();
+        peerConnectionRef.current = null;
+      }
 
+      if (localStream) {
+        localStream.getTracks().forEach((track) => {
+          track.stop();
+        });
+        setLocalStream(null);
+      }
+      setIsInCall(false);
+      setIsRinging(false);
+
+      navigate("/chat");
+    };
+
+    socket.on("CALL_REJECTED", handleCallRejected);
+
+    return () => {
+      socket.off("CALL_REJECTED", handleCallRejected);
+    };
+  }, [socket, navigate, localStream]);
+
+  useEffect(() => {
     socket.on("CALL_USER", async () => {
       setIsRinging(false);
       await handleAnswerCall();
@@ -147,7 +172,9 @@ export const useWebRTC = (socket, chatId, members, isVideoCall) => {
           await peerConnectionRef.current.addIceCandidate(candidate);
         }
       } catch (error) {
-        console.error("Error setting remote description:", error);
+        toast.error(
+          "Something went wrong please report the issue and try again"
+        );
       }
     });
 

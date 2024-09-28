@@ -2,20 +2,29 @@ import React from "react";
 import { FaPhoneAlt, FaVideo } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { callStarted } from "../../../app/features/otherSlice";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 
-const CallButtons = ({ chatId }) => {
+const CallButtons = ({ chatId, member }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
+  const user = useSelector((state) => state.auth.user);
+
+  // console.log(user);
+
   const handleAudioCall = () => {
     dispatch(callStarted(true));
-    navigate(`/call/${chatId}?type=audio`);
+    navigate(
+      `/call/${chatId}?type=audio&&to=${member[0]._id}&&toName=${member[0].name}&&toImage=${member[0].avatar}`
+    );
+    ``;
   };
 
   const handleVideoCall = () => {
     dispatch(callStarted(true));
-    navigate(`/call/${chatId}?type=video`);
+    navigate(
+      `/call/${chatId}?type=video&&to=${member[0]._id}&&toName=${member[0].name}&&toImage=${member[0].avatar}`
+    );
     // onVideoCall();
   };
 

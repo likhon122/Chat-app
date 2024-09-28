@@ -18,32 +18,10 @@ const GroupChatNav = ({ chatId }) => {
   const user = useSelector((state) => state.auth.user);
   const { data, isLoading } = useGetGroupDetailsQuery(chatId);
 
+
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const socket = getSocket();
-
-  // const membersWithoutMe = chatMembers.filter((member) => member !== user?._id);
-
-  // const {
-  //   localStream,
-  //   remoteStream,
-  //   startCall,
-  //   handleAnswerCall,
-  //   handleEndCall,
-  //   isRinging,
-  //   isInCall,
-  //   isVideoCall
-  // } = useWebRTC(socket, chatId, chatMembers);
-
-  // const handleAudioCall = () => {
-  //   startCall(false); // Start audio call
-  //   setIsCallStarted(true);
-  // };
-
-  // const handleVideoCall = () => {
-  //   startCall(true); // Start video call
-  //   setIsCallStarted(true);
-  // };
 
   const handleInfoButton = () => {
     dispatch(setGroupInfoDrawer(!groupInfoDrawer));
@@ -62,6 +40,11 @@ const GroupChatNav = ({ chatId }) => {
     dispatch(setGroupInfoDrawer(false));
   }, []);
 
+  const isGroupChat = data?.payload?.chat.groupChat;
+  const member = data?.payload?.chat.members.filter(
+    (member) => member._id !== user._id
+  );
+
   if (isLoading) return <div>Loading...</div>;
 
   const { chatName, members } = data.payload.chat;
@@ -75,7 +58,7 @@ const GroupChatNav = ({ chatId }) => {
         <div className="flex items-center justify-between">
           <div className="flex items-center justify-between w-full">
             <div>
-              {data?.payload?.chat.groupChat ? (
+              {isGroupChat ? (
                 <div className="flex items-center cursor-default">
                   {members.slice(0, 3).map((member) => (
                     <img
@@ -109,28 +92,13 @@ const GroupChatNav = ({ chatId }) => {
               )}
             </div>
             <div className="pr-6">
-              <CallButtons chatId={chatId} />
-              {/* 
-              {isRinging && (
-                <div className="ringing-notification">
-                  <p>
-                    {isVideoCall
-                      ? "Incoming video call..."
-                      : "Incoming audio call..."}
-                  </p>
-                  <button onClick={handleAnswerCall}>Answer</button>
-                  <button onClick={handleEndCall}>Reject</button>
+              {!isGroupChat ? (
+                <CallButtons chatId={chatId} member={member} />
+              ) : (
+                <div className="text-white text-xs">
+                  Group Call is coming soon
                 </div>
               )}
-
-              {isInCall && localStream && remoteStream && (
-                <CallWindow
-                  localStream={localStream}
-                  remoteStream={remoteStream}
-                  onEndCall={handleEndCall}
-                  isVideoCall={isVideoCall}
-                />
-              )} */}
             </div>
           </div>
           <div className="flex items-center justify-end">
