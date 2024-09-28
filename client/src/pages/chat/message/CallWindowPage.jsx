@@ -76,7 +76,7 @@ const CallWindowPage = () => {
   return isLoading ? (
     <div className="text-center text-white bg-gray-900">Loading....</div>
   ) : (
-    <div className="call-page bg-gray-900 text-white h-full flex justify-center items-center">
+    <div className="call-page bg-gray-900 text-white h-[94vh] flex justify-center items-center">
       <CallWindow
         localStream={localStream}
         remoteStream={remoteStream}

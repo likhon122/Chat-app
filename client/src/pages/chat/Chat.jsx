@@ -1,15 +1,10 @@
-// import React from 'react'
-
 import { useEffect } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import MyChats from "./MyChats";
-// import { getSocket } from "../../Socket";
-import Message from "./message/Message";
 import GroupChatNav from "./GroupChatNav";
 import GroupInfo from "./GroupInfo";
-import { useGetGroupDetailsQuery } from "../../app/api/api";
-// import Demo from "../../components/Demo";
+import Message from "./message/Message";
 
 const Chat = () => {
   const userData = useSelector((state) => state.auth.user);
@@ -33,7 +28,7 @@ const Chat = () => {
 
   return (
     <>
-      <div className="md:hidden block">
+      <div className="md:hidden block h-[94vh] overflow-hidden">
         <div className="border border-black ">
           <GroupChatNav chatId={chatId} />
           {groupInfoDrawer ? (
@@ -45,7 +40,7 @@ const Chat = () => {
           )}
         </div>
       </div>
-      <div className="hidden md:block ">
+      <div className="hidden md:block md:h-[95vh] overflow-hidden">
         <div
           className={` ${
             groupInfoDrawer

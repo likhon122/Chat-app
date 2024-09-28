@@ -7,10 +7,10 @@ import React, {
   useRef,
   useState
 } from "react";
+import { FaXmark } from "react-icons/fa6";
 import { useDispatch, useSelector } from "react-redux";
 import { getSocket } from "../../../SocketHelper";
 import {
-  useGetGroupDetailsQuery,
   useGetMessagesQuery,
   useSendAttachmentsMutation
 } from "../../../app/api/api";
@@ -31,10 +31,7 @@ import { useSocketHook } from "../../../hooks/useSocketHook";
 import MessageInputBox from "./MessageInputBox";
 import ShowMessages from "./ShowMessages";
 import TypingIndicator from "./TypingIndicator";
-import { FaXmark } from "react-icons/fa6";
-import CallButtons from "./CallButtons";
-import CallWindow from "./CallWindow";
-import { useWebRTC } from "../../../hooks/useWebRTC";
+import SingleSpinner from "../../../components/Loaders/SingleSpinner";
 
 const Message = ({ chatId }) => {
   const members = useSelector((state) => state.other.members);
@@ -53,7 +50,6 @@ const Message = ({ chatId }) => {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [replyMessage, setReplyMessage] = useState(null);
   const [highlightedMessageId, setHighlightedMessageId] = useState(null);
-  const [inCall, setInCall] = useState(false);
 
   const typingTimeOut = useRef(null);
   const containerRef = useRef(null);
@@ -210,7 +206,7 @@ const Message = ({ chatId }) => {
       setSubmitFile([]);
       await sendAttachmentHandler("Sending attachments", formData);
     } catch (error) {
-      console.log(error);
+      return;
     }
   };
 
@@ -229,13 +225,13 @@ const Message = ({ chatId }) => {
       bottomRef.current.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  useEffect(() => {
-    messageInputRef?.current?.focus();
-    const handleBlur = () => {
-      messageInputRef?.current?.focus();
-    };
-    messageInputRef.current.addEventListener("blur", handleBlur);
-  }, [chatId]);
+  // useEffect(() => {
+  //   messageInputRef?.current?.focus();
+  //   const handleBlur = () => {
+  //     messageInputRef?.current?.focus();
+  //   };
+  //   messageInputRef.current.addEventListener("blur", handleBlur);
+  // }, [chatId]);
 
   useEffect(() => {
     dispatch(setChatId(chatId));
@@ -288,17 +284,23 @@ const Message = ({ chatId }) => {
       <div
         className={`flex flex-col h-[calc(100vh-90px)] sm:h-[calc(100vh-90px)] bg-gray-800 text-gray-100 scrollbar-thin scrollbar-thumb-rounded-lg`}
       >
-        <ShowMessages
-          bottomRef={bottomRef}
-          containerRef={containerRef}
-          handleReplyMessage={handleReplyMessage}
-          handleShowReplyMessage={handleShowReplyMessage}
-          messageRefs={messageRefs}
-          allMessages={allMessages}
-          replyMessage={replyMessage?.realTimeId}
-          userId={userId}
-          highlightedMessageId={highlightedMessageId}
-        />
+        {oldMessagesChunk.isFetching ? (
+          <div className="flex justify-center items-center h-full">
+            <SingleSpinner size="h-8 w-8" />
+          </div>
+        ) : (
+          <ShowMessages
+            bottomRef={bottomRef}
+            containerRef={containerRef}
+            handleReplyMessage={handleReplyMessage}
+            handleShowReplyMessage={handleShowReplyMessage}
+            messageRefs={messageRefs}
+            allMessages={allMessages}
+            replyMessage={replyMessage?.realTimeId}
+            userId={userId}
+            highlightedMessageId={highlightedMessageId}
+          />
+        )}
 
         <TypingIndicator userTyping={userTyping} />
 

@@ -19,7 +19,7 @@ const MessageInputBox = ({
 }) => {
   return (
     <>
-      <div className="relative bg-gray-800 p-3 sm:p-4 border-t border-gray-600">
+      <div className="relative bg-gray-800 p-3 sm:p-4 border-t border-gray-600 mb-2">
         <div>
           {selectedImage.length > 0 && (
             <div

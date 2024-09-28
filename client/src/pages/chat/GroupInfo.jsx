@@ -46,7 +46,7 @@ const GroupInfo = ({ chatId }) => {
 
   if (isLoading)
     return (
-      <div className="text-gray-400 text-center dark:bg-gray-900 h-[85.9vh] items-center justify-center flex">
+      <div className="text-gray-400 text-center dark:bg-gray-900 h-[85.9vh] overflow-hidden items-center justify-center flex">
         <SingleSpinner size="h-14 w-14" />
       </div>
     );

@@ -89,3 +89,7 @@
 .animate-swipe-right {
   animation: swipe-right 0.3s ease forwards;
 }
+
+body {
+  background-color: rgba(0, 0, 0, 0.829);
+}

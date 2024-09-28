@@ -88,7 +88,7 @@ const MyChats = () => {
   }
 
   return (
-    <div className="overflow-y-auto h-full p-4 bg-gray-100 dark:bg-gray-900">
+    <div className="overflow-y-auto h-[94.9vh] p-4 bg-gray-100 dark:bg-gray-900">
       {data?.payload.allChats.length === 0 ? (
         <h1 className="text-gray-500 dark:text-gray-400 text-lg text-center">
           No chats available. Send a friend request!

@@ -29,7 +29,7 @@ const CallWindow = ({
   const callerAvatar = callerDetails?.callerInfo?.avatar;
 
   return (
-    <div className="call-window text-white w-full h-screen flex flex-col justify-between relative overflow-hidden">
+    <div className="call-window text-white w-full h-full flex flex-col justify-between relative overflow-hidden">
       {toImage && (
         <div
           className="absolute inset-0 bg-cover bg-center"

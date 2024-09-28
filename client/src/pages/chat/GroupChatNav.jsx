@@ -9,6 +9,7 @@ import { useWebRTC } from "../../hooks/useWebRTC";
 import { getSocket } from "../../SocketHelper";
 import CallButtons from "./message/CallButtons";
 import CallWindow from "./message/CallWindow";
+import SingleSpinner from "../../components/Loaders/SingleSpinner";
 
 const GroupChatNav = ({ chatId }) => {
   const { groupInfoDrawer } = useSelector((state) => state.other);
@@ -17,7 +18,6 @@ const GroupChatNav = ({ chatId }) => {
 
   const user = useSelector((state) => state.auth.user);
   const { data, isLoading } = useGetGroupDetailsQuery(chatId);
-
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -45,52 +45,62 @@ const GroupChatNav = ({ chatId }) => {
     (member) => member._id !== user._id
   );
 
-  if (isLoading) return <div>Loading...</div>;
+  // if (isLoading) return <div>Loading...</div>;
 
-  const { chatName, members } = data.payload.chat;
+  const chat = data?.payload?.chat;
 
   // Filter out the current user from members
-  const friendMembers = members.filter((member) => member._id !== user._id);
+  const friendMembers = chat?.members.filter(
+    (member) => member._id !== user._id
+  );
 
   return (
     <>
-      <div className="bg-[#111827] p-[6px]">
+      <div className="bg-[#1d2f55] p-[6px]">
         <div className="flex items-center justify-between">
           <div className="flex items-center justify-between w-full">
-            <div>
-              {isGroupChat ? (
-                <div className="flex items-center cursor-default">
-                  {members.slice(0, 3).map((member) => (
-                    <img
-                      key={member._id}
-                      src={member.avatar}
-                      alt={member.name}
-                      className="w-8 h-8 rounded-full mr-2"
-                    />
-                  ))}
-                  <span className="text-white text-[10px]">
-                    {chatName?.split("-").filter((name) => name !== user.name)}
-                  </span>
-                </div>
-              ) : (
-                <div
-                  className="flex items-center cursor-pointer"
-                  onClick={handleClick}
-                >
-                  {friendMembers.map((member) => (
-                    <img
-                      key={member._id}
-                      src={member.avatar}
-                      alt={member.name}
-                      className="w-8 h-8 rounded-full mr-2"
-                    />
-                  ))}
-                  <span className="text-white text-[10px]">
-                    {chatName?.split("-").filter((name) => name !== user.name)}
-                  </span>
-                </div>
-              )}
-            </div>
+            {isLoading ? (
+              <SingleSpinner size="h-6 w-6" />
+            ) : (
+              <div>
+                {isGroupChat ? (
+                  <div className="flex items-center cursor-default">
+                    {chat.members.slice(0, 3).map((member) => (
+                      <img
+                        key={member._id}
+                        src={member.avatar}
+                        alt={member.name}
+                        className="w-8 h-8 rounded-full mr-2"
+                      />
+                    ))}
+                    <span className="text-white text-[10px]">
+                      {chat.chatName
+                        ?.split("-")
+                        .filter((name) => name !== user.name)}
+                    </span>
+                  </div>
+                ) : (
+                  <div
+                    className="flex items-center cursor-pointer"
+                    onClick={handleClick}
+                  >
+                    {friendMembers.map((member) => (
+                      <img
+                        key={member._id}
+                        src={member.avatar}
+                        alt={member.name}
+                        className="w-8 h-8 rounded-full mr-2"
+                      />
+                    ))}
+                    <span className="text-white text-[10px]">
+                      {chat.chatName
+                        ?.split("-")
+                        .filter((name) => name !== user.name)}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
             <div className="pr-6">
               {!isGroupChat ? (
                 <CallButtons chatId={chatId} member={member} />

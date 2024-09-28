@@ -39,8 +39,8 @@ const Navbar = () => {
   };
 
   return (
-    <div className="shadow-lg bg-[#FFFFFF] dark:bg-[#1F2937] top-0 left-0 w-full z-10">
-      <div className="container mx-auto flex items-center justify-between py-2 sm:px-4 sm:py-2 gap-1 sm:gap-2 ">
+    <div className="shadow-lg bg-[#FFFFFF] dark:bg-[#0b0f14] h-[6vh] md:h-[5vh] w-full z-10">
+      <div className="container mx-auto flex items-center justify-between sm:px-4 sm:py-2 gap-1 sm:gap-2 h-full ">
         <div className="md:hidden">
           <button
             onClick={toggleMobileMenu}
@@ -113,28 +113,14 @@ const Navbar = () => {
                 Chat
               </NavLink>
             </li>
-            {/* <li>
-              <NavLink
-                to="/dashboard"
-                className={({ isActive }) =>
-                  `text-lg font-medium transition-colors ${
-                    isActive
-                      ? "text-[#7D8ABC] dark:text-[#7D8ABC]"
-                      : "text-gray-700 dark:text-white"
-                  } hover:text-gray-900 dark:hover:text-gray-300`
-                }
-              >
-                Dashboard
-              </NavLink>
-            </li> */}
           </ul>
         )}
 
-        <div className="flex-grow flex justify-center">
+        <div className="flex-grow flex justify-center ">
           <Search />
         </div>
 
-        <div className="flex items-center sm:gap-2  z-50 mr-2 " title="Profile">
+        <div className="flex items-center sm:gap-2 z-50 mr-2" title="Profile">
           {userData && <Notification />}
           {userData?._id && (
             <NavLink
@@ -156,8 +142,10 @@ const Navbar = () => {
       <div
         ref={mobileMenuRef}
         className={`${
-          isMobileMenuOpen ? "max-h-screen" : "max-h-0"
-        } overflow-hidden transition-max-height duration-300 ease-in-out bg-white dark:bg-[#222222] md:hidden border-t border-gray-200 dark:border-gray-700`}
+          isMobileMenuOpen
+            ? "block opacity-100 scale-100"
+            : "hidden opacity-0 scale-95"
+        } transition-all duration-300 ease-in-out bg-white dark:bg-[#222222] md:hidden border-t border-gray-200 dark:border-gray-700 z-30`}
       >
         <ul className="flex flex-col gap-4 p-4">
           {!userData && (

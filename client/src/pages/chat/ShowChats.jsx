@@ -11,7 +11,6 @@ const ShowChat = () => {
   const navigate = useNavigate();
   const socket = getSocket();
 
-
   useEffect(() => {
     if (!userData) {
       setTimeout(() => {
@@ -33,7 +32,7 @@ const ShowChat = () => {
   }, [dispatch, socket]);
 
   return (
-    <div className=" grid  h-[95vh] grid-cols-1 md:grid-cols-[1fr_2fr]">
+    <div className=" grid h-[95vh] overflow-hidden grid-cols-1 md:grid-cols-[1fr_2fr]">
       <div className=" bg-gray-100 border-r border-gray-300 ">
         <MyChats />
       </div>
