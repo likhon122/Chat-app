@@ -1,7 +1,7 @@
 import { useEffect, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { getSocket } from "../../SocketHelper";
+import { useGetSocket } from "../../SocketHelper";
 import {
   useGetChatsQuery,
   useGetNotificationsQuery,
@@ -32,7 +32,7 @@ const MyChats = () => {
   const [readNotificationHandler] = useReadNotificationMutation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const socket = getSocket();
+  const socket = useGetSocket();
 
   const handleClick = (chat) => {
     dispatch(setMembers(chat.members));

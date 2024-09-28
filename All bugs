@@ -12,7 +12,7 @@ Bug !!!!!!!!
 
 2. When change any chat then missing loading for message component // Finish
 
-3. Make sure height always 100vh
+3. Make sure height always 100vh // Almost finished
 
 4. When I call anyone then it's not calling until user do not refresh!!
 

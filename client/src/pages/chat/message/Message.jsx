@@ -9,7 +9,7 @@ import React, {
 } from "react";
 import { FaXmark } from "react-icons/fa6";
 import { useDispatch, useSelector } from "react-redux";
-import { getSocket } from "../../../SocketHelper";
+import { useGetSocket } from "../../../SocketHelper";
 import {
   useGetMessagesQuery,
   useSendAttachmentsMutation
@@ -37,7 +37,7 @@ const Message = ({ chatId }) => {
   const members = useSelector((state) => state.other.members);
   const userId = useSelector((state) => state.auth.user?._id);
 
-  const socket = getSocket();
+  const socket = useGetSocket();
   const dispatch = useDispatch();
 
   const [message, setMessage] = useState("");

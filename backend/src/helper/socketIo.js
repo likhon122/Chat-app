@@ -45,6 +45,7 @@ const handleSocketEvents = (io) => {
     const { user } = socket;
 
     userSocketIds.set(user._id.toString(), socket.id);
+
     // Handle new message
     socket.on(
       NEW_MESSAGE,
@@ -155,17 +156,19 @@ const handleSocketEvents = (io) => {
     socket.on(
       "CALL_USER",
       async ({ to, offer, callType, chatId, callerInfo }) => {
+        console.log(to);
         const memberIds = to.filter((id) => id !== user._id);
 
-        // const membersInfo = await User.find({ _id: { $in: memberIds } }).select(
-        //   "name avatar"
-        // );
+        // console.log(userSocketIds);
+
+        const userSocketId = userSocketIds.get(user._id.toString());
 
         const targetSocketIds = getSockets(memberIds);
 
         // Emit the call to all valid socket IDs
         if (!targetSocketIds.length) {
-          console.warn(`No connected users found for ${to}`);
+          io.to(userSocketId).emit("USER_OFFLINE", to);
+          return;
         }
 
         io.to(targetSocketIds).emit("INCOMING_CALL", {

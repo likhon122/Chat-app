@@ -44,7 +44,6 @@ export const useWebRTC = (socket, chatId, members, isVideoCall) => {
       video: isVideoCall
     });
 
-    // Only set localStream if it's different
     if (!localStream) {
       setLocalStream(stream);
     }
@@ -105,13 +104,11 @@ export const useWebRTC = (socket, chatId, members, isVideoCall) => {
       peerConnectionRef.current = null;
     }
 
-    // Stop all tracks in the local stream
     if (localStream) {
       localStream.getTracks().forEach((track) => track.stop());
       setLocalStream(null);
     }
 
-    // Also stop the remote stream if necessary
     if (remoteStream) {
       remoteStream.getTracks().forEach((track) => track.stop());
       setRemoteStream(null);
@@ -119,7 +116,6 @@ export const useWebRTC = (socket, chatId, members, isVideoCall) => {
 
     setIsInCall(false);
     setIsRinging(false);
-
     socket.emit("REJECT_CALL", { to: members, chatId });
   };
 
@@ -131,20 +127,7 @@ export const useWebRTC = (socket, chatId, members, isVideoCall) => {
 
   useEffect(() => {
     const handleCallRejected = () => {
-      if (peerConnectionRef.current) {
-        peerConnectionRef.current.close();
-        peerConnectionRef.current = null;
-      }
-
-      if (localStream) {
-        localStream.getTracks().forEach((track) => {
-          track.stop();
-        });
-        setLocalStream(null);
-      }
-      setIsInCall(false);
-      setIsRinging(false);
-
+      endCall();
       navigate("/chat");
     };
 
@@ -153,7 +136,7 @@ export const useWebRTC = (socket, chatId, members, isVideoCall) => {
     return () => {
       socket.off("CALL_REJECTED", handleCallRejected);
     };
-  }, [socket, navigate, localStream]);
+  }, [socket, navigate]);
 
   useEffect(() => {
     socket.on("CALL_USER", async () => {
@@ -172,9 +155,8 @@ export const useWebRTC = (socket, chatId, members, isVideoCall) => {
           await peerConnectionRef.current.addIceCandidate(candidate);
         }
       } catch (error) {
-        toast.error(
-          "Something went wrong please report the issue and try again"
-        );
+        console.error("Error setting remote description:", error);
+        toast.error("Failed to set remote description.");
       }
     });
 
@@ -192,15 +174,23 @@ export const useWebRTC = (socket, chatId, members, isVideoCall) => {
       }
     });
 
+    socket.on("USER_OFFLINE", () => {
+      setIsRinging(false);
+      toast.error("User is offline", {
+        autoClose: 700,
+        closeButton: true
+      });
+      endCall();
+    });
+
     return () => {
-      socket.off("INCOMING_CALL");
       socket.off("CALL_USER");
       socket.off("CALL_ANSWERED");
       socket.off("ICE_CANDIDATE");
+      socket.off("USER_OFFLINE");
     };
   }, [socket, incomingOffer]);
 
-  // Memoize localStream if necessary
   const memoizedLocalStream = useMemo(() => localStream, [localStream]);
 
   return {

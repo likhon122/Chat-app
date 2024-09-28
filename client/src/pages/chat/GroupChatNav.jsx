@@ -6,7 +6,7 @@ import { FaXmark } from "react-icons/fa6";
 import { useGetGroupDetailsQuery } from "../../app/api/api";
 import { useNavigate } from "react-router-dom";
 import { useWebRTC } from "../../hooks/useWebRTC";
-import { getSocket } from "../../SocketHelper";
+import { useGetSocket } from "../../SocketHelper";
 import CallButtons from "./message/CallButtons";
 import CallWindow from "./message/CallWindow";
 import SingleSpinner from "../../components/Loaders/SingleSpinner";
@@ -16,12 +16,14 @@ const GroupChatNav = ({ chatId }) => {
   const chatMembers = useSelector((state) => state.other.members);
   const [isCallStarted, setIsCallStarted] = useState(false);
 
+  // console.log(chatMembers);
+
   const user = useSelector((state) => state.auth.user);
   const { data, isLoading } = useGetGroupDetailsQuery(chatId);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const socket = getSocket();
+  const socket = useGetSocket();
 
   const handleInfoButton = () => {
     dispatch(setGroupInfoDrawer(!groupInfoDrawer));

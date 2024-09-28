@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
-import { getSocket } from "./SocketHelper"; // Socket connection logic
+import { useGetSocket } from "./SocketHelper"; // Socket connection logic
 
 import {
   setCallerDetails,
@@ -11,13 +11,14 @@ import { useDispatch } from "react-redux";
 
 const GlobalCallHandler = () => {
   const navigate = useNavigate();
-  const socket = getSocket();
+  const socket = useGetSocket();
   const dispatch = useDispatch();
 
   useEffect(() => {
     socket.on(
       "INCOMING_CALL",
       ({ chatId, callType, members, fromName, offer, from, callerInfo }) => {
+        console.log(members);
         dispatch(setMembers(members));
         dispatch(setIncomingOffer(offer));
         dispatch(setCallerDetails({ from, fromName, callerInfo }));

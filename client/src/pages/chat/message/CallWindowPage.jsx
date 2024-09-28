@@ -2,11 +2,10 @@ import { useParams, useLocation, useNavigate } from "react-router-dom";
 import CallWindow from "../message/CallWindow";
 import { useWebRTC } from "../../../hooks/useWebRTC";
 import { useDispatch, useSelector } from "react-redux";
-import { getSocket } from "../../../SocketHelper";
-import { useEffect, useState } from "react";
+import { useGetSocket } from "../../../SocketHelper";
+import { useEffect } from "react";
 import { useGetGroupDetailsQuery } from "../../../app/api/api";
 import { toast } from "react-toastify";
-import { setIncomingOffer } from "../../../app/features/otherSlice";
 
 const CallWindowPage = () => {
   const { chatId } = useParams();
@@ -22,17 +21,15 @@ const CallWindowPage = () => {
 
   const { data, isLoading } = useGetGroupDetailsQuery(chatId, false);
 
-  const members = [];
-  if (data?.payload?.chat?.members.length > 1) {
-    data.payload.chat.members.forEach((member) => members.push(member._id));
-  }
+  const members =
+    data?.payload?.chat?.members.map((member) => member._id) || [];
 
   if (!isLoading && members.length < 1) {
     toast.error("No members found");
   }
 
   const callStarted = useSelector((state) => state.other.isCallStarted);
-  const socket = getSocket();
+  const socket = useGetSocket();
   const isVideoCall = callType === "video";
 
   const {
@@ -42,11 +39,7 @@ const CallWindowPage = () => {
     handleAnswerCall,
     endCall,
     isRinging,
-    isInCall,
-    muteAudio,
-    toggleVideo,
-    isMuted,
-    isVideoEnabled
+    isInCall
   } = useWebRTC(socket, chatId, members, isVideoCall);
 
   useEffect(() => {
@@ -57,21 +50,10 @@ const CallWindowPage = () => {
     }
   }, [callStarted, startCall]);
 
-  const initiateCall = async () => {
-    if (!isInCall && !isRinging) {
-      await startCall();
-    }
-  };
-
   const handleRejectCall = () => {
     endCall();
-    navigate(`/chat`);
+    navigate("/chat");
   };
-
-  // useEffect(() => {
-  //   console.log("Local Stream:", localStream);
-  //   console.log("Remote Stream:", remoteStream);
-  // }, [localStream, remoteStream]);
 
   return isLoading ? (
     <div className="text-center text-white bg-gray-900">Loading....</div>
@@ -85,11 +67,7 @@ const CallWindowPage = () => {
         isRinging={isRinging}
         isInCall={isInCall}
         handleAnswerCall={handleAnswerCall}
-        initiateCall={initiateCall}
-        muteAudio={muteAudio}
-        toggleVideo={toggleVideo}
-        isMuted={isMuted}
-        isVideoEnabled={isVideoEnabled}
+        initiateCall={startCall}
         toName={toName}
         toImage={toImage}
         to={to}
