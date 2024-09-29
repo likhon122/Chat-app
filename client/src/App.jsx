@@ -1,61 +1,44 @@
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import {
   createBrowserRouter,
   createRoutesFromElements,
+  Navigate,
   Route,
-  RouterProvider,
-  Navigate
+  RouterProvider
 } from "react-router-dom";
-import Layout from "./Layout";
-import Home from "./pages/home/Home";
-import SignUp from "./pages/sign-up/SignUp";
-import Login from "./pages/login/Login";
-import NotFound from "./pages/not-found/404NotFound";
-import Chat from "./pages/chat/Chat";
-import { useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { setUser } from "./app/features/authSlice";
-import Verify from "./pages/sign-up/Verify";
 import { useVerifyUserQuery } from "./app/api/api";
-import ShowChat from "./pages/chat/ShowChats";
-import Profile from "./pages/profile/Profile";
-import Friends from "./pages/friends/Friends";
-import MyGroups from "./pages/myGroups/MyGroups";
+import { setUser } from "./app/features/authSlice";
 import DuelSpinner from "./components/Loaders/DuelSpinner";
-import PushNotificationManager from "./PushNotificationManager";
-import Dashboard from "./pages/admin/Dashboard";
-import MainLayout from "./pages/admin/MainLayout";
+import Layout from "./Layout";
+import Chat from "./pages/chat/Chat";
 import CallWindowPage from "./pages/chat/message/CallWindowPage";
+import ShowChat from "./pages/chat/ShowChats";
+import Friends from "./pages/friends/Friends";
+import Home from "./pages/home/Home";
+import Login from "./pages/login/Login";
+import MyGroups from "./pages/myGroups/MyGroups";
+import NotFound from "./pages/not-found/404NotFound";
+import Profile from "./pages/profile/Profile";
+import SignUp from "./pages/sign-up/SignUp";
+import Verify from "./pages/sign-up/Verify";
+import PushNotificationManager from "./PushNotificationManager";
 
 const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY;
 
 // Protected Route component for authentication
 const ProtectedRoute = ({ user, isLoading, children }) => {
-  if (isLoading) {
-    return (
-      <div className="h-screen dark:bg-darkBg flex items-center justify-center">
-        <DuelSpinner /> {/* Show spinner while loading */}
-      </div>
-    );
-  }
-
-  if (!user) {
-    return <Navigate to="/login" replace />;
+  if (!isLoading && !user) {
+    return <Navigate to="/login" />;
   }
 
   return children;
 };
 
+// Check if the user is already logged in to redirect to chat
 const CheckUserIsLoggedIn = ({ user, isLoading, children }) => {
-  if (isLoading) {
-    return (
-      <div className="h-screen dark:bg-darkBg flex items-center justify-center">
-        <DuelSpinner />
-      </div>
-    );
-  }
-
-  if (user) {
-    return <Navigate to="/chat" replace />;
+  if (!isLoading && user) {
+    return <Navigate to="/chat" />;
   }
 
   return children;
@@ -65,12 +48,18 @@ const App = () => {
   const dispatch = useDispatch();
   const { data, isLoading, isError, error } = useVerifyUserQuery();
   const user = useSelector((state) => state.auth.user);
+  const userData = useSelector((state) => state.auth.user);
+  // console.log(user);
 
   useEffect(() => {
-    if (data && data.payload?.user) {
+    if (!isLoading && data && data.payload?.user) {
       dispatch(setUser(data.payload.user));
     }
-  }, [dispatch, data]);
+  }, [dispatch, data, isLoading]);
+
+  console.log(isLoading, userData);
+
+  console.log(isLoading, user);
 
   if (isLoading) {
     return (
@@ -84,21 +73,13 @@ const App = () => {
     createRoutesFromElements(
       <Route path="/" element={<Layout />}>
         <Route
-          path=""
+          index
           element={
             <CheckUserIsLoggedIn user={user} isLoading={isLoading}>
               <Home />
             </CheckUserIsLoggedIn>
           }
         />
-        {/* <Route
-          path="dashboard"
-          element={
-            <ProtectedRoute user={user} isLoading={isLoading}>
-              <MainLayout />
-            </ProtectedRoute>
-          }
-        /> */}
         <Route
           path="sign-up"
           element={

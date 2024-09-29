@@ -1,62 +1,58 @@
-import { useEffect } from "react";
 import { useSelector } from "react-redux";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import MyChats from "./MyChats";
+import { useParams } from "react-router-dom";
 import GroupChatNav from "./GroupChatNav";
 import GroupInfo from "./GroupInfo";
 import Message from "./message/Message";
+import MyChats from "./MyChats";
 
 const Chat = () => {
-  const userData = useSelector((state) => state.auth.user);
   const { groupInfoDrawer } = useSelector((state) => state.other);
-
-  const navigate = useNavigate();
   const params = useParams();
-  const [searchParams] = useSearchParams();
-
-  const groupChat = searchParams.get("group-chat");
-
   const { chatId } = params;
-
-  useEffect(() => {
-    setTimeout(() => {
-      if (!userData) {
-        navigate("/sign-up");
-      }
-    }, 2000);
-  }, [userData, navigate]);
 
   return (
     <>
-      <div className="md:hidden block h-[94vh] overflow-hidden">
-        <div className="border border-black ">
-          <GroupChatNav chatId={chatId} />
-          {groupInfoDrawer ? (
-            <div className="border border-black ">
-              <GroupInfo chatId={chatId} />
-            </div>
-          ) : (
-            <Message chatId={chatId} />
-          )}
+      <div className="md:hidden block">
+        <div
+          className={`${
+            groupInfoDrawer ? "" : "h-[94vh] overflow-clip"
+          } px-1 py-1 `}
+        >
+          <div className="">
+            <GroupChatNav chatId={chatId} />
+            {groupInfoDrawer ? (
+              <div className="  ">
+                <GroupInfo chatId={chatId} />
+              </div>
+            ) : (
+              <div className="h-[92vh]">
+                <Message chatId={chatId} />
+              </div>
+            )}
+          </div>
         </div>
       </div>
-      <div className="hidden md:block md:h-[95vh] overflow-hidden">
+      <div className="hidden md:block  grid-cols-1 px-5 py-3">
         <div
           className={` ${
             groupInfoDrawer
-              ? "md:grid grid-cols-[1fr_1.3fr_.7fr]"
-              : "md:grid grid-cols-[1fr_2fr]"
+              ? "md:grid grid-cols-[400px_1fr] xl:grid-cols-[400px_1fr_300px] gap-4"
+              : "grid grid-cols-[400px_1fr] gap-5"
           }`}
         >
-          <div className="border border-black sm:h-[calc(100vh-52px)] ">
+          <div className="">
             <MyChats />
           </div>
-          <div className="border border-black ">
+          <div
+            className={`${
+              groupInfoDrawer ? "hidden xl:block" : ""
+            } border border-gray-700 shadow-md shadow-gray-700 rounded-md h-[92vh] `}
+          >
             <GroupChatNav chatId={chatId} />
             <Message chatId={chatId} />
           </div>
           {groupInfoDrawer && (
-            <div className="border border-black ">
+            <div className="">
               <GroupInfo chatId={chatId} />
             </div>
           )}

@@ -14,11 +14,11 @@ const ShowMessages = ({
 }) => {
   const [startTouchX, setStartTouchX] = useState(null);
   const [swipeDirection, setSwipeDirection] = useState({});
-  const [swipeThreshold] = useState(50); // Define a swipe threshold
+  const [swipeThreshold] = useState(50);
 
   const handleTouchStart = (e) => {
     setStartTouchX(e.touches[0].clientX);
-    setSwipeDirection({}); // Reset swipe direction
+    setSwipeDirection({});
   };
 
   const handleTouchMove = (e, messageId) => {
@@ -63,7 +63,7 @@ const ShowMessages = ({
 
   return (
     <div
-      className="flex-1 overflow-y-auto bg-gray-900 p-4 rounded-t-lg shadow-lg"
+      className="flex-1 overflow-y-auto custom-scrollbar dark:bg-darkBg p-4 rounded-t-lg shadow-lg"
       ref={containerRef}
     >
       {allMessages &&
@@ -109,20 +109,11 @@ const ShowMessages = ({
               onTouchStart={handleTouchStart}
               onTouchMove={(e) => handleTouchMove(e, messageId)}
               onTouchEnd={(e) => handleTouchEnd(e, messageId)}
-              className={`group flex relative ${
+              className={`group flex ${
                 isSameSender ? "justify-end" : "justify-start"
               } mb-4 ${animationClass}`}
               style={{ maxWidth: "100%" }} // Limit the width of the messages
             >
-              <p
-                className={`top-2 ${
-                  isSameSender ? "block" : "hidden"
-                } text-xs text-blue-500 cursor-pointer flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300 ease-in-out px-2 py-1 rounded-lg z-10`}
-                onClick={() => handleReplyMessage(message)}
-              >
-                <FaReply className="text-sm" /> Reply
-              </p>
-
               <div className="flex flex-col">
                 <div
                   onClick={() => handleShowReplyMessage(message)}
@@ -130,7 +121,7 @@ const ShowMessages = ({
                 >
                   {message.replyTo && (
                     <div
-                      className={`border-l-4 border-sky-500 pl-2 bg-gray-900/70 p-2 rounded-lg shadow-sm ${
+                      className={`border-l-4 border-sky-500 pl-2 bg-gray-900 p-2 rounded-lg shadow-sm ${
                         isSameSender ? "text-right" : "text-left"
                       }`}
                     >
@@ -192,113 +183,131 @@ const ShowMessages = ({
                   )}
                 </div>
 
-                <div
-                  className={`p-4 shadow-md max-w-[200px] sm:max-w-md lg:max-w-lg min-w-20 ${
-                    isSameSender
-                      ? "bg-[#0B2F9F] text-white rounded-s-[1.6rem] rounded-tr-[1.6rem]"
-                      : "bg-gray-700 text-gray-200 rounded-e-[1.6rem] rounded-bl-[1.6rem]"
-                  } ${
-                    highlightedMessageId === messageId
-                      ? `border border-gray-200 transform scale-110 duration-700 ${
-                          isSameSender ? "bg-cyan-900" : "bg-gray-200"
-                        }`
-                      : ""
-                  }`}
-                >
-                  {!isSameSender && (
-                    <h3 className="mb-1 text-sky-400 text-xs sm:text-sm font-semibold uppercase">
-                      {message.sender.name}
-                    </h3>
-                  )}
-
-                  <p className="break-words text-sm sm:text-base leading-relaxed">
-                    {message.content}
+                <div className="flex  items-center">
+                  <p
+                    className={`top-2 ${
+                      isSameSender ? "block" : "hidden"
+                    } text-xs text-blue-500 cursor-pointer flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300 ease-in-out px-2 py-1 rounded-lg z-10`}
+                    onClick={() => handleReplyMessage(message)}
+                  >
+                    <FaReply className="text-sm" /> Reply
                   </p>
+                  <div className={`${isSameSender ? "hidden" : ""}`}>
+                    <img
+                      src={message.sender.avatar.url || message.sender.avatar}
+                      alt="sender Image"
+                      className="w-6 h-6 rounded-full mr-2 object-cover bg-cover"
+                    />
+                  </div>
+                  <div
+                    className={`px-4 py-2 shadow-md max-w-[200px] sm:max-w-md lg:max-w-lg min-w-20   ${
+                      isSameSender
+                        ? "bg-[#0B2F9F] text-white rounded-s-[1.6rem] rounded-tr-[1.6rem]"
+                        : "bg-gray-700 text-gray-200 rounded-e-[1.6rem] rounded-bl-[1.6rem]"
+                    } ${
+                      highlightedMessageId === messageId
+                        ? `border border-gray-200 transform scale-110 duration-700 ${
+                            isSameSender ? "bg-cyan-900" : "bg-gray-200"
+                          }`
+                        : ""
+                    }`}
+                  >
 
-                  {message.attachment?.length > 0 && (
-                    <div
-                      className={`grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2`}
-                    >
-                      {message.attachment.map((att) => {
-                        const isVideo =
-                          att.url.endsWith(".mp4") ||
-                          att.url.endsWith(".webm") ||
-                          att.url.endsWith(".ogg");
-                        const isAudio =
-                          att.url.endsWith(".mp3") || att.url.endsWith(".wav");
-                        const isPDF = att.url.endsWith(".pdf");
-                        const isCodeFile =
-                          att.url.endsWith(".js") ||
-                          att.url.endsWith(".html") ||
-                          att.url.endsWith(".css");
 
-                        return (
-                          <div
-                            key={att.public_id}
-                            className="relative rounded-lg shadow-md"
-                          >
-                            {isVideo ? (
-                              <video
-                                className="w-full rounded-lg transition-transform duration-200 ease-in-out transform hover:scale-105"
-                                controls
-                              >
-                                <source src={att.url} type="video/mp4" />
-                                Your browser does not support the video tag.
-                              </video>
-                            ) : isAudio ? (
-                              <audio controls className="w-full">
-                                <source src={att.url} type="audio/mp3" />
-                                Your browser does not support the audio tag.
-                              </audio>
-                            ) : isPDF ? (
-                              <a
-                                href={att.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center justify-center border border-transparent bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold py-2 px-4 rounded-lg shadow-lg hover:scale-105 hover:shadow-xl transition-transform duration-200 ease-in-out"
-                              >
-                                <FaFilePdf className="mr-2" />
-                                Download PDF
-                              </a>
-                            ) : isCodeFile ? (
-                              <a
-                                href={att.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="block border border-gray-600 p-2 rounded-lg hover:border-gray-400"
-                              >
-                                Download{" "}
-                                {att.url.split(".").pop().toUpperCase()} file
-                              </a>
-                            ) : (
-                              <a
-                                href={att.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="block overflow-hidden rounded-lg border border-gray-600 hover:border-gray-400 transition duration-200 ease-in-out"
-                              >
-                                <img
-                                  src={att.url}
-                                  className="h-20 sm:h-32 w-40 object-cover rounded-lg transition-transform duration-200 ease-in-out transform hover:scale-105"
-                                  alt="Image attachment"
-                                />
-                              </a>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
+                    <p className="break-words text-sm  text-pretty">
+                      {message.content}
+                    </p>
+
+                    {message.attachment?.length > 0 && (
+                      <div
+                        className={`${
+                          message.attachment.length > 1
+                            ? "grid grid-cols-2 gap-2"
+                            : ""
+                        }`}
+                      >
+                        {message.attachment.map((att) => {
+                          const isVideo =
+                            att.url.endsWith(".mp4") ||
+                            att.url.endsWith(".webm") ||
+                            att.url.endsWith(".ogg");
+                          const isAudio =
+                            att.url.endsWith(".mp3") ||
+                            att.url.endsWith(".wav");
+                          const isPDF = att.url.endsWith(".pdf");
+                          const isCodeFile =
+                            att.url.endsWith(".js") ||
+                            att.url.endsWith(".html") ||
+                            att.url.endsWith(".css");
+
+                          return (
+                            <div
+                              key={att.public_id}
+                              className="relative rounded-lg shadow-md"
+                            >
+                              {isVideo ? (
+                                <video
+                                  className="w-full rounded-lg transition-transform duration-200 ease-in-out transform hover:scale-105"
+                                  controls
+                                >
+                                  <source src={att.url} type="video/mp4" />
+                                  Your browser does not support the video tag.
+                                </video>
+                              ) : isAudio ? (
+                                <audio controls className="w-full">
+                                  <source src={att.url} type="audio/mp3" />
+                                  Your browser does not support the audio tag.
+                                </audio>
+                              ) : isPDF ? (
+                                <a
+                                  href={att.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center justify-center border border-transparent bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold py-2 px-4 rounded-lg shadow-lg hover:scale-105 hover:shadow-xl transition-transform duration-200 ease-in-out"
+                                >
+                                  <FaFilePdf className="mr-2" />
+                                  Download PDF
+                                </a>
+                              ) : isCodeFile ? (
+                                <a
+                                  href={att.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="block border border-gray-600 p-2 rounded-lg hover:border-gray-400"
+                                >
+                                  Download{" "}
+                                  {att.url.split(".").pop().toUpperCase()} file
+                                </a>
+                              ) : (
+                                <a
+                                  href={att.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="block overflow-hidden rounded-lg border border-gray-600 hover:border-gray-400 transition duration-200 ease-in-out"
+                                >
+                                  <img
+                                    src={att.url}
+                                    className="h-20 sm:h-32 w-40 object-cover rounded-lg transition-transform duration-200 ease-in-out transform hover:scale-105"
+                                    alt="Image attachment"
+                                  />
+                                </a>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  <p
+                    className={` ${
+                      isSameSender ? "hidden" : "block"
+                    } text-xs text-blue-500 cursor-pointer flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300 ease-in-out px-2 py-1 rounded-lg z-10`}
+                    onClick={() => handleReplyMessage(message)}
+                  >
+                    Reply <FaReply className="text-sm" />
+                  </p>
                 </div>
-
-                <p
-                  className={`top-2 ${
-                    isSameSender ? "hidden" : "block"
-                  } text-xs text-blue-500 cursor-pointer flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300 ease-in-out px-2 py-1 rounded-lg z-10`}
-                  onClick={() => handleReplyMessage(message)}
-                >
-                  <FaReply className="text-sm" /> Reply
-                </p>
               </div>
             </div>
           );

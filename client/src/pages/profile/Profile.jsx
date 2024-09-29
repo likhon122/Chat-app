@@ -55,14 +55,6 @@ const Profile = () => {
     }
   };
 
-  useEffect(() => {
-    if (!userData) {
-      setTimeout(() => {
-        navigate("/sign-up");
-      }, 1000);
-    }
-  }, [userData, navigate]);
-
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-[94.7vh] text-lg text-gray-700 dark:text-gray-300 dark:bg-gray-900">
@@ -76,12 +68,11 @@ const Profile = () => {
   };
 
   return (
-    <div className="relative min-h-[100vh] sm:h-[94.9vh] sm:min-h-max bg-gray-100 dark:bg-gray-900 flex flex-col items-center p-6">
-      <div className="w-full bg-white dark:bg-gray-800 shadow-lg rounded-lg p-8 mb-6">
+    <div className=" min-h-[100vh] sm:h-[94.9vh] sm:min-h-max bg-gray-100 dark:bg-darkBg flex flex-col items-center p-6">
+      <div className="w-full shadow-lg rounded-lg p-8 mb-6">
         {data?.payload?.user && (
           <div>
             <div className="flex justify-center items-center mb-4 cursor-pointer">
-              {" "}
               <img
                 src={
                   data.payload.user.avatar || "path/to/placeholder-image.png"

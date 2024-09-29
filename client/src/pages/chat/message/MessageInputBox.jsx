@@ -19,7 +19,7 @@ const MessageInputBox = ({
 }) => {
   return (
     <>
-      <div className="relative bg-gray-800 p-3 sm:p-4 border-t border-gray-600 mb-2">
+      <div className="relative bg-[#292c33] p-3 border-t border-gray-600">
         <div>
           {selectedImage.length > 0 && (
             <div
@@ -73,10 +73,10 @@ const MessageInputBox = ({
             <input
               type="text"
               id="messageInput"
-              spellCheck={false}
               placeholder="Type your message..."
               value={message}
-              className="border border-gray-600 bg-gray-700 px-2 py-1 sm:p-2 rounded-lg text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all w-full"
+              spellCheck={true}
+              className="border border-gray-600 bg-gray-700 px-2 py-1 sm:p-2 rounded-lg text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400 transition-all w-full"
               onChange={handleMessageChange}
               ref={messageInputRef}
             />

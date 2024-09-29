@@ -134,7 +134,8 @@ const Message = ({ chatId }) => {
   const getGridClasses = (length) => {
     if (length > 4) return "grid-cols-3";
     if (length > 2) return "grid-cols-3";
-    return "grid-cols-2";
+    if(length === 2) return "grid-cols-2";
+    return "grid-cols-1 ";
   };
 
   const handleReplyMessage = (message) => {
@@ -225,13 +226,6 @@ const Message = ({ chatId }) => {
       bottomRef.current.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // useEffect(() => {
-  //   messageInputRef?.current?.focus();
-  //   const handleBlur = () => {
-  //     messageInputRef?.current?.focus();
-  //   };
-  //   messageInputRef.current.addEventListener("blur", handleBlur);
-  // }, [chatId]);
 
   useEffect(() => {
     dispatch(setChatId(chatId));
@@ -282,7 +276,7 @@ const Message = ({ chatId }) => {
   return (
     <>
       <div
-        className={`flex flex-col h-[calc(100vh-90px)] sm:h-[calc(100vh-90px)] bg-gray-800 text-gray-100 scrollbar-thin scrollbar-thumb-rounded-lg`}
+        className={`flex flex-col h-[95%] md:h-[95%] dark:bg-darkBg text-gray-100 scrollbar-thin scrollbar-thumb-rounded-lg`}
       >
         {oldMessagesChunk.isFetching ? (
           <div className="flex justify-center items-center h-full">

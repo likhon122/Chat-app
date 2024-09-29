@@ -39,7 +39,7 @@ const Navbar = () => {
   };
 
   return (
-    <div className="shadow-lg bg-[#FFFFFF] dark:bg-[#0b0f14] h-[6vh] md:h-[5vh] w-full z-10">
+    <div className="shadow-md bg-[#FFFFFF] dark:bg-[#222222] h-[6vh] md:h-[5vh] w-full z-99 shadow-black border-b border-b-gray-700">
       <div className="container mx-auto flex items-center justify-between sm:px-4 sm:py-2 gap-1 sm:gap-2 h-full ">
         <div className="md:hidden">
           <button
@@ -120,8 +120,11 @@ const Navbar = () => {
           <Search />
         </div>
 
-        <div className="flex items-center sm:gap-2 z-50 mr-2" title="Profile">
-          {userData && <Notification />}
+        {userData && <Notification />}
+        <div
+          className="flex items-center sm:gap-2 z-50 mr-2 "
+          title="Notification"
+        >
           {userData?._id && (
             <NavLink
               to={`/profile/${userData._id}`}

@@ -37,7 +37,7 @@ const NotificationDrawer = ({ onClose }) => {
   };
 
   return (
-    <div className="h-full bg-white dark:bg-[#222222] min-h-[400px] max-h-[100vh] overflow-y-auto ">
+    <div className="h-full bg-white dark:bg-[#222222] py-2 px-4 min-h-[400px] max-h-[100vh] overflow-y-auto ">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-lg font-semibold text-gray-800 dark:text-white">
           Notifications
@@ -45,7 +45,7 @@ const NotificationDrawer = ({ onClose }) => {
         <button
           onClick={onClose}
           aria-label="Close drawer"
-          className="text-gray-600 hover:text-gray-800 transition duration-200"
+          className="text-gray-300 hover:text-gray-100 transition duration-200"
         >
           <FaXmark size={22} />
         </button>
@@ -90,7 +90,7 @@ const NotificationDrawer = ({ onClose }) => {
             </div>
           ))
         ) : (
-          <h3 className="text-center text-gray-600">No notifications here!</h3>
+          <h3 className="text-center text-gray-300">No notifications here!</h3>
         )}
       </div>
     </div>

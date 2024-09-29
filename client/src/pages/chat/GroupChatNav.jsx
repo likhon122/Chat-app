@@ -58,8 +58,8 @@ const GroupChatNav = ({ chatId }) => {
 
   return (
     <>
-      <div className="bg-[#1d2f55] p-[6px]">
-        <div className="flex items-center justify-between">
+      <div className="bg-[#292c33] h-[5%] px-3 shadow-gray-600">
+        <div className="flex items-center justify-between h-full">
           <div className="flex items-center justify-between w-full">
             {isLoading ? (
               <SingleSpinner size="h-6 w-6" />
@@ -67,15 +67,19 @@ const GroupChatNav = ({ chatId }) => {
               <div>
                 {isGroupChat ? (
                   <div className="flex items-center cursor-default">
-                    {chat.members.slice(0, 3).map((member) => (
-                      <img
-                        key={member._id}
-                        src={member.avatar}
-                        alt={member.name}
-                        className="w-8 h-8 rounded-full mr-2"
-                      />
-                    ))}
-                    <span className="text-white text-[10px]">
+                    <div className="grid grid-cols-2  w-8 h-8 sm:w-8 sm:h-8 overflow-hidden rounded-full">
+                      {chat.members.slice(0, 3).map((member, index) => (
+                        <img
+                          key={member._id}
+                          src={member.avatar}
+                          alt={member.name}
+                          className={`object-cover bg-center ${
+                            index === 2 ? "col-span-2" : ""
+                          } w-full h-full`}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-white ml-1 font-semibold text-[11px]">
                       {chat.chatName
                         ?.split("-")
                         .filter((name) => name !== user.name)}
@@ -91,10 +95,10 @@ const GroupChatNav = ({ chatId }) => {
                         key={member._id}
                         src={member.avatar}
                         alt={member.name}
-                        className="w-8 h-8 rounded-full mr-2"
+                        className="w-8 h-8 rounded-full mr-2 object-cover bg-cover"
                       />
                     ))}
-                    <span className="text-white text-[10px]">
+                    <span className="text-white font-semibold text-[11px]">
                       {chat.chatName
                         ?.split("-")
                         .filter((name) => name !== user.name)}
@@ -113,17 +117,15 @@ const GroupChatNav = ({ chatId }) => {
               )}
             </div>
           </div>
-          <div className="flex items-center justify-end">
+          <div
+            className="flex items-center justify-end bg-gray-600 hover:bg-gray-400 duration-500 cursor-pointer h-[3.7vh] rounded-md px-1 mr-1"
+            onClick={handleInfoButton}
+          >
             {groupInfoDrawer ? (
-              <FaXmark
-                size={23}
-                onClick={handleInfoButton}
-                className="cursor-pointer dark:text-white"
-              />
+              <FaXmark size={23} className="cursor-pointer dark:text-white" />
             ) : (
               <BsThreeDots
                 size={23}
-                onClick={handleInfoButton}
                 className="cursor-pointer dark:text-white"
               />
             )}

@@ -90,14 +90,14 @@ const Search = () => {
       <form onSubmit={handleSubmit} className="flex items-center">
         <input
           type="search"
-          className="bg-white dark:bg-[#3A3B3C] dark:text-white px-2 py-1 sm:py-1.5 sm:px-3 flex-grow border border-[#3A3B3C] rounded-l-md outline-none transition duration-300 hover:shadow-lg focus:shadow-lg text-sm w-32 sm:w-full"
+          className="bg-white dark:bg-[#3A3B3C] dark:text-white px-2 py-1 sm:py-1.5 sm:px-3 flex-grow border border-[#454647] rounded-s-full outline-none transition duration-300 hover:shadow-lg focus:shadow-lg text-sm w-32 sm:w-full"
           onChange={(e) => setSearchValue(e.target.value)}
           spellCheck={false}
           placeholder="Search users..."
         />
         <button
           type="submit"
-          className="dark:bg-[#676767] dark:text-white dark:hover:bg-[#4e4e4e] transition duration-300 px-2 py-[5px] sm:py-[7px] sm:px-4 rounded-r-md flex items-center justify-center"
+          className="dark:bg-[#3A3B3C] dark:text-white dark:hover:bg-[#303031] transition duration-300 px-2 py-[5px] sm:py-[7px] sm:px-4 rounded-r-full flex items-center justify-center"
         >
           <IoSearch size={20} />
         </button>

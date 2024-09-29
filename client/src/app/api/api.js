@@ -52,7 +52,7 @@ const api = createApi({
         url: `chat/message/${chatId}?page=${page}`,
         credentials: "include"
       }),
-      
+
       keepUnusedDataFor: 0
     }),
 
