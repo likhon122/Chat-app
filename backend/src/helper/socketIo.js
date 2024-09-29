@@ -156,7 +156,6 @@ const handleSocketEvents = (io) => {
     socket.on(
       "CALL_USER",
       async ({ to, offer, callType, chatId, callerInfo }) => {
-        console.log(to);
         const memberIds = to.filter((id) => id !== user._id);
 
         // console.log(userSocketIds);

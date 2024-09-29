@@ -1,7 +1,12 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import {
+  callStarted,
+  setCallerDetails,
+  setIncomingOffer
+} from "../app/features/otherSlice";
 
 export const useWebRTC = (socket, chatId, members, isVideoCall) => {
   const user = useSelector((state) => state.auth.user);
@@ -13,6 +18,7 @@ export const useWebRTC = (socket, chatId, members, isVideoCall) => {
   const [isInCall, setIsInCall] = useState(false);
   const peerConnectionRef = useRef(null);
   const iceCandidatesQueue = useRef([]);
+  const dispatch = useDispatch();
 
   const navigate = useNavigate();
 
@@ -113,6 +119,10 @@ export const useWebRTC = (socket, chatId, members, isVideoCall) => {
       remoteStream.getTracks().forEach((track) => track.stop());
       setRemoteStream(null);
     }
+
+    dispatch(callStarted(false));
+    dispatch(setIncomingOffer(null));
+    dispatch(setCallerDetails(null));
 
     setIsInCall(false);
     setIsRinging(false);

@@ -8,7 +8,7 @@ import {
   useMakeNotificationMutation,
   useReadNotificationMutation
 } from "../../app/api/api";
-import { setMembers } from "../../app/features/otherSlice";
+import { setMembers, setSelectedChat } from "../../app/features/otherSlice";
 import { NEW_MESSAGE_ALERT, REFETCH_CHATS } from "../../constants/event";
 import SingleSpinner from "../../components/Loaders/SingleSpinner";
 import { useSocketHook } from "../../hooks/useSocketHook";
@@ -20,6 +20,7 @@ const MyChats = () => {
   const userName = useSelector((state) => state.auth?.user?.name);
   const userId = useSelector((state) => state.auth?.user?._id);
   const isHasChatId = useSelector((state) => state.other.chatId);
+  const selectedChat = useSelector((state) => state.other.selectedChat);
 
   const { data, isError, isLoading, refetch } = useGetChatsQuery();
   const {
@@ -43,6 +44,7 @@ const MyChats = () => {
           notification.count > 0 &&
           readNotificationHandler({ userId, chatId: chat._id });
       });
+    dispatch(setSelectedChat(chat));
     navigate(`/chat/${chat._id}?group-chat=${chat.groupChat}`);
   };
 
@@ -96,14 +98,20 @@ const MyChats = () => {
       ) : (
         data?.payload?.allChats.map((chat) => {
           const notificationCount = getNotificationCount(chat._id);
+          const isSelectedChat = chat._id === selectedChat?._id;
+
           return (
             <article
               key={chat._id}
-              className="bg-white border border-gray-200 rounded-lg shadow-sm mb-3 
+              className={`${
+                isSelectedChat
+                  ? "dark:border-gray-600 dark:bg-gray-700"
+                  : "dark:border-gray-700 dark:bg-gray-800 "
+              } rounded-lg shadow-sm mb-3 
                          transition-colors duration-300 hover:bg-blue-100 
-                         hover:border-blue-300 dark:bg-gray-800 
-                         dark:border-gray-700 dark:hover:bg-gray-700 dark:hover:border-gray-600 cursor-pointer
-                         sm:p-2 sm:rounded-md"
+                         hover:border-blue-300 
+                          dark:hover:bg-gray-700 dark:hover:border-gray-600 cursor-pointer
+                         sm:p-2 sm:rounded-md`}
               onClick={() => handleClick(chat)}
             >
               <div className="flex items-center p-3 border-b border-gray-200 dark:border-gray-700 sm:p-2">

@@ -13,7 +13,8 @@ const initialState = {
   callInfo: null,
   isCallStarted: false,
   incomingOffer: null,
-  callerDetails: null
+  callerDetails: null,
+  selectedChat: null
 };
 
 const otherSlice = createSlice({
@@ -60,6 +61,9 @@ const otherSlice = createSlice({
     },
     setCallerDetails: (state, action) => {
       state.callerDetails = action.payload;
+    },
+    setSelectedChat: (state, action) => {
+      state.selectedChat = action.payload;
     }
   }
 });
@@ -77,7 +81,8 @@ export const {
   endRinging,
   callStarted,
   setIncomingOffer,
-  setCallerDetails
+  setCallerDetails,
+  setSelectedChat
 } = otherSlice.actions;
 
 export default otherSlice.reducer;
