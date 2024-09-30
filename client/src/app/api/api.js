@@ -267,6 +267,16 @@ const api = createApi({
         credentials: "include"
       }),
       invalidatesTags: (result, error, chatId) => [{ type: "Chat", id: chatId }]
+    }),
+
+    editProfile: builder.mutation({
+      query: (data) => ({
+        url: "user/edit-profile",
+        method: "PUT",
+        credentials: "include",
+        body: data
+      }),
+      invalidatesTags: ["User"]
     })
   })
 });
@@ -300,5 +310,6 @@ export const {
   useReadNotificationMutation,
   useMakeFriendRequestNotificationMutation,
   useGetFriendRequestNotificationCountQuery,
-  useReadFriendRequestNotificationMutation
+  useReadFriendRequestNotificationMutation,
+  useEditProfileMutation
 } = api;

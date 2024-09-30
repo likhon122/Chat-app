@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   createBrowserRouter,
@@ -23,6 +23,7 @@ import Profile from "./pages/profile/Profile";
 import SignUp from "./pages/sign-up/SignUp";
 import Verify from "./pages/sign-up/Verify";
 import PushNotificationManager from "./PushNotificationManager";
+import EditProfile from "./pages/profile/EditProfile";
 
 const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY;
 
@@ -46,20 +47,24 @@ const CheckUserIsLoggedIn = ({ user, isLoading, children }) => {
 
 const App = () => {
   const dispatch = useDispatch();
-  const { data, isLoading, isError, error } = useVerifyUserQuery();
-  const user = useSelector((state) => state.auth.user);
-  const userData = useSelector((state) => state.auth.user);
-  // console.log(user);
+  const {
+    data,
+    isLoading: mountLoading,
+    isError,
+    error
+  } = useVerifyUserQuery();
+  const user = data?.payload?.user;
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!isLoading && data && data.payload?.user) {
+    if (!mountLoading && data && data.payload?.user) {
       dispatch(setUser(data.payload.user));
+      setIsLoading(false);
     }
-  }, [dispatch, data, isLoading]);
-
-  console.log(isLoading, userData);
-
-  console.log(isLoading, user);
+    if (isError) {
+      setIsLoading(false);
+    }
+  }, [dispatch, data, mountLoading, isError]);
 
   if (isLoading) {
     return (
@@ -142,6 +147,14 @@ const App = () => {
           element={
             <ProtectedRoute user={user} isLoading={isLoading}>
               <CallWindowPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="edit-profile/:userId"
+          element={
+            <ProtectedRoute user={user} isLoading={isLoading}>
+              <EditProfile />
             </ProtectedRoute>
           }
         />

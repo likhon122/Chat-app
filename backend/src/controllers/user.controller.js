@@ -12,7 +12,10 @@ import Request from "../models/request.model.js";
 import { emitEvent } from "../helper/socketIo.js";
 import { NEW_FRIEND_REQUEST, REFETCH_CHATS } from "../constants/event.js";
 import Chat from "../models/chat.model.js";
-import { uploadFilesFromCloudinary } from "../helper/cloudinary.js";
+import {
+  deleteFilesFromCloudinary,
+  uploadFilesFromCloudinary
+} from "../helper/cloudinary.js";
 
 const getSingleUser = async (req, res, next) => {
   try {
@@ -594,6 +597,91 @@ const getPendingFriendRequests = async (req, res, next) => {
   }
 };
 
+const editProfile = async (req, res, next) => {
+  try {
+    const { name, bio, userId } = req.body;
+
+    const profilePic = req.file;
+
+    if ((!name && !bio && !profilePic) || !userId) {
+      return errorResponse(res, {
+        statusCode: 400,
+        errorMessage: "Please send valid data to update your profile!",
+        nextURl: {}
+      });
+    }
+
+    const user = await User.findOne({ _id: userId });
+    if (profilePic) {
+      if (user.avatar.publicId) {
+        await deleteFilesFromCloudinary([user.avatar.publicId]);
+      }
+
+      const file = [profilePic];
+      const attachment = await uploadFilesFromCloudinary(file);
+
+      const avatar = {
+        publicId: attachment[0].public_id,
+        url: attachment[0].url
+      };
+
+      const updatedUser = await User.findOneAndUpdate(
+        { _id: userId },
+        { avatar }
+      )
+        .select("-password")
+        .lean();
+
+      updatedUser.avatar = avatar.url;
+
+      return successResponse(res, {
+        statusCode: 200,
+        successMessage: "Profile updated successfully!!",
+        payload: { updatedUser },
+        nextURl: {}
+      });
+    }
+
+    if (name || bio) {
+      if (name) {
+        if (name === user.name) {
+          return errorResponse(res, {
+            statusCode: 400,
+            errorMessage: "You can not update same name!!",
+            nextURl: {}
+          });
+        }
+        user.name = name;
+      }
+
+      if (bio) {
+        if (bio === user.bio) {
+          return errorResponse(res, {
+            statusCode: 400,
+            errorMessage: "You can not update same bio!!",
+            nextURl: {}
+          });
+        }
+        user.bio = bio;
+      }
+
+      await user.save();
+      const updatedUser = user.toObject();
+
+      delete updatedUser.password;
+      updatedUser.avatar = updatedUser.avatar.url;
+      return successResponse(res, {
+        statusCode: 200,
+        successMessage: "Profile updated successfully!!",
+        payload: { updatedUser },
+        nextURl: {}
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+};
+
 export {
   getSingleUser,
   getAllUsers,
@@ -605,5 +693,6 @@ export {
   deleteRequest,
   getFriends,
   getFriendRequestNotifications,
-  getPendingFriendRequests
+  getPendingFriendRequests,
+  editProfile
 };

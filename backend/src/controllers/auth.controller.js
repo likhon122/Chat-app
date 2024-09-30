@@ -23,7 +23,11 @@ const getUser = async (req, res, next) => {
       });
     }
 
-    const user = verifyJsonWebToken(accessToken, accessTokenKey);
+    const existUser = verifyJsonWebToken(accessToken, accessTokenKey);
+
+    const user = await User.findById({ _id: existUser._id })
+      .select("-password")
+      .lean();
 
     if (!user) {
       return errorResponse(res, {
@@ -34,7 +38,7 @@ const getUser = async (req, res, next) => {
         }
       });
     }
-
+    user.avatar = user.avatar.url;
     return successResponse(res, {
       statusCode: 200,
       successMessage: "User logged in successfully!",

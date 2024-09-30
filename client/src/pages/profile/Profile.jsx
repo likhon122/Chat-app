@@ -57,7 +57,7 @@ const Profile = () => {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-[94.7vh] text-lg text-gray-700 dark:text-gray-300 dark:bg-gray-900">
+      <div className="flex justify-center items-center h-[94.7vh] text-lg text-gray-700 dark:text-gray-300 dark:bg-darkBg">
         <DuelSpinner />
       </div>
     );
@@ -65,6 +65,10 @@ const Profile = () => {
 
   const handleImageClick = () => {
     setIsModalOpen(true);
+  };
+
+  const handleEditProfile = () => {
+    navigate(`/edit-profile/${id}`);
   };
 
   return (
@@ -83,14 +87,22 @@ const Profile = () => {
               />
             </div>
             <div className="text-center mt-4">
-              <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">
-                {data.payload.user.name}
-              </h1>
-              <h2 className="text-xl text-gray-600 dark:text-gray-300 mb-4">
-                @{data.payload.user.username}
+              <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2"></h1>
+              <h2 className=" text-gray-600 dark:text-gray-300 mb-4">
+                {data.payload.user.bio}
               </h2>
             </div>
 
+            {userId === id && (
+              <div>
+                <button
+                  onClick={handleEditProfile}
+                  className="bg-blue-600 dark:bg-blue-700 px-8 py-3 rounded-md text-white font-medium hover:bg-blue-700 dark:hover:bg-blue-800 transition duration-300"
+                >
+                  Edit Profile
+                </button>
+              </div>
+            )}
             <div className="mt-8">
               <div>
                 <div className="mb-[-20px] border-b-2 w-20 ">

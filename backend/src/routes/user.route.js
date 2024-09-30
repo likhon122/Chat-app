@@ -11,7 +11,8 @@ import {
   deleteRequest,
   getFriends,
   getFriendRequestNotifications,
-  getPendingFriendRequests
+  getPendingFriendRequests,
+  editProfile
 } from "../controllers/user.controller.js";
 import { isAdmin, isLoggedIn, isLoggedOut } from "../middlewares/auth.js";
 import {
@@ -71,6 +72,8 @@ userRoute.put(
   isLoggedIn,
   acceptRequest
 );
+
+userRoute.put("/edit-profile", singleAvatar, editProfile);
 
 userRoute.delete(
   "/delete-request",

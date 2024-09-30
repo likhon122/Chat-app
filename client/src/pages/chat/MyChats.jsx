@@ -14,10 +14,6 @@ import SingleSpinner from "../../components/Loaders/SingleSpinner";
 import { useSocketHook } from "../../hooks/useSocketHook";
 
 const MyChats = () => {
-  const messageNotification = useSelector(
-    (state) => state.chat.messageNotification
-  );
-
   const userName = useSelector((state) => state.auth?.user?.name);
   const userId = useSelector((state) => state.auth?.user?._id);
 
@@ -26,7 +22,6 @@ const MyChats = () => {
 
   const { data, isError, isLoading, refetch } = useGetChatsQuery();
 
-  console.log(userId);
   const {
     data: getNotificationData,
     isError: getNotificationError,
@@ -63,7 +58,7 @@ const MyChats = () => {
 
   const refetchHandler = useCallback(() => {
     refetch();
-  }, []);
+  }, [refetch]);
 
   const newMessageAlertHandler = useCallback(
     (data) => {

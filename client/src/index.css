@@ -87,3 +87,7 @@ body {
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background-color: #6b7280; /* Slightly lighter on hover */
 }
+
+.no-select {
+  user-select: none;
+}

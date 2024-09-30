@@ -5,7 +5,7 @@ const validateSubscription = [
   body("keys")
     .isObject()
     .withMessage("Keys must be an object containing p256dh and auth"),
-  body("userId").isString().optional() // Optional userId validation
+  body("userId").isString().optional()
 ];
 
 const getNotificationValidation = [
