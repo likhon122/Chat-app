@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 const useAsyncMutation = (mutationHook) => {
   const [isLoading, setIsLoading] = useState(false);
   const [data, setData] = useState(null);
+  const [error, setError] = useState(null);
 
   const [mutate] = mutationHook();
 
@@ -26,6 +27,7 @@ const useAsyncMutation = (mutationHook) => {
       }
     } catch (err) {
       setIsLoading(false);
+      setError(err);
       toast.update(loadingToastId, {
         render: err.data?.errorMessage || "Something went wrong!!",
         type: "error",
@@ -38,7 +40,7 @@ const useAsyncMutation = (mutationHook) => {
     }
   };
 
-  return [executeMutation, isLoading, data];
+  return [executeMutation, isLoading, data, error];
 };
 
 export { useAsyncMutation };

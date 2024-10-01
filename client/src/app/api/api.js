@@ -241,6 +241,24 @@ const api = createApi({
       invalidatesTags: ["FriendRequestNotification", "User"]
     }),
 
+    forgotPassword: builder.mutation({
+      query: (data) => ({
+        url: "user/forgot-password",
+        method: "POST",
+        credentials: "include",
+        body: data
+      })
+    }),
+
+    resetPassword: builder.mutation({
+      query: (data) => ({
+        url: "user/reset-password",
+        method: "PUT",
+        credentials: "include",
+        body: data
+      })
+    }),
+
     rejectFriendRequest: builder.mutation({
       query: (data) => ({
         url: "user/delete-request",
@@ -311,5 +329,7 @@ export const {
   useMakeFriendRequestNotificationMutation,
   useGetFriendRequestNotificationCountQuery,
   useReadFriendRequestNotificationMutation,
-  useEditProfileMutation
+  useEditProfileMutation,
+  useForgotPasswordMutation,
+  useResetPasswordMutation
 } = api;

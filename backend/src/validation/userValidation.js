@@ -16,7 +16,12 @@ const registerUserValidation = [
     .withMessage("User email is required to sign up!")
     .trim()
     .isEmail()
-    .withMessage("Please enter valid email address!")
+    .withMessage("Please enter valid email address!"),
+
+  body("password")
+    .notEmpty()
+    .withMessage("Password is required to sign up!")
+    .trim()
 ];
 
 const verifyUserRegistrationValidation = [
@@ -67,6 +72,27 @@ const deleteFriendRequestValidation = [
       "Accept Id id is missing please make sure you provide correct AcceptId!!"
     )
 ];
+const forgotPasswordValidation = [
+  body("email")
+    .trim()
+    .notEmpty()
+    .withMessage("Email is required to reset your password!")
+    .isEmail()
+    .withMessage("Please enter valid email address!")
+];
+
+const resetPasswordValidation = [
+  body("password")
+    .trim()
+    .notEmpty()
+    .withMessage("Password is required to reset your password!"),
+  body("token")
+    .trim()
+    .notEmpty()
+    .withMessage(
+      "Token is required to reset your password! Please provide valid token! And make sure you provide this token in 5 minutes!"
+    )
+];
 
 export {
   registerUserValidation,
@@ -74,5 +100,7 @@ export {
   getSingleUserValidation,
   sendFriendRequestValidation,
   acceptFriendRequestValidation,
-  deleteFriendRequestValidation
+  deleteFriendRequestValidation,
+  forgotPasswordValidation,
+  resetPasswordValidation
 };

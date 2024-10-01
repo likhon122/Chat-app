@@ -12,14 +12,17 @@ import {
   getFriends,
   getFriendRequestNotifications,
   getPendingFriendRequests,
-  editProfile
+  editProfile,
+  forGotPassword,
+  resetPassword
 } from "../controllers/user.controller.js";
 import { isAdmin, isLoggedIn, isLoggedOut } from "../middlewares/auth.js";
 import {
   acceptFriendRequestValidation,
   deleteFriendRequestValidation,
-  getSingleUserValidation,
+  forgotPasswordValidation,
   registerUserValidation,
+  resetPasswordValidation,
   sendFriendRequestValidation,
   verifyUserRegistrationValidation
 } from "../validation/userValidation.js";
@@ -74,6 +77,22 @@ userRoute.put(
 );
 
 userRoute.put("/edit-profile", singleAvatar, editProfile);
+
+userRoute.post(
+  "/forgot-password",
+  isLoggedOut,
+  forgotPasswordValidation,
+  runValidation,
+  forGotPassword
+);
+
+userRoute.put(
+  "/reset-password",
+  isLoggedOut,
+  resetPasswordValidation,
+  runValidation,
+  resetPassword
+);
 
 userRoute.delete(
   "/delete-request",

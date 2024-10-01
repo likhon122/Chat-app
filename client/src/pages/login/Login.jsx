@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setUser } from "../../app/features/authSlice";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAsyncMutation } from "../../hooks/useAsyncMutationHook";
 import { useLoginUserMutation } from "../../app/api/api";
 import { FiMail, FiLock } from "react-icons/fi";
@@ -36,10 +36,6 @@ const Login = () => {
   };
 
   useEffect(() => {
-    // if (userData || data) {
-    //   navigate("/chat");
-    // }
-
     if (data) {
       dispatch(setUser(data?.payload?.user));
     }
@@ -76,14 +72,23 @@ const Login = () => {
               onChange={handleChange}
             />
           </div>
+
           <button
             type="submit"
-            className="w-full py-2 mt-4 text-white bg-indigo-600 rounded-lg hover:bg-indigo-500 dark:bg-purple-600 dark:hover:bg-purple-500 transition duration-300"
+            className="w-full py-2 my-2 text-white bg-indigo-600 rounded-lg hover:bg-indigo-500 dark:bg-purple-600 dark:hover:bg-purple-500 transition duration-300"
             disabled={isLoading}
           >
             {isLoading ? "Loading..." : "Login"}
           </button>
         </form>
+        <div className="text-right">
+          <Link
+            to="/forgot-password"
+            className="text-sm text-indigo-600 dark:text-purple-500 hover:underline"
+          >
+            Forgot Password?
+          </Link>
+        </div>
       </div>
     </div>
   );

@@ -6,7 +6,7 @@ import {
   createJsonWebToken,
   verifyJsonWebToken
 } from "../helper/jsonWebToken.js";
-import { frontendUrl1, jsonWebTokenKey } from "../secret.js";
+import { frontendUrl1, jsonWebTokenKey, resetPasswordKey } from "../secret.js";
 import { sendEmailWithNodemailer } from "../helper/sendEmail.js";
 import Request from "../models/request.model.js";
 import { emitEvent } from "../helper/socketIo.js";
@@ -682,6 +682,133 @@ const editProfile = async (req, res, next) => {
   }
 };
 
+const forGotPassword = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return errorResponse(res, {
+        statusCode: 404,
+        errorMessage: "User not found with this email!",
+        nextURl: {}
+      });
+    }
+
+    const tokenData = {
+      email
+    };
+
+    const token = createJsonWebToken(tokenData, resetPasswordKey, "5m");
+
+    const emailData = {
+      email,
+      subject: "Account activation email",
+      html: `
+       <h2>Hi ${user.name} !</h2>
+    <div>
+     <p>
+      You trying to reset your password.
+      </p>
+    </div>
+    <div>
+   <p>
+    Do not share this link with anyone. This link is only valid for 5 minutes.
+   </p>
+    </div>
+    <div style="padding: 10px 0px">
+      You can reset your password for click this link <a
+        style="color: blue; text-decoration: underline"
+        href="${frontendUrl1}/reset-password/${token}"
+      >
+        Reset Password
+      </a> or click reset password button!
+    </div>
+    <div style="padding: 10px 0px">
+      <a
+        style="
+          background-color: rgba(0, 128, 0, 0.711);
+          border: 1px solid rgba(0, 128, 0, 0.711);
+          text-decoration: none;
+          padding: 10px 10px;
+          color: white;
+          border-radius: 8px;
+        "
+        href="${frontendUrl1}/reset-password/${token}"
+      >
+        Reset password</a
+      >
+    </div>
+      `
+    };
+
+    await sendEmailWithNodemailer(emailData);
+
+    return successResponse(res, {
+      statusCode: 200,
+      successMessage: `Please go to your email ${email} and reset your password! We send you a link to reset your password! Link is only valid for 5 minutes!`,
+      // payload: { token },
+      nextURl: {
+        resetPassword: "/api/v1/reset-password",
+        login: "/api/v1/login"
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const resetPassword = async (req, res, next) => {
+  try {
+    const { token, password } = req.body;
+
+    const userData = verifyJsonWebToken(token, resetPasswordKey);
+
+    if (!userData) {
+      return errorResponse(res, {
+        statusCode: 400,
+        errorMessage:
+          "Something is wrong! Please try again! Token is not valid! Please send valid token! We think token is expired!",
+        nextURl: {
+          forgotPassword: "/api/v1/forgot-password",
+          login: "/api/v1/login"
+        }
+      });
+    }
+
+    const salt = await bcryptjs.genSalt(10);
+    const hashedPassword = await bcryptjs.hash(password, salt);
+
+    const user = await User.findOneAndUpdate(
+      { email: userData.email },
+      { password: hashedPassword }
+    );
+
+    if (!user) {
+      return errorResponse(res, {
+        statusCode: 400,
+        errorMessage:
+          "Something is wrong! Please try again! Password is not updated! Please try again!",
+        nextURl: {
+          forgotPassword: "/api/v1/forgot-password",
+          login: "/api/v1/login"
+        }
+      });
+    }
+
+    return successResponse(res, {
+      statusCode: 200,
+      successMessage: "Password is updated successfully!",
+      nextURl: {
+        login: "/api/v1/login"
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export {
   getSingleUser,
   getAllUsers,
@@ -694,5 +821,7 @@ export {
   getFriends,
   getFriendRequestNotifications,
   getPendingFriendRequests,
-  editProfile
+  editProfile,
+  forGotPassword,
+  resetPassword
 };

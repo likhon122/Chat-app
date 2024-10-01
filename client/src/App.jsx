@@ -24,6 +24,8 @@ import SignUp from "./pages/sign-up/SignUp";
 import Verify from "./pages/sign-up/Verify";
 import PushNotificationManager from "./PushNotificationManager";
 import EditProfile from "./pages/profile/EditProfile";
+import ForgotPassword from "./pages/forgot-password/ForgotPassword";
+import ResetPassword from "./pages/forgot-password/ResetPassword";
 
 const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY;
 
@@ -37,7 +39,7 @@ const ProtectedRoute = ({ user, isLoading, children }) => {
 };
 
 // Check if the user is already logged in to redirect to chat
-const CheckUserIsLoggedIn = ({ user, isLoading, children }) => {
+const CheckUserIsLoggedOut = ({ user, isLoading, children }) => {
   if (!isLoading && user) {
     return <Navigate to="/chat" />;
   }
@@ -76,90 +78,109 @@ const App = () => {
 
   const router = createBrowserRouter(
     createRoutesFromElements(
-      <Route path="/" element={<Layout />}>
+      <>
+        <Route path="/" element={<Layout />}>
+          <Route
+            index
+            element={
+              <CheckUserIsLoggedOut user={user} isLoading={isLoading}>
+                <Home />
+              </CheckUserIsLoggedOut>
+            }
+          />
+          <Route
+            path="sign-up"
+            element={
+              <CheckUserIsLoggedOut user={user} isLoading={isLoading}>
+                <SignUp />
+              </CheckUserIsLoggedOut>
+            }
+          />
+          <Route
+            path="login"
+            element={
+              <CheckUserIsLoggedOut user={user} isLoading={isLoading}>
+                <Login />
+              </CheckUserIsLoggedOut>
+            }
+          />
+          <Route
+            path="forgot-password"
+            element={
+              <CheckUserIsLoggedOut user={user} isLoading={isLoading}>
+                <ForgotPassword />
+              </CheckUserIsLoggedOut>
+            }
+          />
+          <Route
+            path="chat"
+            element={
+              <ProtectedRoute user={user} isLoading={isLoading}>
+                <ShowChat />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="chat/:chatId"
+            element={
+              <ProtectedRoute user={user} isLoading={isLoading}>
+                <Chat />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/api/v1/verify/:token" element={<Verify />} />
+          <Route
+            path="profile/:userId"
+            element={
+              <ProtectedRoute user={user} isLoading={isLoading}>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="friends/:userId"
+            element={
+              <ProtectedRoute user={user} isLoading={isLoading}>
+                <Friends />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="my-groups/:groupId"
+            element={
+              <ProtectedRoute user={user} isLoading={isLoading}>
+                <MyGroups />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="call/:chatId"
+            element={
+              <ProtectedRoute user={user} isLoading={isLoading}>
+                <CallWindowPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="edit-profile/:userId"
+            element={
+              <ProtectedRoute user={user} isLoading={isLoading}>
+                <EditProfile />
+              </ProtectedRoute>
+            }
+          />
+        </Route>
+
         <Route
-          index
+          path="/reset-password/:token"
           element={
-            <CheckUserIsLoggedIn user={user} isLoading={isLoading}>
-              <Home />
-            </CheckUserIsLoggedIn>
-          }
-        />
-        <Route
-          path="sign-up"
-          element={
-            <CheckUserIsLoggedIn user={user} isLoading={isLoading}>
-              <SignUp />
-            </CheckUserIsLoggedIn>
-          }
-        />
-        <Route
-          path="login"
-          element={
-            <CheckUserIsLoggedIn user={user} isLoading={isLoading}>
-              <Login />
-            </CheckUserIsLoggedIn>
-          }
-        />
-        <Route
-          path="chat"
-          element={
-            <ProtectedRoute user={user} isLoading={isLoading}>
-              <ShowChat />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="chat/:chatId"
-          element={
-            <ProtectedRoute user={user} isLoading={isLoading}>
-              <Chat />
-            </ProtectedRoute>
-          }
-        />
-        <Route path="/api/v1/verify/:token" element={<Verify />} />
-        <Route
-          path="profile/:userId"
-          element={
-            <ProtectedRoute user={user} isLoading={isLoading}>
-              <Profile />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="friends/:userId"
-          element={
-            <ProtectedRoute user={user} isLoading={isLoading}>
-              <Friends />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="my-groups/:groupId"
-          element={
-            <ProtectedRoute user={user} isLoading={isLoading}>
-              <MyGroups />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="call/:chatId"
-          element={
-            <ProtectedRoute user={user} isLoading={isLoading}>
-              <CallWindowPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="edit-profile/:userId"
-          element={
-            <ProtectedRoute user={user} isLoading={isLoading}>
-              <EditProfile />
-            </ProtectedRoute>
+            <CheckUserIsLoggedOut user={user} isLoading={isLoading}>
+              <ResetPassword />
+            </CheckUserIsLoggedOut>
           }
         />
         <Route path="*" element={<NotFound />} />
-      </Route>
+      </>
     )
   );
 
