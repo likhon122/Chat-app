@@ -46,7 +46,7 @@ const Chat = () => {
           <div
             className={`${
               groupInfoDrawer ? "hidden xl:block" : ""
-            } border border-gray-700 shadow-md shadow-gray-700 rounded-md h-[92vh] `}
+            } border dark:border-gray-700 shadow-md shadow-gray-300 border-gray-300 dark:shadow-gray-700 rounded-md h-[92vh] overflow-hidden `}
           >
             <GroupChatNav chatId={chatId} />
             <Message chatId={chatId} />

@@ -26,8 +26,10 @@ const ShowChat = () => {
       <div className="">
         <MyChats />
       </div>
-      <div className="flex-1 dark:bg-[#222222]  items-center justify-center hidden md:flex border-gray-600 rounded-md shadow-md shadow-gray-600">
-        <h1 className="text-gray-300 text-lg">Please select a chat!</h1>
+      <div className="flex-1 dark:bg-[#222222]  items-center justify-center hidden md:flex dark:border-gray-600   border-gray-300 border-t-gray-300 border rounded-md shadow-md shadow-gray-300 dark:shadow-gray-600">
+        <h1 className="dark:text-gray-300 text-gray-600 text-lg">
+          Please select a chat!
+        </h1>
       </div>
     </div>
   );

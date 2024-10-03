@@ -45,7 +45,7 @@ const NotificationDrawer = ({ onClose }) => {
         <button
           onClick={onClose}
           aria-label="Close drawer"
-          className="text-gray-300 hover:text-gray-100 transition duration-200"
+          className="dark:text-gray-300 text-gray-500 dark:hover:text-gray-100 hover:text-gray-800 transition duration-200"
         >
           <FaXmark size={22} />
         </button>

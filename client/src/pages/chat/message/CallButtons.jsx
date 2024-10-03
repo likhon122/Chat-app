@@ -29,7 +29,7 @@ const CallButtons = ({ chatId, member }) => {
   };
 
   return (
-    <div className="flex space-x-4 rounded-lg">
+    <div className="flex space-x-4 rounded-lg items-center justify-center ">
       <button
         onClick={handleAudioCall}
         className="flex items-center justify-center p-2 bg-blue-600 text-white font-semibold rounded-lg transition duration-300 ease-in-out transform hover:bg-blue-700 hover:scale-105"

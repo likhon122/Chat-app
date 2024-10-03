@@ -4,7 +4,7 @@ const TypingIndicator = ({ userTyping }) => {
   return (
     <div>
       {userTyping && (
-        <div className="bg-gray-800 p-2 text-center text-sm text-gray-400 flex justify-center items-center shadow-md rounded-md">
+        <div className="bg-transparent p-2 text-center text-sm text-gray-600  dark:text-gray-400 flex justify-center items-center shadow-md rounded-md">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             className="w-16 h-4"

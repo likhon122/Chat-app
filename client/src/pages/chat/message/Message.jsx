@@ -299,9 +299,9 @@ const Message = ({ chatId }) => {
         <TypingIndicator userTyping={userTyping} />
 
         {replyMessage && (
-          <div className="shadow-md p-1 sm:p-2 flex items-start bg-gray-800 border border-gray-700">
+          <div className="dark:shadow-md p-1 sm:p-2 flex items-start dark:bg-gray-800 border dark:border-gray-700">
             <div className="ml-1 sm:ml-3 flex-1">
-              <h1 className=" text-xs sm:text-md font-medium text-gray-200 font-sans">
+              <h1 className=" text-xs sm:text-md font-medium dark:text-gray-200 text-gray-600 font-sans">
                 Replying to{" "}
                 {userId === replyMessage.sender._id
                   ? "Yourself"
@@ -309,7 +309,7 @@ const Message = ({ chatId }) => {
               </h1>
               <div className="p-1 rounded-md italic">
                 {!replyMessage.attachment?.length && replyMessage.content ? (
-                  <p className="text-gray-300">
+                  <p className="dark:text-gray-300 text-gray-700">
                     {replyMessage.content.length > 20
                       ? replyMessage.content.slice(0, 20) + "..."
                       : replyMessage.content}

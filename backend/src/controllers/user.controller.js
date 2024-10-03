@@ -16,6 +16,7 @@ import {
   deleteFilesFromCloudinary,
   uploadFilesFromCloudinary
 } from "../helper/cloudinary.js";
+import { userSocketIds } from "../app.js";
 
 const getSingleUser = async (req, res, next) => {
   try {
@@ -809,6 +810,50 @@ const resetPassword = async (req, res, next) => {
   }
 };
 
+const onlineUsers = async (req, res, next) => {
+  try {
+    const { userId } = req;
+
+    const userFriends = await User.findById(userId).select("friends").populate({
+      path: "friends",
+      select: "name avatar"
+    });
+
+    if (!userFriends) {
+      return errorResponse(res, {
+        statusCode: 404,
+        errorMessage:
+          "You don't have any friends! Please add any friend's and enjoy chat!!",
+        nextURl: { sendFriendRequest: "/api/v1/user/send-request" }
+      });
+    }
+
+    const onlineUsersArr = userFriends.friends.filter((friend) => {
+      return userSocketIds.has(friend._id.toString());
+    });
+
+    const onlineFriendsWithDetails = onlineUsersArr.map((friend) => ({
+      _id: friend._id,
+      name: friend.name,
+      avatar: friend.avatar,
+      socketId: userSocketIds.get(friend._id.toString())
+    }));
+
+    return successResponse(res, {
+      statusCode: 200,
+      successMessage: "Online users returned successfully!!",
+      payload: { onlineFriendsWithDetails },
+      nextURl: {
+        sendFriendRequest: "/api/v1/user/send-request",
+        acceptRequest: "/api/v1/user/accept-request",
+        deleteRequest: "/api/v1/user/delete-request"
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export {
   getSingleUser,
   getAllUsers,
@@ -823,5 +868,6 @@ export {
   getPendingFriendRequests,
   editProfile,
   forGotPassword,
-  resetPassword
+  resetPassword,
+  onlineUsers
 };

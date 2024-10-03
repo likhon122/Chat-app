@@ -15,7 +15,6 @@ const PushNotificationManager = ({ userId, pushNotificationPublicKey }) => {
 
           await sendSubscriptionToServer(subscription);
         } catch (error) {
-          console.log(error);
           return;
         }
       }

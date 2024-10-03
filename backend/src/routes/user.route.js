@@ -14,7 +14,8 @@ import {
   getPendingFriendRequests,
   editProfile,
   forGotPassword,
-  resetPassword
+  resetPassword,
+  onlineUsers
 } from "../controllers/user.controller.js";
 import { isAdmin, isLoggedIn, isLoggedOut } from "../middlewares/auth.js";
 import {
@@ -93,6 +94,8 @@ userRoute.put(
   runValidation,
   resetPassword
 );
+
+userRoute.get("/online-users", isLoggedIn, onlineUsers);
 
 userRoute.delete(
   "/delete-request",

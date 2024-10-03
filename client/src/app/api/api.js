@@ -64,6 +64,14 @@ const api = createApi({
       providesTags: (result, error, id) => [{ type: "User", id }]
     }),
 
+    getOnlineUsers: builder.query({
+      query: () => ({
+        url: "user/online-users",
+        credentials: "include"
+      }),
+      providesTags: ["User"]
+    }),
+
     getFriends: builder.query({
       query: (id) => ({
         url: `user/get-friends/${id}`,
@@ -331,5 +339,6 @@ export const {
   useReadFriendRequestNotificationMutation,
   useEditProfileMutation,
   useForgotPasswordMutation,
-  useResetPasswordMutation
+  useResetPasswordMutation,
+  useGetOnlineUsersQuery
 } = api;

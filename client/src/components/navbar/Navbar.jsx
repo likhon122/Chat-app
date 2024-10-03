@@ -39,7 +39,7 @@ const Navbar = () => {
   };
 
   return (
-    <div className="shadow-md bg-[#FFFFFF] dark:bg-[#222222] h-[6vh] md:h-[5vh] w-full z-99 shadow-black border-b border-b-gray-700">
+    <div className="dark:shadow-md bg-[#FFFFFF] dark:bg-[#222222] h-[6vh] md:h-[5vh] w-full z-99 dark:shadow-black border-b dark:border-none border-b-gray-300">
       <div className="container mx-auto flex items-center justify-between sm:px-4 sm:py-2 gap-1 sm:gap-2 h-full ">
         <div className="md:hidden">
           <button

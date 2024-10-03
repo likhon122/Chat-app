@@ -44,6 +44,10 @@ const handleSocketEvents = (io) => {
   io.on("connection", (socket) => {
     const { user } = socket;
 
+    if (!user) {
+      return;
+    }
+
     userSocketIds.set(user._id.toString(), socket.id);
 
     // Handle new message

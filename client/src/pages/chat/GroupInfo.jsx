@@ -56,14 +56,14 @@ const GroupInfo = ({ chatId }) => {
     );
 
   return (
-    <div className="flex flex-col min-h-[92vh] dark:bg-darkBg dark:text-gray-200 px-3 py-3 rounded-lg border border-gray-600 shadow-md shadow-gray-600 m-2 md:mt-0 relative">
+    <div className="flex flex-col min-h-[92vh] dark:bg-darkBg dark:text-gray-200 px-3 py-3 rounded-lg border border-gray-300 shadow-gray-300 dark:border-gray-600 shadow-md dark:shadow-gray-600 m-2 md:mt-0 relative">
       <div className="flex-grow w-full mx-auto  ">
         <div className="flex justify-end ">
           <div
             onClick={() => dispatch(setGroupInfoDrawer(false))}
-            className="cursor-pointer bg-gray-600 hover:bg-gray-400 duration-500  rounded-md px-1 py-[6px] absolute left-3 top-2 xl:hidden"
+            className="cursor-pointer bg-gray-400 hover:bg-gray-500 dark:bg-gray-600 dark:hover:bg-gray-400 duration-500  rounded-md px-1 py-[6px] absolute left-3 top-2 xl:hidden"
           >
-            <IoIosArrowBack size={22} className="font-bold " />
+            <IoIosArrowBack size={22} className="font-bold text-white" />
           </div>
 
           {data.payload.chat.groupChat ? (
@@ -137,8 +137,13 @@ const GroupInfo = ({ chatId }) => {
               data.payload.chat.members.map((member) => (
                 <div
                   key={member._id}
-                  className="flex items-center gap-2 p-2 rounded-md bg-gray-700 hover:bg-gray-600 transition-colors"
+                  className="flex items-center gap-3 p-2 rounded-md bg-white border-gray-300 border dark:border-none dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
                 >
+                  <img
+                    src={member.avatar}
+                    alt={member.name}
+                    className="w-10 h-10 rounded-full object-cover bg-cover"
+                  />
                   <Link
                     to={`/profile/${member._id}`}
                     className="text-orange-400 font-semibold hover:underline"

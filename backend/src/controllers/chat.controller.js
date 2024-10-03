@@ -355,7 +355,6 @@ const removeMember = async (req, res, next) => {
 
     chat.members = filteredMembers;
 
-
     await chat.save();
 
     const uniqueNames = [
@@ -527,7 +526,6 @@ const sendAttachments = async (req, res, next) => {
 
     const attachments = await uploadFilesFromCloudinary(files);
 
-
     const messageForRealTime = {
       content: formMessage ? formMessage : "",
       attachment: attachments,
@@ -537,7 +535,8 @@ const sendAttachments = async (req, res, next) => {
         _id: userId,
         name: userInfo.name,
         avatar: userInfo.avatar
-      }
+      },
+      createdAt: new Date().toISOString()
     };
 
     const dbMessage = {

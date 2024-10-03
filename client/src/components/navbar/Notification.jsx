@@ -77,12 +77,12 @@ const Notification = () => {
       {/* Notification Drawer */}
       {drawerToggle && (
         <div
-          className={`absolute  w-80 right-[-33px]  sm:right-0 top-12 md:w-[400px] max-h-[100vh]  sm:top-11 transition-transform duration-500 
+          className={`absolute  w-80 right-[-33px]  sm:right-0 top-12 md:w-[400px] max-h-[100vh]  sm:top-12 transition-transform duration-500 
             "
           }`}
           ref={drawerRef}
         >
-          <div className="bg-white w-full md:w-[400px] max-h-[100vh] overflow-y-auto  rounded-lg border-gray-600 border shadow-md shadow-gray-700">
+          <div className="bg-white w-full md:w-[400px] max-h-[100vh] overflow-y-auto  rounded-lg dark:border-gray-600 border-gray-300 border dark:shadow-md shadow-gray-700">
             <NotificationDrawer onClose={handleClick} />
           </div>
         </div>
