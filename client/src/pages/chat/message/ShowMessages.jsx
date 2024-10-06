@@ -42,7 +42,6 @@ const ShowMessages = ({
       const messageToReply = allMessages.find(
         (msg) => msg._id === messageId || msg.realTimeId === messageId
       );
-      console.log("Message to reply:", messageToReply); // Debugging statement
       if (messageToReply) {
         handleReplyMessage(messageToReply);
       } else {
@@ -255,7 +254,7 @@ const ShowMessages = ({
                     </p>
                     <div
                       onClick={() => setClickedMessageId(messageId)}
-                      className="flex items-center"
+                      className="flex items-center flex-auto"
                     >
                       <div className={`${isSameSender ? "hidden" : ""}`}>
                         <img

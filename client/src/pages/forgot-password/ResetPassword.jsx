@@ -91,7 +91,7 @@ const ResetPassword = () => {
   }, [data, error, navigate, dispatch]);
 
   return (
-    <div className="flex justify-center items-center h-[85vh] md:h-screen ">
+    <div className="flex justify-center items-center h-screen ">
       <div className={`${!successMessage ? "hidden" : "block"} h-[70%]`}>
         <div className="flex items-center justify-center flex-col gap-10">
           <div className="text-green-500 text-center">{successMessage}</div>

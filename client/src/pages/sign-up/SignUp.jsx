@@ -116,10 +116,10 @@ const SignUp = () => {
   }, [navigate, userData]);
 
   return (
-    <div className="flex justify-center items-center h-[85vh] md:h-screen ">
-      <div className="bg-white dark:bg-[#2B2B2B] rounded-lg shadow-lg p-8 max-w-md w-full ">
+    <div className="flex justify-center items-center h-screen md:h-screen ">
+      <div className="bg-white dark:bg-[#2B2B2B] rounded-lg shadow-lg p-8 max-w-md w-full relative">
         <div
-          className="absolute top-4 right-4 cursor-pointer"
+          className="absolute top-4 right-4 cursor-pointer "
           onMouseEnter={() => setShowTooltip(true)}
           onMouseLeave={() => setShowTooltip(false)}
         >

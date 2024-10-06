@@ -46,7 +46,7 @@ const ForgotPassword = () => {
 
   return (
     <>
-      <div className="flex justify-center items-center h-[85vh] md:h-screen ">
+      <div className="flex justify-center items-center h-screen md:h-screen ">
         <div className="bg-white dark:bg-[#2B2B2B] rounded-lg shadow-lg p-8 max-w-md w-full relative">
           <div className="flex items-center justify-center">
             <div className={`absolute ${errorMessage ? "top-[-40px]" : "top-[-90px]"}`}>
