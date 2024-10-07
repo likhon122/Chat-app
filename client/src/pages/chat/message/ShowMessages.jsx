@@ -84,7 +84,7 @@ const ShowMessages = ({
       className="flex-1 overflow-y-auto custom-scrollbar dark:bg-darkBg p-4 rounded-t-lg dark:shadow-lg"
       ref={containerRef}
     >
-      {messagePage > 1 && isFetching && <SingleSpinner size="h-8 w-8" />}
+      {messagePage > 0 && isFetching && <SingleSpinner size="h-8 w-8" />}
       {allMessages &&
         allMessages.length > 0 &&
         allMessages.map((message, index) => {
@@ -386,11 +386,7 @@ const ShowMessages = ({
                   </div>
                   {isClickedMessage && (
                     <div
-                      className={`${
-                        isSameSender
-                          ? ""
-                          : "flex justify-end"
-                      }`}
+                      className={`${isSameSender ? "" : "flex justify-end"}`}
                     >
                       <p className="text-xs text-gray-500 pl-4">
                         {new Date(message.createdAt).toLocaleTimeString([], {

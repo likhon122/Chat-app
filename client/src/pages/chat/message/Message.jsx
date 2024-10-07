@@ -53,7 +53,7 @@ const Message = ({ chatId }) => {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [replyMessage, setReplyMessage] = useState(null);
   const [highlightedMessageId, setHighlightedMessageId] = useState(null);
-  const [messagePage, setMessagePage] = useState(1);
+  const [messagePage, setMessagePage] = useState(0);
 
   const typingTimeOut = useRef(null);
   const containerRef = useRef(null);
@@ -225,6 +225,7 @@ const Message = ({ chatId }) => {
       setMessages([]);
       setPage(1);
       setData([]);
+      setMessagePage(0);
     };
   }, [chatId]);
 
@@ -289,7 +290,7 @@ const Message = ({ chatId }) => {
       <div
         className={`flex flex-col h-[95%] md:h-[95%] dark:bg-darkBg text-gray-100 scrollbar-thin scrollbar-thumb-rounded-lg`}
       >
-        {oldMessagesChunk.isFetching && messagePage === 1 ? (
+        {oldMessagesChunk.isFetching && messagePage === 0 ? (
           <div className="flex justify-center items-center h-full">
             <SingleSpinner size="h-8 w-8" />
           </div>
