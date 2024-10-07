@@ -159,14 +159,17 @@ const Search = () => {
                         </button>
                       )}
 
-                      {!isFriend && !isPending && _id !== sender && (
-                        <button
-                          className="bg-blue-500 text-white hover:bg-blue-400 rounded-md px-2 py-1 transition duration-300"
-                          onClick={() => handleSendFriendRequest(_id)}
-                        >
-                          Add Friend
-                        </button>
-                      )}
+                      {userData &&
+                        !isFriend &&
+                        !isPending &&
+                        _id !== sender && (
+                          <button
+                            className="bg-blue-500 text-white hover:bg-blue-400 rounded-md px-2 py-1 transition duration-300"
+                            onClick={() => handleSendFriendRequest(_id)}
+                          >
+                            Add Friend
+                          </button>
+                        )}
 
                       {isFriend && (
                         <button className="bg-blue-500 text-white hover:bg-blue-400 rounded-md px-2 py-1 transition duration-300">
