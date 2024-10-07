@@ -2,10 +2,8 @@
 import { v4 as uuid } from "uuid";
 
 import { userSocketIds } from "../app.js";
+
 import {
-  CALL_ANSWER,
-  CALL_REJECT,
-  CALL_USER,
   NEW_MESSAGE,
   NEW_MESSAGE_ALERT,
   REFETCH_CHATS,
@@ -14,7 +12,6 @@ import {
 } from "../constants/event.js";
 import { sendNotificationToUser } from "./sendPushNotification.js";
 import Message from "../models/message.model.js";
-import User from "../models/user.model.js";
 
 const getSockets = (members = []) => {
   const sockets =

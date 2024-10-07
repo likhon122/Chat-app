@@ -10,6 +10,8 @@ const Chat = () => {
   const params = useParams();
   const { chatId } = params;
 
+  
+
   return (
     <>
       <div className="md:hidden block">

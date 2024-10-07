@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { FaFilePdf, FaReply } from "react-icons/fa";
+import SingleSpinner from "../../../components/Loaders/SingleSpinner";
 
 const ShowMessages = ({
   containerRef,
@@ -10,12 +11,14 @@ const ShowMessages = ({
   handleShowReplyMessage,
   bottomRef,
   highlightedMessageId,
-  setHighlightedMessageId
+  // setHighlightedMessageId,
+  messagePage,
+  isFetching
 }) => {
   const [startTouchX, setStartTouchX] = useState(null);
   const [swipeDirection, setSwipeDirection] = useState({});
   const [swipeThreshold] = useState(50);
-  const [clickedMessageId, setClickedMessageId] = useState(null); // New state for clicked message
+  const [clickedMessageId, setClickedMessageId] = useState(null);
 
   const handleTouchStart = (e) => {
     setStartTouchX(e.touches[0].clientX);
@@ -81,6 +84,7 @@ const ShowMessages = ({
       className="flex-1 overflow-y-auto custom-scrollbar dark:bg-darkBg p-4 rounded-t-lg dark:shadow-lg"
       ref={containerRef}
     >
+      {messagePage > 1 && isFetching && <SingleSpinner size="h-8 w-8" />}
       {allMessages &&
         allMessages.length > 0 &&
         allMessages.map((message, index) => {
@@ -381,12 +385,20 @@ const ShowMessages = ({
                     </p>
                   </div>
                   {isClickedMessage && (
-                    <p className="text-xs text-gray-500 pl-4">
-                      {new Date(message.createdAt).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit"
-                      })}
-                    </p>
+                    <div
+                      className={`${
+                        isSameSender
+                          ? ""
+                          : "flex justify-end"
+                      }`}
+                    >
+                      <p className="text-xs text-gray-500 pl-4">
+                        {new Date(message.createdAt).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit"
+                        })}
+                      </p>
+                    </div>
                   )}
                 </div>
               </div>

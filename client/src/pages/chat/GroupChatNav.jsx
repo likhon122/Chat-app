@@ -5,25 +5,21 @@ import { setGroupInfoDrawer } from "../../app/features/otherSlice";
 import { FaXmark } from "react-icons/fa6";
 import { useGetGroupDetailsQuery } from "../../app/api/api";
 import { useNavigate } from "react-router-dom";
-import { useWebRTC } from "../../hooks/useWebRTC";
 import { useGetSocket } from "../../SocketHelper";
 import CallButtons from "./message/CallButtons";
-import CallWindow from "./message/CallWindow";
 import SingleSpinner from "../../components/Loaders/SingleSpinner";
+import { toast } from "react-toastify";
 
 const GroupChatNav = ({ chatId }) => {
   const { groupInfoDrawer } = useSelector((state) => state.other);
-  const chatMembers = useSelector((state) => state.other.members);
-  const [isCallStarted, setIsCallStarted] = useState(false);
 
   // console.log(chatMembers);
 
   const user = useSelector((state) => state.auth.user);
-  const { data, isLoading } = useGetGroupDetailsQuery(chatId);
+  const { data, isLoading, isError } = useGetGroupDetailsQuery(chatId);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const socket = useGetSocket();
 
   const handleInfoButton = () => {
     dispatch(setGroupInfoDrawer(!groupInfoDrawer));
@@ -42,16 +38,20 @@ const GroupChatNav = ({ chatId }) => {
     dispatch(setGroupInfoDrawer(false));
   }, []);
 
+  useEffect(() => {
+    if (isError) {
+      navigate("/chat");
+      toast.error("Something went wrong!");
+    }
+  }, [isError, navigate]);
+
   const isGroupChat = data?.payload?.chat.groupChat;
   const member = data?.payload?.chat.members.filter(
     (member) => member._id !== user._id
   );
 
-  // if (isLoading) return <div>Loading...</div>;
-
   const chat = data?.payload?.chat;
 
-  // Filter out the current user from members
   const friendMembers = chat?.members.filter(
     (member) => member._id !== user._id
   );
@@ -90,7 +90,7 @@ const GroupChatNav = ({ chatId }) => {
                     className="flex items-center cursor-pointer"
                     onClick={handleClick}
                   >
-                    {friendMembers.map((member) => (
+                    {friendMembers?.map((member) => (
                       <img
                         key={member._id}
                         src={member.avatar}
@@ -100,7 +100,7 @@ const GroupChatNav = ({ chatId }) => {
                     ))}
                     <span className="dark:text-white text-gray-600  font-semibold text-[11px]">
                       {
-                        chat.chatName
+                        chat?.chatName
                           .split("-")
                           .filter((name) => name !== user.name)[0]
                       }

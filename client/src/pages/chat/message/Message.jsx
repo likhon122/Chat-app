@@ -11,6 +11,7 @@ import { FaXmark } from "react-icons/fa6";
 import { useDispatch, useSelector } from "react-redux";
 import { useGetSocket } from "../../../SocketHelper";
 import {
+  useGetGroupDetailsQuery,
   useGetMessagesQuery,
   useSendAttachmentsMutation
 } from "../../../app/api/api";
@@ -18,7 +19,7 @@ import {
   resetMessageNotification,
   setMessageNotification
 } from "../../../app/features/chatSlice";
-import { setChatId } from "../../../app/features/otherSlice";
+import { setChatId, setMembers } from "../../../app/features/otherSlice";
 import {
   NEW_MESSAGE,
   NEW_MESSAGE_ALERT,
@@ -32,6 +33,7 @@ import MessageInputBox from "./MessageInputBox";
 import ShowMessages from "./ShowMessages";
 import TypingIndicator from "./TypingIndicator";
 import SingleSpinner from "../../../components/Loaders/SingleSpinner";
+import { useParams } from "react-router-dom";
 
 const Message = ({ chatId }) => {
   const members = useSelector((state) => state.other.members);
@@ -39,6 +41,7 @@ const Message = ({ chatId }) => {
 
   const socket = useGetSocket();
   const dispatch = useDispatch();
+  const params = useParams();
 
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
@@ -50,6 +53,7 @@ const Message = ({ chatId }) => {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [replyMessage, setReplyMessage] = useState(null);
   const [highlightedMessageId, setHighlightedMessageId] = useState(null);
+  const [messagePage, setMessagePage] = useState(1);
 
   const typingTimeOut = useRef(null);
   const containerRef = useRef(null);
@@ -61,11 +65,9 @@ const Message = ({ chatId }) => {
   const getItemClasses = () => "w-16 h-16";
 
   const oldMessagesChunk = useGetMessagesQuery({ chatId, page });
-  // const {
-  //   data: groupDetails,
-  //   error: groupDetailsError,
-  //   isLoading: groupDetailsIsLoading
-  // } = useGetGroupDetailsQuery(chatId);
+  const { data: groupData, isError: groupDataError } = useGetGroupDetailsQuery(
+    params.chatId
+  );
 
   const [sendAttachmentHandler, isLoading, setAttachmentData] =
     useAsyncMutation(useSendAttachmentsMutation);
@@ -91,11 +93,6 @@ const Message = ({ chatId }) => {
       setShowEmojiPicker(false);
     }
   });
-
-  // const handleEndCall = () => {
-  //   endCall();
-  //   setIsCallStarted(false);
-  // };
 
   const handleMessageChange = (e) => {
     setMessage(e.target.value);
@@ -134,7 +131,7 @@ const Message = ({ chatId }) => {
   const getGridClasses = (length) => {
     if (length > 4) return "grid-cols-3";
     if (length > 2) return "grid-cols-3";
-    if(length === 2) return "grid-cols-2";
+    if (length === 2) return "grid-cols-2";
     return "grid-cols-1 ";
   };
 
@@ -212,6 +209,16 @@ const Message = ({ chatId }) => {
   };
 
   useEffect(() => {
+    if (groupData && groupData.payload?.chat) {
+      const members = [];
+      groupData.payload.chat.members.forEach((member) => {
+        members.push(member._id);
+      });
+      dispatch(setMembers(members));
+    }
+  }, [groupData, dispatch]);
+
+  useEffect(() => {
     dispatch(resetMessageNotification(chatId));
     return () => {
       setMessage("");
@@ -225,7 +232,6 @@ const Message = ({ chatId }) => {
     if (bottomRef.current)
       bottomRef.current.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
-
 
   useEffect(() => {
     dispatch(setChatId(chatId));
@@ -273,12 +279,17 @@ const Message = ({ chatId }) => {
 
   useSocketHook(socket, eventHandlers);
 
+  useEffect(() => {
+    oldMessagesChunk?.data?.payload &&
+      setMessagePage(oldMessagesChunk.data.payload.pagination?.page);
+  }, [oldMessagesChunk.data]);
+
   return (
     <>
       <div
         className={`flex flex-col h-[95%] md:h-[95%] dark:bg-darkBg text-gray-100 scrollbar-thin scrollbar-thumb-rounded-lg`}
       >
-        {oldMessagesChunk.isFetching ? (
+        {oldMessagesChunk.isFetching && messagePage === 1 ? (
           <div className="flex justify-center items-center h-full">
             <SingleSpinner size="h-8 w-8" />
           </div>
@@ -293,6 +304,8 @@ const Message = ({ chatId }) => {
             replyMessage={replyMessage?.realTimeId}
             userId={userId}
             highlightedMessageId={highlightedMessageId}
+            messagePage={messagePage}
+            isFetching={oldMessagesChunk.isFetching}
           />
         )}
 
