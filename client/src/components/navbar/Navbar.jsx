@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { NavLink } from "react-router-dom";
 import Search from "./Search";
 import Notification from "./Notification";

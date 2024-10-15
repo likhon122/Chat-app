@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+
 import MyGroup from "./MyGroup";
 import MyGroupInfo from "./MyGroupInfo";
 

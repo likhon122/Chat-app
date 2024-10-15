@@ -1,4 +1,3 @@
-import React from "react";
 import {
   LineChart,
   Line,
@@ -6,7 +5,6 @@ import {
   XAxis,
   YAxis,
   Tooltip,
-  Label,
   ResponsiveContainer,
   BarChart,
   Bar,

@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { setUser } from "../../app/features/authSlice";
-import { useNavigate, Link, useParams } from "react-router-dom";
-import { useAsyncMutation } from "../../hooks/useAsyncMutationHook";
+import { FiLock } from "react-icons/fi";
+import { useDispatch } from "react-redux";
+import { useNavigate, useParams } from "react-router-dom";
+
 import { useResetPasswordMutation } from "../../app/api/api";
-import { FiMail, FiLock } from "react-icons/fi";
 import SingleSpinner from "../../components/Loaders/SingleSpinner";
+import { useAsyncMutation } from "../../hooks/useAsyncMutationHook";
 
 const ResetPassword = () => {
   const params = useParams();

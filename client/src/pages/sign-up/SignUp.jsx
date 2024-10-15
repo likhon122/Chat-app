@@ -19,7 +19,7 @@ const SignUp = () => {
     email: "",
     password: "",
     avatar: {},
-    bio: "" // Add bio field here
+    bio: "" 
   });
 
   const [avatarPreview, setAvatarPreview] = useState(null);

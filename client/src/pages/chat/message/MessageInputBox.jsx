@@ -1,4 +1,3 @@
-import React from "react";
 import { FaPaperPlane, FaTimes, FaUpload } from "react-icons/fa";
 import EmojiPicker from "emoji-picker-react";
 

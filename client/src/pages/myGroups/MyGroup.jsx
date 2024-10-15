@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
-import { useGetMyGroupsQuery } from "../../app/api/api";
-import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 import { useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { useGetMyGroupsQuery } from "../../app/api/api";
 import { setEditGroup, setGroupId } from "../../app/features/otherSlice";
 
 const MyGroup = () => {

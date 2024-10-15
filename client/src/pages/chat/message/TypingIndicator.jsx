@@ -1,5 +1,3 @@
-import React from "react";
-
 const TypingIndicator = ({ userTyping }) => {
   return (
     <div>

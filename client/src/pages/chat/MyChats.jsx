@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { useGetSocket } from "../../SocketHelper";
@@ -120,7 +120,9 @@ const MyChats = () => {
             <article
               key={chat._id}
               className={`${
-                isSelectedChat ? "dark:border-gray-600 bg-gray-300 border-gray-300 dark:bg-gray-700" : ""
+                isSelectedChat
+                  ? "dark:border-gray-600 bg-gray-300 border-gray-300 dark:bg-gray-700"
+                  : ""
               } rounded-lg shadow-sm mb-3 
                          transition-colors duration-300 hover:bg-gray-300 
                          hover:border-gray-300

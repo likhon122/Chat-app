@@ -1,12 +1,6 @@
 import { useInfiniteScrollTop } from "6pp";
 
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FaXmark } from "react-icons/fa6";
 import { useDispatch, useSelector } from "react-redux";
 import { useGetSocket } from "../../../SocketHelper";

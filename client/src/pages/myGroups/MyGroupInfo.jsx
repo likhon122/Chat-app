@@ -1,4 +1,7 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { useSelector } from "react-redux";
+
 import {
   useAddGroupMembersMutation,
   useDeleteGroupMutation,
@@ -8,8 +11,6 @@ import {
   useRenameGroupChatMutation
 } from "../../app/api/api";
 import { useAsyncMutation } from "../../hooks/useAsyncMutationHook";
-import { Link } from "react-router-dom";
-import { useSelector } from "react-redux";
 
 const MyGroupInfo = ({ groupId }) => {
   const userId = useSelector((state) => state.auth.user._id);
@@ -116,7 +117,6 @@ const MyGroupInfo = ({ groupId }) => {
     );
 
   return (
-    
     <div className="sm:h-[94.7vh] bg-gray-100 dark:bg-gray-900 p-6 space-y-6">
       {/* Change Group Name */}
       <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md border border-gray-300 dark:border-gray-700">

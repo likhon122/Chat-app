@@ -1,13 +1,9 @@
 import { useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { setUser } from "../../app/features/authSlice";
-import { useNavigate, Link } from "react-router-dom";
-import { useAsyncMutation } from "../../hooks/useAsyncMutationHook";
-import {
-  useForgotPasswordMutation,
-  useLoginUserMutation
-} from "../../app/api/api";
 import { FiMail } from "react-icons/fi";
+import { useDispatch } from "react-redux";
+
+import { useForgotPasswordMutation } from "../../app/api/api";
+import { useAsyncMutation } from "../../hooks/useAsyncMutationHook";
 
 const ForgotPassword = () => {
   const [forgotPassword, isLoading, data, error] = useAsyncMutation(
@@ -49,7 +45,11 @@ const ForgotPassword = () => {
       <div className="flex justify-center items-center h-screen md:h-screen ">
         <div className="bg-white dark:bg-[#2B2B2B] rounded-lg shadow-lg p-8 max-w-md w-full relative">
           <div className="flex items-center justify-center">
-            <div className={`absolute ${errorMessage ? "top-[-40px]" : "top-[-90px]"}`}>
+            <div
+              className={`absolute ${
+                errorMessage ? "top-[-40px]" : "top-[-90px]"
+              }`}
+            >
               {errorMessage && (
                 <div className=" text-red-500 text-center sm:text-lg font-semibold">
                   {errorMessage}

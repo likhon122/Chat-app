@@ -1,4 +1,3 @@
-import React from "react";
 import { FaPhoneAlt, FaVideo } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { callStarted } from "../../../app/features/otherSlice";

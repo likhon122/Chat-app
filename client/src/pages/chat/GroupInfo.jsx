@@ -1,4 +1,5 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { IoMdExit, IoIosArrowBack } from "react-icons/io";
 import {
@@ -9,7 +10,6 @@ import {
 import { timeSince } from "../../helper/timeSince";
 import { useAsyncMutation } from "../../hooks/useAsyncMutationHook";
 import SingleSpinner from "../../components/Loaders/SingleSpinner";
-import { useDispatch, useSelector } from "react-redux";
 import { setGroupInfoDrawer } from "../../app/features/otherSlice";
 
 const GroupInfo = ({ chatId }) => {

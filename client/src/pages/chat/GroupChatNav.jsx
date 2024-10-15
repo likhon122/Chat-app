@@ -1,14 +1,14 @@
-import React, { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { BsThreeDots } from "react-icons/bs";
 import { useDispatch, useSelector } from "react-redux";
-import { setGroupInfoDrawer } from "../../app/features/otherSlice";
 import { FaXmark } from "react-icons/fa6";
-import { useGetGroupDetailsQuery } from "../../app/api/api";
 import { useNavigate } from "react-router-dom";
-import { useGetSocket } from "../../SocketHelper";
+import { toast } from "react-toastify";
+
+import { setGroupInfoDrawer } from "../../app/features/otherSlice";
+import { useGetGroupDetailsQuery } from "../../app/api/api";
 import CallButtons from "./message/CallButtons";
 import SingleSpinner from "../../components/Loaders/SingleSpinner";
-import { toast } from "react-toastify";
 
 const GroupChatNav = ({ chatId }) => {
   const { groupInfoDrawer } = useSelector((state) => state.other);
