@@ -98,6 +98,7 @@ app.use((err, req, res, next) => {
       errorMessage: `Duplicate key error: ${Object.keys(err.keyPattern)[0]} is already in use. Please use another value.`,
       nextURl: {
         processRegister: "/api/v1/process-register",
+        processLogin: "/api/v1/process-login",
         customerService: "www.friends-chat-app.netlify.app"
       }
     });
