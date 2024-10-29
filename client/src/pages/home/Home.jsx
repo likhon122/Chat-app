@@ -3,6 +3,7 @@ import { motion, useAnimation } from "framer-motion";
 import { useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { useSendSupportMessageMutation } from "../../app/api/api";
 
 const HomePage = () => {
   const userData = useSelector((state) => state.auth.user);
@@ -19,6 +20,8 @@ const HomePage = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
+
+  const [sendSupportMessage, { isLoading }] = useSendSupportMessageMutation();
 
   // Function to handle scroll event and trigger animations
   const handleScroll = () => {
@@ -77,23 +80,31 @@ const HomePage = () => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const toastId = toast.loading("Sending message...");
 
     setMessage("");
     setEmail("");
     setName("");
-    setTimeout(() => {
-      toast.update(toastId, {
-        render:
-          "Message Sent Successful!! Our support team contact you very soon",
-        type: "success",
-        isLoading: false,
-        autoClose: 5000,
-        closeButton: true
+
+    try {
+      await sendSupportMessage({
+        name,
+        email,
+        message
       });
-    }, 2000);
+
+      toast.success(
+        "Message Sent Successfully! Our support team will contact you soon.",
+        {
+          isLoading: false,
+          autoClose: 3000,
+          closeButton: true
+        }
+      );
+    } catch (error) {
+      toast.error(error.data?.errorMessage || "Something went wrong!!");
+    }
   };
 
   useEffect(() => {
@@ -308,7 +319,7 @@ const HomePage = () => {
                 type="submit"
                 className="w-full py-2 my-2 text-white bg-indigo-600 rounded-lg hover:bg-indigo-500 dark:bg-purple-600 dark:hover:bg-purple-500 transition duration-300"
               >
-                Send Message
+                {isLoading ? "Sending..." : "Send Message"}
               </button>
             </form>
           </div>

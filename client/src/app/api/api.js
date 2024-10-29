@@ -303,6 +303,14 @@ const api = createApi({
         body: data
       }),
       invalidatesTags: ["User"]
+    }),
+    sendSupportMessage: builder.mutation({
+      query: (data) => ({
+        url: "support/send-support-message",
+        method: "POST",
+        credentials: "include",
+        body: data
+      })
     })
   })
 });
@@ -340,5 +348,6 @@ export const {
   useEditProfileMutation,
   useForgotPasswordMutation,
   useResetPasswordMutation,
-  useGetOnlineUsersQuery
+  useGetOnlineUsersQuery,
+  useSendSupportMessageMutation
 } = api;
