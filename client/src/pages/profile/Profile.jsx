@@ -72,7 +72,7 @@ const Profile = () => {
   };
 
   return (
-    <div className=" min-h-[100vh] sm:h-[94.9vh] sm:min-h-max bg-gray-100 dark:bg-darkBg flex flex-col items-center p-6">
+    <div className=" min-h-[100vh] sm:h-[94.9vh] sm:min-h-max bg-gray-100 dark:dark:bg-[#181818] flex flex-col items-center p-6">
       <div className="w-full shadow-lg rounded-lg p-8 mb-6">
         {data?.payload?.user && (
           <div>

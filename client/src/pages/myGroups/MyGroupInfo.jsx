@@ -11,7 +11,9 @@ import {
   useRenameGroupChatMutation
 } from "../../app/api/api";
 import { useAsyncMutation } from "../../hooks/useAsyncMutationHook";
+import SingleSpinner from "../../components/Loaders/SingleSpinner";
 
+// eslint-disable-next-line react/prop-types
 const MyGroupInfo = ({ groupId }) => {
   const userId = useSelector((state) => state.auth.user._id);
 
@@ -20,24 +22,14 @@ const MyGroupInfo = ({ groupId }) => {
   const [addMemberCheckedMembers, setAddMemberCheckedMembers] = useState([]);
 
   const { data, isError, isLoading, error } = useGetGroupDetailsQuery(groupId);
-  const {
-    data: friendsData,
-    isError: friendsIsError,
-    isLoading: friendsIsLoading,
-    error: friendsError
-  } = useGetFriendsQuery(userId);
+  const { data: friendsData } = useGetFriendsQuery(userId);
+
   const [renameGroupChat, renameGroupChatLoading] = useAsyncMutation(
     useRenameGroupChatMutation
   );
-  const [addGroupMember, addGroupMemberLoading] = useAsyncMutation(
-    useAddGroupMembersMutation
-  );
-  const [removeGroupMember, removeGroupMemberLoading] = useAsyncMutation(
-    useRemoveGroupMembersMutation
-  );
-  const [deleteGroup, deleteGroupLoading] = useAsyncMutation(
-    useDeleteGroupMutation
-  );
+  const [addGroupMember] = useAsyncMutation(useAddGroupMembersMutation);
+  const [removeGroupMember] = useAsyncMutation(useRemoveGroupMembersMutation);
+  const [deleteGroup] = useAsyncMutation(useDeleteGroupMutation);
 
   const handleNameChange = (e) => {
     setChatName(e.target.value);
@@ -106,18 +98,18 @@ const MyGroupInfo = ({ groupId }) => {
   if (isLoading)
     return (
       <div className="text-center text-lg h-[94.7vh] text-gray-700 dark:bg-gray-900">
-        Loading group details...
+        <SingleSpinner />
       </div>
     );
   if (isError)
     return (
-      <div className="text-center h-[94.7vh] dark:bg-gray-900 text-lg text-red-600 dark:text-red-400">
+      <div className="text-center h-[94.7vh] dark:bg-[#181818] text-lg text-red-600 dark:text-red-400">
         Error loading group details: {error?.message}
       </div>
     );
 
   return (
-    <div className="sm:h-[94.7vh] bg-gray-100 dark:bg-gray-900 p-6 space-y-6">
+    <div className="sm:h-[94.7vh] bg-gray-100 dark:bg-[#181818] p-6 space-y-6">
       {/* Change Group Name */}
       <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md border border-gray-300 dark:border-gray-700">
         <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">

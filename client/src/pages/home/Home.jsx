@@ -6,7 +6,7 @@ import { toast } from "react-toastify";
 
 const HomePage = () => {
   const userData = useSelector((state) => state.auth.user);
-  const [hasScrolled, setHasScrolled] = useState(false);
+  // const [hasScrolled, setHasScrolled] = useState(false);
 
   // Initialize animation controls
   const heroControls = useAnimation();
@@ -34,7 +34,7 @@ const HomePage = () => {
       const heroTop = heroElement.offsetTop;
       if (scrollPosition > heroTop) {
         heroControls.start({ opacity: 1, y: 0 });
-        setHasScrolled(true);
+        // setHasScrolled(true);
       } else {
         heroControls.start({ opacity: 0, y: 50 });
       }
@@ -112,11 +112,11 @@ const HomePage = () => {
   }, []);
 
   return (
-    <div className="font-sans antialiased bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+    <div className="font-sans antialiased bg-gray-100 dark:bg-[#181818]  text-gray-900 dark:text-gray-100">
       {/* Hero Section */}
       <section
         id="hero"
-        className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+        className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-[#181818]   text-gray-900 dark:text-gray-100"
       >
         <motion.div
           className="text-center p-8 md:p-16 lg:px-24"
@@ -140,7 +140,7 @@ const HomePage = () => {
       </section>
 
       {/* Features Section */}
-      <section className="py-16 bg-gray-100 dark:bg-gray-800" id="features">
+      <section className="py-16 bg-gray-100 dark:bg-gray-800 " id="features">
         <div className="container mx-auto px-4">
           <motion.h2
             className="text-3xl font-bold text-center mb-12"
@@ -241,7 +241,7 @@ const HomePage = () => {
       </section>
 
       {/* Contact Section */}
-      <section className="py-16 bg-gray-100 dark:bg-gray-800" id="contact">
+      <section className="py-16 bg-gray-100 dark:bg-[#181818] " id="contact">
         <div className="container mx-auto px-4">
           <motion.h2
             className="text-3xl font-bold text-center mb-12"
@@ -251,7 +251,7 @@ const HomePage = () => {
           >
             Contact Us
           </motion.h2>
-          <div className="max-w-md mx-auto bg-white dark:bg-gray-700 p-8 rounded-lg shadow-lg">
+          <div className="max-w-md mx-auto bg-white dark:bg-[#2B2B2B] p-8 rounded-lg shadow-lg">
             <form onSubmit={handleSubmit}>
               <div className="mb-4">
                 <label
@@ -266,7 +266,7 @@ const HomePage = () => {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   name="name"
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 dark:bg-slate-600"
+                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-[#3A3B3C] dark:text-white dark:border-[#444] dark:focus:ring-purple-500"
                   required
                 />
               </div>
@@ -283,7 +283,7 @@ const HomePage = () => {
                   name="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 dark:bg-slate-600"
+                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-[#3A3B3C] dark:text-white dark:border-[#444] dark:focus:ring-purple-500"
                   required
                 />
               </div>
@@ -300,13 +300,13 @@ const HomePage = () => {
                   rows="4"
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 dark:bg-slate-600"
+                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-[#3A3B3C] dark:text-white dark:border-[#444] dark:focus:ring-purple-500"
                   required
                 ></textarea>
               </div>
               <button
                 type="submit"
-                className="bg-blue-600 dark:bg-blue-700 text-white text-lg py-3 px-6 rounded-lg shadow-lg hover:bg-blue-700 dark:hover:bg-blue-800 transition duration-300 ease-in-out"
+                className="w-full py-2 my-2 text-white bg-indigo-600 rounded-lg hover:bg-indigo-500 dark:bg-purple-600 dark:hover:bg-purple-500 transition duration-300"
               >
                 Send Message
               </button>

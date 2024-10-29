@@ -7,7 +7,7 @@ const MyGroups = () => {
   const { groupId } = useSelector((state) => state.other);
   const { editGroup } = useSelector((state) => state.other);
 
-  console.log(editGroup);
+  
 
   return (
     <>

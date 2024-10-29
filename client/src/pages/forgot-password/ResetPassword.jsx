@@ -128,7 +128,7 @@ const ResetPassword = () => {
               id="password"
               value={resetPasswordData.password}
               required
-              placeholder="Enter your email *"
+              placeholder="Enter your Password *"
               className="w-full py-2 pl-10 pr-4 border rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-[#3A3B3C] dark:text-white dark:border-[#444] dark:focus:ring-purple-500"
               onChange={handleChange}
             />
@@ -141,7 +141,7 @@ const ResetPassword = () => {
               id="confirmPassword"
               value={resetPasswordData.confirmPassword}
               required
-              placeholder="Enter your password *"
+              placeholder="Enter your Confirm Password *"
               className="w-full py-2 pl-10 pr-4 border rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-[#3A3B3C] dark:text-white dark:border-[#444] dark:focus:ring-purple-500"
               onChange={handleChange}
               onFocus={handleFocus}
