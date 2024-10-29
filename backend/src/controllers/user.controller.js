@@ -6,7 +6,7 @@ import {
   createJsonWebToken,
   verifyJsonWebToken
 } from "../helper/jsonWebToken.js";
-import { frontendUrl1, jsonWebTokenKey, resetPasswordKey } from "../secret.js";
+import { frontendUrl3, jsonWebTokenKey, resetPasswordKey } from "../secret.js";
 import { sendEmailWithNodemailer } from "../helper/sendEmail.js";
 import Request from "../models/request.model.js";
 import { emitEvent } from "../helper/socketIo.js";
@@ -165,7 +165,7 @@ const processRegisterController = async (req, res, next) => {
       the button Verify account or click
       <a
         style="color: blue; text-decoration: underline"
-        href="${frontendUrl1}/api/v1/verify/${token}"
+        href="${frontendUrl3}/api/v1/verify/${token}"
         >Verify Account
       </a>
       this link!
@@ -180,7 +180,7 @@ const processRegisterController = async (req, res, next) => {
           color: white;
           border-radius: 8px;
         "
-        href="${frontendUrl1}/api/v1/verify/${token}"
+        href="${frontendUrl3}/api/v1/verify/${token}"
       >
         Verify Account</a
       >
@@ -721,7 +721,7 @@ const forGotPassword = async (req, res, next) => {
     <div style="padding: 10px 0px">
       You can reset your password for click this link <a
         style="color: blue; text-decoration: underline"
-        href="${frontendUrl1}/reset-password/${token}"
+        href="${frontendUrl3}/reset-password/${token}"
       >
         Reset Password
       </a> or click reset password button!
@@ -736,7 +736,7 @@ const forGotPassword = async (req, res, next) => {
           color: white;
           border-radius: 8px;
         "
-        href="${frontendUrl1}/reset-password/${token}"
+        href="${frontendUrl3}/reset-password/${token}"
       >
         Reset password</a
       >
