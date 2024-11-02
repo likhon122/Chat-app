@@ -20,6 +20,12 @@ import supportRoute from "./routes/support.route.js";
 const app = express();
 const server = createServer(app);
 
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", frontendUrl3); // Replace with your main frontend URL
+  res.header("Access-Control-Allow-Credentials", "true");
+  next();
+});
+
 // Setup Socket.io
 const io = new Server(server, {
   cors: {
