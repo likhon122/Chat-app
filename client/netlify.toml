@@ -6,7 +6,9 @@
   from = "/*"
   to = "/index.html"
   status = 200
-  headers = { 
-    "Access-Control-Allow-Origin" = "https://your-frontend-url.netlify.app", 
-    "Access-Control-Allow-Credentials" = "true" 
-  }
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "https://friends-adda.netlify.app"
+    Access-Control-Allow-Credentials = "true"
