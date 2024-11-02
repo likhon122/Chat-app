@@ -6,15 +6,16 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 
 import { errorResponse } from "./helper/responseHandler.js";
-import { handleSocketEvents } from "./helper/socketIo.js";
 import { socketAuthenticator } from "./middlewares/auth.js";
 import adminRoute from "./routes/admin.route.js";
+import { handleSocketEvents } from "./helper/socketIo.js";
 import authRoute from "./routes/auth.route.js";
 import chatRoute from "./routes/chat.route.js";
 import notificationRoute from "./routes/notification.route.js";
 import userRoute from "./routes/user.route.js";
 import { frontendUrl1, frontendUrl2, frontendUrl3 } from "./secret.js";
 import seedRoute from "./seeders/seed.route.js";
+import supportRoute from "./routes/support.route.js";
 
 const app = express();
 const server = createServer(app);
@@ -53,6 +54,7 @@ app.use("/api/v1/user", userRoute);
 app.use("/api/v1/auth", authRoute);
 app.use("/api/v1/chat", chatRoute);
 app.use("/api/v1/admin", adminRoute);
+app.use("/api/v1/support", supportRoute);
 app.use("/api/v1/notification", notificationRoute);
 
 // Socket.io Authentication Middleware

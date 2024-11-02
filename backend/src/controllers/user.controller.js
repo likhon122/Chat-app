@@ -9,13 +9,13 @@ import {
 import { frontendUrl3, jsonWebTokenKey, resetPasswordKey } from "../secret.js";
 import { sendEmailWithNodemailer } from "../helper/sendEmail.js";
 import Request from "../models/request.model.js";
-import { emitEvent } from "../helper/socketIo.js";
 import { NEW_FRIEND_REQUEST, REFETCH_CHATS } from "../constants/event.js";
 import Chat from "../models/chat.model.js";
 import {
   deleteFilesFromCloudinary,
   uploadFilesFromCloudinary
 } from "../helper/cloudinary.js";
+import { emitEvent } from "../helper/socketIo.js";
 import { userSocketIds } from "../app.js";
 
 const getSingleUser = async (req, res, next) => {
