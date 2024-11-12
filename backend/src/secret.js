@@ -18,7 +18,7 @@ const adminLoginPath = process.env.ADMIN_LOGIN_PATH;
 const adminLoginPassword = process.env.ADMIN_LOGIN_PASSWORD;
 const adminLoginEmail = process.env.ADMIN_LOGIN_EMAIL;
 const resetPasswordKey = process.env.RESET_PASSWORD_KEY;
-const disposableApiKey = process.env.API_KEY;
+
 
 export {
   frontendUrl1,
@@ -36,6 +36,5 @@ export {
   adminLoginPath,
   adminLoginPassword,
   adminLoginEmail,
-  resetPasswordKey,
-  disposableApiKey
+  resetPasswordKey
 };

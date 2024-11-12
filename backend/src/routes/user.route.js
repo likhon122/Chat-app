@@ -29,7 +29,6 @@ import {
 } from "../validation/userValidation.js";
 import runValidation from "../validation/runValidation.js";
 import { singleAvatar } from "../middlewares/multer.js";
-import { validateEmailMiddleware } from "../helper/sendEmail.js";
 
 const userRoute = express.Router();
 
@@ -41,7 +40,6 @@ userRoute.post(
   "/process-register",
   isLoggedOut,
   singleAvatar,
-  validateEmailMiddleware,
   registerUserValidation,
   runValidation,
   processRegisterController
