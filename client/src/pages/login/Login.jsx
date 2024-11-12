@@ -28,16 +28,14 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    try {
-      await loginUser("Login...", loginData);
-    } catch (error) {
-      console.log(error);
-    }
+    await loginUser("Login...", loginData);
+    navigate("/chat");
   };
 
   useEffect(() => {
     if (data) {
       dispatch(setUser(data?.payload?.user));
+      navigate("/chat");
     }
   }, [navigate, userData, data, dispatch]);
 
