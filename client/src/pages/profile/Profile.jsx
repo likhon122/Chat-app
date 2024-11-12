@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useState } from "react";
+import { Link, redirect, useNavigate, useParams } from "react-router-dom";
 import { useGetUserQuery } from "../../app/api/api";
 import MakeGroup from "./MakeGroup";
 import { useDispatch, useSelector } from "react-redux";
@@ -21,7 +21,7 @@ const Profile = () => {
   const userId = useSelector((state) => state.auth?.user?._id);
   const { makeGroupDrawer } = useSelector((state) => state.other);
   const id = params.userId;
-  const { data, isError, error, isLoading } = useGetUserQuery(id);
+  const { data, isLoading } = useGetUserQuery(id);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -53,6 +53,7 @@ const Profile = () => {
         closeButton: true
       });
     }
+    redirect("/");
   };
 
   if (isLoading) {

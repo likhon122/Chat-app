@@ -6,14 +6,6 @@ const api = createApi({
   baseQuery: fetchBaseQuery({ baseUrl: `${serverUrl}/api/v1/` }),
   tagTypes: ["Chat", "User", "Auth", "Message", "FriendRequestNotification"],
   endpoints: (builder) => ({
-    verifyUser: builder.query({
-      query: () => ({
-        url: "auth",
-        credentials: "include"
-      }),
-      providesTags: ["Auth"]
-    }),
-
     getChats: builder.query({
       query: () => ({
         url: "chat/my-chats",
@@ -130,6 +122,15 @@ const api = createApi({
       invalidatesTags: ["User"]
     }),
 
+    verifyUser: builder.query({
+      query: () => ({
+        url: "auth",
+        credentials: "include"
+      }),
+      providesTags: (result) =>
+        result ? [{ type: "Auth", id: "current" }] : []
+    }),
+
     loginUser: builder.mutation({
       query: (data) => ({
         url: "auth/login",
@@ -137,10 +138,10 @@ const api = createApi({
         credentials: "include",
         body: data
       }),
-      invalidatesTags: ["Auth"]
+      invalidatesTags: [{ type: "Auth", id: "current" }]
     }),
 
-    acceptFriendRequest: builder.mutation({
+    FriendRequest: builder.mutation({
       query: (data) => ({
         url: "user/accept-request",
         method: "PUT",

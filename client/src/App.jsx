@@ -31,7 +31,8 @@ const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY;
 
 // Protected Route component for authentication
 const ProtectedRoute = ({ user, isLoading, children }) => {
-  if (!isLoading && !user) {
+  const userData = useSelector((state) => state.auth.user);
+  if (!isLoading && !user && !userData) {
     return <Navigate to="/login" />;
   }
 
@@ -40,7 +41,8 @@ const ProtectedRoute = ({ user, isLoading, children }) => {
 
 // Check if the user is already logged in to redirect to chat
 const CheckUserIsLoggedOut = ({ user, isLoading, children }) => {
-  if (!isLoading && user) {
+  const userData = useSelector((state) => state.auth.user);
+  if (!isLoading && user && userData) {
     return <Navigate to="/chat" />;
   }
 
@@ -49,11 +51,11 @@ const CheckUserIsLoggedOut = ({ user, isLoading, children }) => {
 
 const App = () => {
   const dispatch = useDispatch();
+
   const {
     data,
     isLoading: mountLoading,
-    isError,
-    error
+    isError
   } = useVerifyUserQuery();
   const user = data?.payload?.user;
   const [isLoading, setIsLoading] = useState(true);
