@@ -28,8 +28,11 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await loginUser("Login...", loginData);
-    navigate("/chat");
+    try {
+      await loginUser("Login...", loginData);
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   useEffect(() => {
