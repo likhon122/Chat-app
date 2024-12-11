@@ -1,4 +1,3 @@
-import { useDispatch } from "react-redux";
 import { FaXmark } from "react-icons/fa6";
 import {
   useAcceptFriendRequestMutation,
@@ -13,7 +12,6 @@ const NotificationDrawer = ({ onClose }) => {
     useFriendRequestNotificationQuery();
   const [acceptFriendRequest] = useAcceptFriendRequestMutation();
   const [rejectFriendRequest] = useRejectFriendRequestMutation();
-  const dispatch = useDispatch();
 
   const handleConfirmRequest = async (id) => {
     try {

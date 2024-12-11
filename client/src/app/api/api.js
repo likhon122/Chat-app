@@ -141,7 +141,7 @@ const api = createApi({
       invalidatesTags: [{ type: "Auth", id: "current" }]
     }),
 
-    FriendRequest: builder.mutation({
+    acceptFriendRequest: builder.mutation({
       query: (data) => ({
         url: "user/accept-request",
         method: "PUT",
