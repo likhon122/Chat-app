@@ -8,11 +8,19 @@ const userSchema = new mongoose.Schema(
     },
     username: {
       type: String,
-      required: [true, "Username is required to sign up!"]
+      required: [true, "Username is required to sign up!"],
+      unique: [
+        true,
+        "Username is already have anyone taken! Please select another username"
+      ]
+    },
+    bio: {
+      type: String,
+      default: "Chat is everything!!👍"
     },
     email: {
       type: String,
-      unique: true,
+      unique: [true, "Email is already Exist! Please select another Email!"],
       required: [true, "User email is required to sign up!"]
     },
     password: {
@@ -21,14 +29,15 @@ const userSchema = new mongoose.Schema(
     },
     avatar: {
       publicId: {
-        type: String,
-        required: [true, "Avatar public id is required!"]
+        type: String
+        // required: [true, "Avatar public id is required!"]
       },
       url: {
-        type: String,
-        required: [true, "Avatar url is required!"]
+        type: String
+        // required: [true, "Avatar url is required!"]
       }
     },
+    friends: [{ type: mongoose.Schema.ObjectId, ref: "User" }],
     isAdmin: {
       type: Boolean,
       default: false

@@ -4,8 +4,51 @@ import User from "../models/user.model.js";
 import { errorResponse, successResponse } from "../helper/responseHandler.js";
 import {
   createAccessToken,
-  createRefreshToken
+  createRefreshToken,
+  verifyJsonWebToken
 } from "../helper/jsonWebToken.js";
+import { accessTokenKey } from "../secret.js";
+
+const getUser = async (req, res, next) => {
+  try {
+    const { accessToken } = req.cookies;
+
+    if (!accessToken) {
+      return errorResponse(res, {
+        statusCode: 401,
+        errorMessage: "Access token not found please login again!",
+        nextURl: {
+          login: "/api/v1/login"
+        }
+      });
+    }
+
+    const existUser = verifyJsonWebToken(accessToken, accessTokenKey);
+
+    const user = await User.findById({ _id: existUser._id })
+      .select("-password")
+      .lean();
+
+    if (!user) {
+      return errorResponse(res, {
+        statusCode: 401,
+        errorMessage: "Access token not valid please login again!",
+        nextURl: {
+          login: "/api/v1/login"
+        }
+      });
+    }
+    user.avatar = user.avatar.url;
+    return successResponse(res, {
+      statusCode: 200,
+      successMessage: "User logged in successfully!",
+      payload: { user },
+      nextURl: {}
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
 
 const loginUser = async (req, res, next) => {
   try {
@@ -13,7 +56,7 @@ const loginUser = async (req, res, next) => {
 
     const existUser = await User.findOne({ email });
     if (!existUser) {
-      errorResponse(res, {
+      return errorResponse(res, {
         statusCode: 404,
         errorMessage:
           "User is not registered with this email please register first!",
@@ -30,7 +73,7 @@ const loginUser = async (req, res, next) => {
       existUser.password
     );
     if (!comparePassword) {
-      errorResponse(res, {
+      return errorResponse(res, {
         statusCode: 404,
         errorMessage: "User email or password is incorrect!",
         nextURl: {
@@ -40,14 +83,17 @@ const loginUser = async (req, res, next) => {
       });
     }
     const user = existUser.toObject();
+
     delete user.password;
-    
+
+    if (user.avatar && user.avatar.url) {
+      user.avatar = user.avatar.url;
+    }
+
     createAccessToken(res, user);
     createRefreshToken(res, user);
 
-    delete user.password;
-
-    successResponse(res, {
+    return successResponse(res, {
       statusCode: 200,
       successMessage: "User logged in successfully!",
       payload: { user },
@@ -63,7 +109,7 @@ const logOutUser = async (req, res, next) => {
     const { accessToken, refreshToken } = req.cookies;
 
     if (!accessToken || !refreshToken) {
-      errorResponse(res, {
+      return errorResponse(res, {
         statusCode: 401,
         errorMessage: "You are already logged out please login first!",
         nextURl: {
@@ -84,7 +130,7 @@ const logOutUser = async (req, res, next) => {
       sameSite: "none"
     });
 
-    successResponse(res, {
+    return successResponse(res, {
       statusCode: 200,
       successMessage: "User logged out successfully!",
       payload: {},
@@ -95,4 +141,4 @@ const logOutUser = async (req, res, next) => {
   }
 };
 
-export { loginUser, logOutUser };
+export { loginUser, logOutUser, getUser };

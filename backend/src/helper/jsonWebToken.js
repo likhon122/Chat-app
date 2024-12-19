@@ -36,9 +36,9 @@ const verifyJsonWebToken = (token, jwtSecretKey) => {
 
 const createAccessToken = (res, user) => {
   try {
-    const accessToken = jwt.sign(user, accessTokenKey, { expiresIn: "15m" });
+    const accessToken = jwt.sign(user, accessTokenKey, { expiresIn: "1d" });
     res.cookie("accessToken", accessToken, {
-      maxAge: 15 * 60 * 1000,
+      maxAge: 24 * 60 * 60 * 1000,
       secure: true,
       httpOnly: true,
       sameSite: "none"

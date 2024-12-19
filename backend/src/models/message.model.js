@@ -13,7 +13,7 @@ const messageModel = new mongoose.Schema(
     },
     attachment: [
       {
-        publicId: {
+        public_id: {
           type: String,
           required: [true, "Public id is required!"]
         },
@@ -25,7 +25,16 @@ const messageModel = new mongoose.Schema(
     ],
     chat: {
       type: mongoose.Types.ObjectId,
+      ref: "Chat",
       required: [true, "Chat is required!"]
+    },
+    replyTo: {
+      type: String,
+      default: null
+    },
+    realTimeId: {
+      type: String,
+      required: [true, "Real time id is required!"]
     }
   },
   { timestamps: true }

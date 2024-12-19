@@ -1,0 +1,27 @@
+language: node_js
+
+node_js:
+  - "16" # Specify Node.js version
+
+# Specify that CI should run only on the 'developer' branch
+branches:
+  only:
+    - developer
+
+# Install dependencies for both backend and client
+install:
+  # Install backend dependencies
+  - cd backend
+  - npm install
+  # Install client dependencies
+  - cd ../client
+  - npm install
+
+# Run tests or build for both backend and client
+script:
+  # Run backend tests
+  - cd ../backend
+  - npm test
+  # Run client build
+  - cd ../client
+  - npm run build

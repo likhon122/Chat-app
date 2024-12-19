@@ -35,7 +35,7 @@
       "BinaryExpression[operator='in']"
     ],
     "prefer-template": "off",
-    "no-underscore-dangle": 1,
+    "no-underscore-dangle": 0,
     "no-unused-vars": 1,
     "object-curly-newline": 0,
     "no-multiple-empty-lines": 0,
@@ -43,6 +43,7 @@
     "import/no-extraneous-dependencies": 0,
     "max-len": 0,
     "radix": 0,
-    "import/extensions": ["error", "always", { "ignorePackages": true }]
+    "import/extensions": ["error", "always", { "ignorePackages": true }],
+    "no-plusplus": ["error", { "allowForLoopAfterthoughts": true }]
   }
 }

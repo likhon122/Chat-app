@@ -13,6 +13,7 @@ const deleteChatWithId = async (res, chatId) => {
           createGroup: "/api/v1/chat/new"
         }
       });
+      return false;
     }
 
     if (!chat.groupChat) {
@@ -23,6 +24,7 @@ const deleteChatWithId = async (res, chatId) => {
           createGroup: "/api/v1/chat/new"
         }
       });
+      return false;
     }
 
     await Chat.findByIdAndDelete(chatId);
@@ -33,4 +35,24 @@ const deleteChatWithId = async (res, chatId) => {
   }
 };
 
-export { deleteChatWithId };
+const checkIsChatAdmin = (res, userId, chatDetails) => {
+  try {
+    if (chatDetails.creator.toString() === userId.toString()) {
+      return true;
+    }
+    errorResponse(res, {
+      statusCode: 403,
+      errorMessage:
+        "Your are not chat admin! Some operation you don't able to access! Please make your own group and get all operations access!",
+      nextURl: {
+        createChat: "/api/v1/chat/new",
+        allGroupsThatYouAdmin: "api/v1/chat/my-groups"
+      }
+    });
+    return false;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export { deleteChatWithId, checkIsChatAdmin };

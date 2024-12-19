@@ -1,0 +1,20 @@
+[build]
+  publish = "dist"
+  command = "npm run build"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "https://friends-adda.netlify.app"
+    Access-Control-Allow-Credentials = "true"
+
+[[headers]]
+  for = "/api/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "https://friends-adda.netlify.app"
+    Access-Control-Allow-Credentials = "true"
