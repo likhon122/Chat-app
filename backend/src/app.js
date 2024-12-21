@@ -13,7 +13,12 @@ import authRoute from "./routes/auth.route.js";
 import chatRoute from "./routes/chat.route.js";
 import notificationRoute from "./routes/notification.route.js";
 import userRoute from "./routes/user.route.js";
-import { frontendUrl1, frontendUrl2, frontendUrl3 } from "./secret.js";
+import {
+  frontendUrl1,
+  frontendUrl2,
+  frontendUrl3,
+  frontendUrl4
+} from "./secret.js";
 import seedRoute from "./seeders/seed.route.js";
 import supportRoute from "./routes/support.route.js";
 
@@ -21,7 +26,7 @@ const app = express();
 const server = createServer(app);
 
 app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", frontendUrl3); // Replace with your main frontend URL
+  res.header("Access-Control-Allow-Origin", frontendUrl3, frontendUrl4); // Replace with your main frontend URL
   res.header("Access-Control-Allow-Credentials", "true");
   next();
 });
@@ -29,7 +34,7 @@ app.use((req, res, next) => {
 // Setup Socket.io
 const io = new Server(server, {
   cors: {
-    origin: [frontendUrl1, frontendUrl2, frontendUrl3],
+    origin: [frontendUrl1, frontendUrl2, frontendUrl3, frontendUrl4],
     methods: ["GET", "POST"],
     credentials: true
   }
