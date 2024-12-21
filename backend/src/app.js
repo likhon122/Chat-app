@@ -44,7 +44,7 @@ app.set("io", io);
 
 app.use(
   cors({
-    origin: [frontendUrl1, frontendUrl2, frontendUrl3],
+    origin: [frontendUrl1, frontendUrl2, frontendUrl3, frontendUrl4],
     credentials: true
   })
 );
