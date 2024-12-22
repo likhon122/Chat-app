@@ -25,6 +25,10 @@ import supportRoute from "./routes/support.route.js";
 const app = express();
 const server = createServer(app);
 
+console.log(
+  `forntendUrl1: ${frontendUrl1} frontendUrl2:${frontendUrl2} frontendUrl3:${frontendUrl3} frontendUrl4:${frontendUrl4}`
+);
+
 // Setup Socket.io
 const io = new Server(server, {
   cors: {
