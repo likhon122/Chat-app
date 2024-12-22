@@ -1,3 +1,4 @@
+/* eslint-disable import/no-cycle */
 /* eslint-disable no-await-in-loop */
 import cookieParser from "cookie-parser";
 import cors from "cors";
@@ -8,32 +9,23 @@ import { Server } from "socket.io";
 import { errorResponse } from "./helper/responseHandler.js";
 import { socketAuthenticator } from "./middlewares/auth.js";
 import adminRoute from "./routes/admin.route.js";
-import { handleSocketEvents } from "./helper/socketIo.js";
 import authRoute from "./routes/auth.route.js";
 import chatRoute from "./routes/chat.route.js";
-import notificationRoute from "./routes/notification.route.js";
+import { handleSocketEvents } from "./helper/socketIo.js";
 import userRoute from "./routes/user.route.js";
-import {
-  frontendUrl1,
-  frontendUrl2,
-  frontendUrl3,
-  frontendUrl4
-} from "./secret.js";
+import notificationRoute from "./routes/notification.route.js";
+import { frontendUrl1, frontendUrl2, frontendUrl3 } from "./secret.js";
 import seedRoute from "./seeders/seed.route.js";
 import supportRoute from "./routes/support.route.js";
 
 const app = express();
 const server = createServer(app);
 
-console.log(
-  `forntendUrl1: ${frontendUrl1} frontendUrl2:${frontendUrl2} frontendUrl3:${frontendUrl3} frontendUrl4:${frontendUrl4}`
-);
-
 // Setup Socket.io
 const io = new Server(server, {
   cors: {
-    origin: [frontendUrl1, frontendUrl2, frontendUrl3, frontendUrl4],
-    methods: ["GET", "POST"],
+    origin: [frontendUrl1, frontendUrl2, frontendUrl3],
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     credentials: true
   }
 });
@@ -42,7 +34,8 @@ app.set("io", io);
 
 app.use(
   cors({
-    origin: [frontendUrl1, frontendUrl2, frontendUrl3, frontendUrl4],
+    origin: [frontendUrl1, frontendUrl2, frontendUrl3],
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     credentials: true
   })
 );
