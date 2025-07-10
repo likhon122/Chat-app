@@ -1,22 +1,18 @@
 import { FaPhoneAlt, FaVideo } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { callStarted } from "../../../app/features/otherSlice";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
+import { motion } from "framer-motion";
 
 const CallButtons = ({ chatId, member }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-
-  const user = useSelector((state) => state.auth.user);
-
-  // console.log(user);
 
   const handleAudioCall = () => {
     dispatch(callStarted(true));
     navigate(
       `/call/${chatId}?type=audio&&to=${member[0]._id}&&toName=${member[0].name}&&toImage=${member[0].avatar}`
     );
-    ``;
   };
 
   const handleVideoCall = () => {
@@ -24,25 +20,30 @@ const CallButtons = ({ chatId, member }) => {
     navigate(
       `/call/${chatId}?type=video&&to=${member[0]._id}&&toName=${member[0].name}&&toImage=${member[0].avatar}`
     );
-    // onVideoCall();
   };
 
   return (
-    <div className="flex space-x-4 rounded-lg items-center justify-center ">
-      <button
+    <div className="flex space-x-3">
+      <motion.button
         onClick={handleAudioCall}
-        className="flex items-center justify-center p-2 bg-blue-600 text-white font-semibold rounded-lg transition duration-300 ease-in-out transform hover:bg-blue-700 hover:scale-105"
+        className="flex items-center justify-center w-9 h-9 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md shadow-blue-500/30"
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
         aria-label="Audio Call"
+        title="Start audio call"
       >
-        <FaPhoneAlt />
-      </button>
-      <button
+        <FaPhoneAlt className="text-sm" />
+      </motion.button>
+      <motion.button
         onClick={handleVideoCall}
-        className="flex items-center justify-center p-2 bg-green-600 text-white font-semibold rounded-lg transition duration-300 ease-in-out transform hover:bg-green-700 hover:scale-105"
+        className="flex items-center justify-center w-9 h-9 rounded-full bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-md shadow-green-500/30"
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
         aria-label="Video Call"
+        title="Start video call"
       >
-        <FaVideo />
-      </button>
+        <FaVideo className="text-sm" />
+      </motion.button>
     </div>
   );
 };

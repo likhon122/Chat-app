@@ -1,7 +1,13 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
-import { FaInfoCircle } from "react-icons/fa";
+import {
+  FaInfoCircle,
+  FaCamera,
+  FaUser,
+  FaEnvelope,
+  FaQuoteRight
+} from "react-icons/fa";
 import { useAsyncMutation } from "../../hooks/useAsyncMutationHook";
 import { useEditProfileMutation } from "../../app/api/api";
 import { setUser } from "../../app/features/authSlice";
@@ -93,125 +99,175 @@ const EditProfile = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-darkBg p-4 sm:p-6">
-      <div className="border border-gray-900 shadow-gray-600 shadow-sm rounded-lg p-8 w-full max-w-md">
-        <h2 className="text-xl sm:text-2xl font-bold text-center text-gray-800 dark:text-white mb-4 sm:mb-6">
-          Edit Profile
+    <div className=" flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-black p-4 sm:p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-8 w-full max-w-md transition-all duration-300">
+        <h2 className="text-2xl font-bold text-center text-gray-800 dark:text-white mb-6 flex items-center justify-center">
+          <span className="bg-gradient-to-r from-blue-600 to-indigo-600 text-transparent bg-clip-text">
+            Edit Profile
+          </span>
         </h2>
 
-        <form onSubmit={handleImageSubmit}>
-          <div className="mb-4 sm:mb-6 relative">
-            <div className="flex justify-center mb-2 sm:mb-4">
-              <img
-                src={selectedImage || avatar}
-                alt="Avatar"
-                className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-2 border-gray-300 dark:border-gray-600 object-cover cursor-pointer"
-                onClick={() => document.getElementById("image-input").click()}
+        {/* Avatar Section */}
+        <form onSubmit={handleImageSubmit} className="mb-[10px]">
+          <div className="relative flex flex-col items-center">
+            <div className="group relative">
+              <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-white dark:border-gray-700 shadow-lg relative mx-auto">
+                <img
+                  src={
+                    selectedImage || avatar || "https://via.placeholder.com/150"
+                  }
+                  alt="Avatar"
+                  className="w-full h-full object-cover"
+                />
+                <div
+                  className="absolute inset-0 bg-black bg-opacity-40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-300 cursor-pointer"
+                  onClick={() => document.getElementById("image-input").click()}
+                >
+                  <FaCamera className="text-white text-xl" />
+                </div>
+              </div>
+              <input
+                id="image-input"
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                hidden
               />
             </div>
-            <input
-              id="image-input"
-              type="file"
-              accept="image/*"
-              onChange={handleImageChange}
-              hidden
-            />
-            <div>
-              <div className="ml-2 relative">
-                <span
-                  className="text-gray-600 dark:text-gray-400 cursor-pointer"
-                  onMouseEnter={handleMouseEnterImage}
-                  onMouseLeave={handleMouseLeaveImage}
-                >
-                  <FaInfoCircle />
-                </span>
-                {tooltipShowImage && (
-                  <div className="absolute z-10 w-40 sm:w-48 p-2 bg-gray-800 text-white text-sm rounded-md shadow-lg text-center">
-                    When you click change image button then you can change your
-                    image. Without it, it's not changeable.
-                  </div>
-                )}
+
+            <div className="mt-4 text-center">
+              <div className="flex items-center justify-center text-sm text-gray-500 dark:text-gray-400 mb-2">
+                <span className="mr-1">Click image to change</span>
+                <div className="relative inline-block">
+                  <FaInfoCircle
+                    className="cursor-pointer text-blue-500 hover:text-blue-600 transition-colors"
+                    onMouseEnter={handleMouseEnterImage}
+                    onMouseLeave={handleMouseLeaveImage}
+                  />
+                  {tooltipShowImage && (
+                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-48 p-2 bg-gray-800 text-white text-xs rounded-lg shadow-lg z-10">
+                      When you select a new image, click the Update Avatar
+                      button to save your changes.
+                      <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-800 rotate-45"></div>
+                    </div>
+                  )}
+                </div>
               </div>
               <button
-                className="mt-2 bg-gray-700 text-white py-1 px-3 rounded-md hover:bg-gray-600 transition duration-200"
                 type="submit"
                 disabled={imageChangeButton}
+                className={`
+                  px-4 py-2 rounded-full text-sm font-medium transition-all duration-200
+                  ${
+                    imageChangeButton
+                      ? "bg-gray-300 text-gray-500 dark:bg-gray-700 dark:text-gray-400 cursor-not-allowed"
+                      : "bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:shadow-md hover:translate-y-[-1px]"
+                  }
+                `}
               >
-                Change Image
+                Update Avatar
               </button>
             </div>
           </div>
         </form>
 
-        <form onSubmit={handleNameChange}>
-          <div className="mb-4 sm:mb-6">
-            <h3 className="text-xs sm:text-xl font-semibold text-gray-800 dark:text-white mb-2">
-              Change Name
-            </h3>
+        {/* Name Section */}
+        <form onSubmit={handleNameChange} className="mb-6">
+          <div className="space-y-2">
+            <label className="flex items-center text-gray-700 dark:text-gray-300 text-sm font-medium mb-1">
+              <FaUser className="mr-2 text-blue-500" />
+              Display Name
+            </label>
             <input
               type="text"
               value={name}
               spellCheck="false"
               onChange={(e) => setName(e.target.value)}
-              className="w-full p-2 sm:p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white transition-all duration-200"
               placeholder="Enter your name"
             />
-            <button className="mt-2 bg-gray-700 text-white py-1 px-3 rounded-md hover:bg-gray-600 transition duration-200">
-              Change Name
-            </button>
+            <div className="pt-2">
+              <button
+                type="submit"
+                className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white py-2 px-4 rounded-lg transition-all duration-200 hover:shadow-md hover:translate-y-[-1px] text-sm font-medium"
+              >
+                Update Name
+              </button>
+            </div>
           </div>
         </form>
 
-        <div className="mb-4 sm:mb-6">
-          <div className="flex items-center">
-            <h3 className="text-xs sm:text-xl font-semibold text-gray-800 dark:text-white mb-2">
-              Change Email
-            </h3>
-            <div className="ml-2 relative">
-              <span
-                className="text-gray-600 dark:text-gray-400 cursor-pointer"
+        {/* Email Section (Read-only) */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-1">
+            <label className="flex items-center text-gray-700 dark:text-gray-300 text-sm font-medium">
+              <FaEnvelope className="mr-2 text-blue-500" />
+              Email Address
+            </label>
+            <div className="relative inline-block">
+              <FaInfoCircle
+                className="cursor-pointer text-blue-500 hover:text-blue-600 transition-colors"
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={handleMouseLeave}
-              >
-                <FaInfoCircle />
-              </span>
+              />
               {showTooltip && (
-                <div className="absolute z-10 w-40 sm:w-48 p-2 bg-gray-800 text-white text-sm rounded-md shadow-lg text-center">
-                  You do not change your email! Please contact our customer
-                  service or email us!!
+                <div className="absolute bottom-full right-0 mb-2 w-48 p-2 bg-gray-800 text-white text-xs rounded-lg shadow-lg z-10">
+                  You cannot change your email. Please contact our customer
+                  service for assistance.
+                  <div className="absolute -bottom-1 right-1 w-2 h-2 bg-gray-800 rotate-45"></div>
                 </div>
               )}
             </div>
           </div>
 
-          <input
-            type="text"
-            value={user?.email}
-            readOnly
-            disabled
-            className="w-full p-2 sm:p-3 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white select-none pointer-events-none"
-            style={{ userSelect: "none", pointerEvents: "none" }}
-          />
+          <div className="relative">
+            <input
+              type="text"
+              value={user?.email || ""}
+              readOnly
+              disabled
+              className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 select-none pointer-events-none"
+            />
+            <div className="absolute inset-y-0 right-3 flex items-center">
+              <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                Read only
+              </span>
+            </div>
+          </div>
         </div>
 
-        <form onSubmit={handleBioChange}>
-          <div className="mb-4 sm:mb-6">
-            <h3 className="text-xs sm:text-xl font-semibold text-gray-800 dark:text-white mb-2">
-              Change Bio
-            </h3>
+        {/* Bio Section */}
+        <form onSubmit={handleBioChange} className="mb-6">
+          <div className="space-y-2">
+            <label className="flex items-center text-gray-700 dark:text-gray-300 text-sm font-medium mb-1">
+              <FaQuoteRight className="mr-2 text-blue-500" />
+              About Me
+            </label>
             <textarea
-              value={bio}
+              value={bio || ""}
               onChange={(e) => setBio(e.target.value)}
-              className="w-full p-2 sm:p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-              rows="3"
+              className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white transition-all duration-200"
+              rows="4"
               spellCheck="true"
-              placeholder="Tell us about yourself"
+              placeholder="Tell the world about yourself..."
             ></textarea>
-            <button className="mt-2 bg-gray-700 text-white py-1 px-3 rounded-md hover:bg-gray-600 transition duration-200">
-              Change Bio
-            </button>
+            <div className="pt-2">
+              <button
+                type="submit"
+                className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white py-2 px-4 rounded-lg transition-all duration-200 hover:shadow-md hover:translate-y-[-1px] text-sm font-medium"
+              >
+                Update Bio
+              </button>
+            </div>
           </div>
         </form>
+
+        {/* Status indicator */}
+        {isLoading && (
+          <div className="mt-4 p-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 text-sm rounded-lg text-center">
+            Saving changes...
+          </div>
+        )}
       </div>
     </div>
   );

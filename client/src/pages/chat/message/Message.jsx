@@ -282,7 +282,7 @@ const Message = ({ chatId }) => {
   return (
     <>
       <div
-        className={`flex flex-col h-[95%] md:h-[95%] dark:bg-darkBg text-gray-100 scrollbar-thin scrollbar-thumb-rounded-lg`}
+        className={`flex flex-col h-full w-full bg-gray-50 dark:bg-gray-900 `}
       >
         {oldMessagesChunk.isFetching && messagePage === 0 ? (
           <div className="flex justify-center items-center h-full">
@@ -304,10 +304,12 @@ const Message = ({ chatId }) => {
           />
         )}
 
-        <TypingIndicator userTyping={userTyping} />
+        <div className="relative">
+          <TypingIndicator userTyping={userTyping} />
+        </div>
 
         {replyMessage && (
-          <div className="dark:shadow-md p-1 sm:p-2 flex items-start dark:bg-gray-800 border dark:border-gray-700">
+          <div className=" p-1 sm:p-2 flex items-start dark:bg-gray-800 border dark:border-gray-700">
             <div className="ml-1 sm:ml-3 flex-1">
               <h1 className=" text-xs sm:text-md font-medium dark:text-gray-200 text-gray-600 font-sans">
                 Replying to{" "}

@@ -1,9 +1,14 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { serverUrl } from "../../..";
 
+
 const api = createApi({
   reducerPath: "api",
-  baseQuery: fetchBaseQuery({ baseUrl: `${serverUrl}/api/v1/` }),
+  baseQuery: fetchBaseQuery({
+    baseUrl: `${serverUrl}/api/v1`,
+    credentials: "include"
+  }),
+
   tagTypes: ["Chat", "User", "Auth", "Message", "FriendRequestNotification"],
   endpoints: (builder) => ({
     getChats: builder.query({
@@ -82,7 +87,7 @@ const api = createApi({
 
     getGroupDetails: builder.query({
       query: (id, populate = true) => ({
-        url: `/chat/${id}?populate=${populate}`,
+        url: `chat/${id}?populate=${populate}`,
         credentials: "include"
       }),
       providesTags: (result, error, id) => [{ type: "Chat", id }]
@@ -98,7 +103,7 @@ const api = createApi({
 
     getPendingFriendRequest: builder.query({
       query: () => ({
-        url: "/user/pending-requests",
+        url: "user/pending-requests",
         credentials: "include"
       }),
       providesTags: ["User"]

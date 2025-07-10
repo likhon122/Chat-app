@@ -1,5 +1,6 @@
 import { useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import GroupChatNav from "./GroupChatNav";
 import GroupInfo from "./GroupInfo";
 import Message from "./message/Message";
@@ -10,57 +11,91 @@ const Chat = () => {
   const params = useParams();
   const { chatId } = params;
 
-  
-
   return (
-    <>
-      <div className="md:hidden block">
-        <div
-          className={`${
-            groupInfoDrawer ? "" : "h-[94vh] overflow-clip"
-          } px-1 py-1 `}
-        >
-          <div className="">
-            <GroupChatNav chatId={chatId} />
+    <div className="w-full h-[92vh] bg-gray-50 dark:bg-gray-900 overflow-hidden">
+      {/* Mobile Layout */}
+      <div className="md:hidden h-full flex flex-col">
+        <div className="flex-shrink-0">
+          <GroupChatNav chatId={chatId} />
+        </div>
+
+        <div className="flex-1 h-0 overflow-hidden">
+          <AnimatePresence mode="wait">
             {groupInfoDrawer ? (
-              <div className="  ">
+              <motion.div
+                key="group-info"
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 10 }}
+                transition={{ duration: 0.2 }}
+                className="h-full overflow-y-auto"
+              >
                 <GroupInfo chatId={chatId} />
-              </div>
+              </motion.div>
             ) : (
-              <div className="h-[92vh]">
+              <motion.div
+                key="message-area"
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                transition={{ duration: 0.2 }}
+                className="h-full"
+              >
                 <Message chatId={chatId} />
-              </div>
+              </motion.div>
             )}
-          </div>
+          </AnimatePresence>
         </div>
       </div>
-      <div className="hidden md:block  grid-cols-1 px-5 py-3">
+
+      {/* Desktop Layout */}
+      <div className="hidden md:flex h-full p-3">
         <div
-          className={` ${
-            groupInfoDrawer
-              ? "md:grid grid-cols-[400px_1fr] xl:grid-cols-[400px_1fr_300px] gap-4"
-              : "grid grid-cols-[400px_1fr] gap-5"
+          className={`flex w-full h-full gap-4 ${
+            groupInfoDrawer ? "pr-0" : ""
           }`}
         >
-          <div className="">
+          {/* Chat List */}
+          <div className="w-[350px] flex-shrink-0">
             <MyChats />
           </div>
+
+          {/* Chat Area */}
           <div
-            className={`${
-              groupInfoDrawer ? "hidden xl:block" : ""
-            } border dark:border-gray-700 shadow-md shadow-gray-300 border-gray-300 dark:shadow-gray-700 rounded-md h-[92vh] overflow-hidden `}
+            className={`flex-1 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-sm ${
+              groupInfoDrawer &&
+              !window.matchMedia("(min-width: 1280px)").matches
+                ? "hidden"
+                : ""
+            }`}
           >
-            <GroupChatNav chatId={chatId} />
-            <Message chatId={chatId} />
-          </div>
-          {groupInfoDrawer && (
-            <div className="">
-              <GroupInfo chatId={chatId} />
+            <div className="flex flex-col h-full">
+              <div className="flex-shrink-0">
+                <GroupChatNav chatId={chatId} />
+              </div>
+              <div className="flex-1 overflow-hidden">
+                <Message chatId={chatId} />
+              </div>
             </div>
-          )}
+          </div>
+
+          {/* Group Info */}
+          <AnimatePresence>
+            {groupInfoDrawer && (
+              <motion.div
+                className={`w-[350px] flex-shrink-0 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-sm`}
+                initial={{ opacity: 0, width: 0 }}
+                animate={{ opacity: 1, width: 350 }}
+                exit={{ opacity: 0, width: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <GroupInfo chatId={chatId} />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 
