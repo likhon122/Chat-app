@@ -26,6 +26,7 @@ import PushNotificationManager from "./PushNotificationManager";
 import EditProfile from "./pages/profile/EditProfile";
 import ForgotPassword from "./pages/forgot-password/ForgotPassword";
 import ResetPassword from "./pages/forgot-password/ResetPassword";
+import { serverUrl } from "..";
 
 const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY;
 
@@ -59,7 +60,7 @@ const App = () => {
   useEffect(() => {
     (async () => {
       const user = await fetch(
-        "https://chat-app-backend-fawn-two.vercel.app//api/v1/auth",
+        `${serverUrl}/api/v1/api/v1/auth`,
         {
           method: "GET",
           credentials: "include"
