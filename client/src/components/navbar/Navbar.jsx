@@ -3,11 +3,19 @@ import { NavLink } from "react-router-dom";
 import Search from "./Search";
 import Notification from "./Notification";
 import { useSelector } from "react-redux";
-import { FiMoreHorizontal } from "react-icons/fi";
+import { FiMenu, FiX } from "react-icons/fi";
+import {
+  FaHome,
+  FaUser,
+  FaSignInAlt,
+  FaUserPlus,
+  FaComment
+} from "react-icons/fa";
 
 const Navbar = () => {
   const userData = useSelector((state) => state.auth.user);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const mobileMenuRef = useRef(null);
 
   const toggleMobileMenu = () => {
@@ -19,6 +27,13 @@ const Navbar = () => {
   };
 
   useEffect(() => {
+    const handleScroll = () => {
+      const isScrolled = window.scrollY > 10;
+      if (isScrolled !== scrolled) {
+        setScrolled(isScrolled);
+      }
+    };
+
     const handleClickOutside = (event) => {
       if (
         mobileMenuRef.current &&
@@ -29,311 +44,290 @@ const Navbar = () => {
     };
 
     document.addEventListener("mousedown", handleClickOutside);
+    window.addEventListener("scroll", handleScroll);
+
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("scroll", handleScroll);
     };
-  }, [mobileMenuRef]);
+  }, [scrolled, mobileMenuRef]);
 
   const handleNavLinkClick = () => {
     closeMobileMenu();
   };
 
   return (
-    <div className="dark:shadow-md bg-[#FFFFFF] dark:bg-[#222222] h-[6vh] md:h-[5vh] w-full z-[] dark:shadow-black border-b dark:border-none border-b-gray-300">
-      <div className="container mx-auto flex items-center justify-between sm:px-4 sm:py-2 gap-1 sm:gap-2 h-full ">
-        <div className="md:hidden">
-          <button
-            onClick={toggleMobileMenu}
-            className="text-gray-700 dark:text-white pl-1 py-2 rounded focus:outline-none hover:bg-gray-200 dark:hover:bg-gray-700 transition"
-          >
-            <FiMoreHorizontal className="text-xl" />
-          </button>
-        </div>
-        <ul className="md:flex items-center gap-8 hidden">
-          {!userData && (
-            <>
-              <li>
+    <nav
+      className={`h-[8vh] ${
+        scrolled
+          ? "bg-white/95 dark:bg-gray-900/95 backdrop-blur-md shadow-md"
+          : "bg-white dark:bg-gray-900"
+      }`}
+    >
+      <div className="container mx-auto px-4 h-16">
+        <div className="flex items-center justify-between h-full">
+          {/* Logo and Brand */}
+          <div className="flex items-center">
+            <NavLink to="/" className="flex items-center space-x-2">
+              <div className="h-10 w-10 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-xl shadow-md">
+                C
+              </div>
+              <span className="text-xl font-bold text-gray-800 dark:text-white">
+                ChatApp
+              </span>
+            </NavLink>
+          </div>
+
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center justify-center flex-1 px-16">
+            {/* Search */}
+            <div className="w-full max-w-lg">
+              <Search />
+            </div>
+          </div>
+
+          {/* Desktop Navigation Links */}
+          <div className="hidden md:flex items-center space-x-1">
+            {!userData ? (
+              <>
                 <NavLink
                   to="/"
                   className={({ isActive }) =>
-                    `text-lg font-medium transition-colors ${
+                    `px-4 py-2 rounded-lg font-medium transition-all ${
                       isActive
-                        ? "text-[#7D8ABC] dark:text-[#7D8ABC]"
-                        : "text-gray-700 dark:text-white"
-                    } hover:text-gray-900 dark:hover:text-gray-300`
+                        ? "bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400"
+                        : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                    } flex items-center space-x-1`
                   }
                 >
-                  Home
+                  <FaHome className="text-lg" />
+                  <span>Home</span>
                 </NavLink>
-              </li>
-              <li>
+
                 <NavLink
                   to="/login"
                   className={({ isActive }) =>
-                    `text-lg font-medium transition-colors ${
+                    `px-4 py-2 rounded-lg font-medium transition-all ${
                       isActive
-                        ? "text-[#7D8ABC] dark:text-[#7D8ABC]"
-                        : "text-gray-700 dark:text-white"
-                    } hover:text-gray-900 dark:hover:text-gray-300`
+                        ? "bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400"
+                        : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                    } flex items-center space-x-1`
                   }
                 >
-                  Login
+                  <FaSignInAlt className="text-lg" />
+                  <span>Login</span>
                 </NavLink>
-              </li>
-              <li>
+
                 <NavLink
                   to="/sign-up"
                   className={({ isActive }) =>
-                    `text-lg font-medium transition-colors ${
-                      isActive
-                        ? "text-[#7D8ABC] dark:text-[#7D8ABC]"
-                        : "text-gray-700 dark:text-white"
-                    } hover:text-gray-900 dark:hover:text-gray-300`
+                    isActive
+                      ? "px-4 py-2 rounded-lg font-medium bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-md hover:shadow-lg transition-all"
+                      : "px-4 py-2 rounded-lg font-medium bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-md hover:shadow-lg transition-all opacity-90 hover:opacity-100"
                   }
                 >
-                  Sign Up
+                  <div className="flex items-center space-x-1">
+                    <FaUserPlus className="text-lg" />
+                    <span>Sign Up</span>
+                  </div>
                 </NavLink>
-              </li>
-            </>
-          )}
-        </ul>
-        {userData && (
-          <ul className="md:flex items-center gap-8 hidden">
-            <li>
-              <NavLink
-                to="/chat/"
-                className={({ isActive }) =>
-                  `text-lg font-medium transition-colors ${
-                    isActive
-                      ? "text-[#7D8ABC] dark:text-[#7D8ABC]"
-                      : "text-gray-700 dark:text-white"
-                  } hover:text-gray-900 dark:hover:text-gray-300`
-                }
-              >
-                Chat
-              </NavLink>
-            </li>
-          </ul>
-        )}
+              </>
+            ) : (
+              <>
+                <NavLink
+                  to="/chat"
+                  className={({ isActive }) =>
+                    `px-4 py-2 rounded-lg font-medium transition-all ${
+                      isActive
+                        ? "bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400"
+                        : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                    } flex items-center space-x-1`
+                  }
+                >
+                  <FaComment className="text-lg" />
+                  <span>Chat</span>
+                </NavLink>
 
-        <div className="flex-grow flex justify-center ">
-          <Search />
-        </div>
+                {/* Notification */}
+                <div className="px-2">
+                  <Notification />
+                </div>
 
-        {userData && <Notification />}
-        <div
-          className="flex items-center sm:gap-2 z-50 mr-2 "
-          title="Notification"
-        >
-          {userData?._id && (
-            <NavLink
-              to={`/profile/${userData._id}`}
-              onClick={handleNavLinkClick}
-              className="relative flex items-center transition-colors hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full p-1"
+                {/* Profile */}
+                <NavLink
+                  to={`/profile/${userData._id}`}
+                  className={({ isActive }) =>
+                    `relative flex items-center ${
+                      isActive
+                        ? "ring-2 ring-blue-500 ring-offset-2 dark:ring-offset-gray-900"
+                        : "hover:ring-2 hover:ring-gray-300 hover:ring-offset-2 dark:hover:ring-offset-gray-900"
+                    } rounded-full transition-all duration-300`
+                  }
+                >
+                  <div className="w-10 h-10 rounded-full overflow-hidden shadow-md border-2 border-white dark:border-gray-700">
+                    <img
+                      src={userData.avatar}
+                      alt="Profile"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-gray-900"></span>
+                </NavLink>
+              </>
+            )}
+          </div>
+
+          {/* Mobile Menu Button */}
+          <div className="md:hidden flex items-center">
+            {userData && (
+              <>
+                <Notification />
+                <NavLink
+                  to={`/profile/${userData._id}`}
+                  className="relative flex items-center mx-3"
+                >
+                  <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-white dark:border-gray-700">
+                    <img
+                      src={userData.avatar}
+                      alt="Profile"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <span className="absolute bottom-0 right-0 w-2 h-2 bg-green-500 rounded-full border-2 border-white dark:border-gray-900"></span>
+                </NavLink>
+              </>
+            )}
+            <button
+              onClick={toggleMobileMenu}
+              className="p-2 rounded-lg text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors focus:outline-none"
             >
-              <img
-                src={userData.avatar}
-                alt="User Avatar"
-                className="w-8 h-8 rounded-full border border-gray-300 dark:border-gray-600 object-cover"
-              />
-              <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></span>
-            </NavLink>
-          )}
+              {isMobileMenuOpen ? (
+                <FiX className="text-xl" />
+              ) : (
+                <FiMenu className="text-xl" />
+              )}
+            </button>
+          </div>
         </div>
       </div>
 
+      {/* Mobile Search Bar */}
+      <div className="md:hidden px-4 pb-3">
+        <Search />
+      </div>
+
+      {/* Mobile Menu */}
       <div
         ref={mobileMenuRef}
-        className={`${
-          isMobileMenuOpen
-            ? "block opacity-100 scale-100"
-            : "hidden opacity-0 scale-95"
-        } transition-all duration-300 ease-in-out bg-white dark:bg-[#222222] md:hidden border-t border-gray-200 dark:border-gray-700 z-40 fixed top-[6vh] left-0 w-full`}
+        className={`md:hidden fixed inset-0 top-16 bg-white dark:bg-gray-900 z-40 transition-transform duration-300 ease-in-out ${
+          isMobileMenuOpen ? "translate-x-0" : "translate-x-full"
+        }`}
       >
-        <ul className="flex flex-col gap-4 p-4">
-          {!userData && (
-            <>
-              <li>
+        <div className="h-full overflow-y-auto p-4">
+          <div className="space-y-3 py-3">
+            {!userData ? (
+              <>
                 <NavLink
                   to="/"
                   onClick={handleNavLinkClick}
                   className={({ isActive }) =>
-                    `text-lg font-medium transition-colors ${
+                    `flex items-center space-x-3 p-3 rounded-lg transition-colors ${
                       isActive
-                        ? "text-[#7D8ABC] dark:text-[#7D8ABC]"
-                        : "text-gray-700 dark:text-white"
-                    } hover:text-gray-900 dark:hover:text-gray-300`
+                        ? "bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400"
+                        : "text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
+                    }`
                   }
                 >
-                  Home
+                  <FaHome className="text-xl" />
+                  <span className="font-medium text-lg">Home</span>
                 </NavLink>
-              </li>
-              <li>
+
                 <NavLink
                   to="/login"
                   onClick={handleNavLinkClick}
                   className={({ isActive }) =>
-                    `text-lg font-medium transition-colors ${
+                    `flex items-center space-x-3 p-3 rounded-lg transition-colors ${
                       isActive
-                        ? "text-[#7D8ABC] dark:text-[#7D8ABC]"
-                        : "text-gray-700 dark:text-white"
-                    } hover:text-gray-900 dark:hover:text-gray-300`
+                        ? "bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400"
+                        : "text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
+                    }`
                   }
                 >
-                  Login
+                  <FaSignInAlt className="text-xl" />
+                  <span className="font-medium text-lg">Login</span>
                 </NavLink>
-              </li>
-              <li>
+
                 <NavLink
                   to="/sign-up"
                   onClick={handleNavLinkClick}
                   className={({ isActive }) =>
-                    `text-lg font-medium transition-colors ${
+                    `flex items-center space-x-3 p-3 rounded-lg transition-colors ${
                       isActive
-                        ? "text-[#7D8ABC] dark:text-[#7D8ABC]"
-                        : "text-gray-700 dark:text-white"
-                    } hover:text-gray-900 dark:hover:text-gray-300`
+                        ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white"
+                        : "bg-gradient-to-r from-blue-500 to-indigo-600 text-white opacity-90"
+                    }`
                   }
                 >
-                  Sign Up
+                  <FaUserPlus className="text-xl" />
+                  <span className="font-medium text-lg">Sign Up</span>
                 </NavLink>
-              </li>
-            </>
-          )}
-          {userData && (
-            <li>
-              <NavLink
-                to="/chat"
-                onClick={handleNavLinkClick}
-                className={({ isActive }) =>
-                  `text-lg font-medium transition-colors ${
-                    isActive
-                      ? "text-[#7D8ABC] dark:text-[#7D8ABC]"
-                      : "text-gray-700 dark:text-white"
-                  } hover:text-gray-900 dark:hover:text-gray-300`
-                }
-              >
-                Chat
-              </NavLink>
-            </li>
-          )}
-          {userData?._id && (
-            <li>
-              <NavLink
-                to={`/profile/${userData._id}`}
-                onClick={handleNavLinkClick}
-                className={({ isActive }) =>
-                  `md:text-lg font-medium transition-colors ${
-                    isActive
-                      ? "text-[#7D8ABC] dark:text-[#7D8ABC]"
-                      : "text-gray-700 dark:text-white"
-                  } hover:text-gray-900 dark:hover:text-gray-300`
-                }
-              >
-                Profile
-              </NavLink>
-            </li>
-          )}
-        </ul>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center p-4 border-b border-gray-100 dark:border-gray-800 mb-3">
+                  <div className="w-12 h-12 rounded-full overflow-hidden mr-3 border-2 border-white dark:border-gray-700">
+                    <img
+                      src={userData.avatar}
+                      alt="Profile"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div>
+                    <div className="font-semibold text-gray-800 dark:text-white">
+                      {userData.name}
+                    </div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                      @{userData.username || "username"}
+                    </div>
+                  </div>
+                </div>
+
+                <NavLink
+                  to="/chat"
+                  onClick={handleNavLinkClick}
+                  className={({ isActive }) =>
+                    `flex items-center space-x-3 p-3 rounded-lg transition-colors ${
+                      isActive
+                        ? "bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400"
+                        : "text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
+                    }`
+                  }
+                >
+                  <FaComment className="text-xl" />
+                  <span className="font-medium text-lg">Chat</span>
+                </NavLink>
+
+                <NavLink
+                  to={`/profile/${userData._id}`}
+                  onClick={handleNavLinkClick}
+                  className={({ isActive }) =>
+                    `flex items-center space-x-3 p-3 rounded-lg transition-colors ${
+                      isActive
+                        ? "bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400"
+                        : "text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
+                    }`
+                  }
+                >
+                  <FaUser className="text-xl" />
+                  <span className="font-medium text-lg">Profile</span>
+                </NavLink>
+              </>
+            )}
+          </div>
+        </div>
       </div>
-    </div>
+    </nav>
   );
 };
 
 export default Navbar;
-
-// import React, { useState, useRef, useEffect } from "react";
-// import { FaBars } from "react-icons/fa"; // assuming you are using React Icons
-// import { Link } from "react-router-dom";
-
-// const Navbar = () => {
-//   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-//   const mobileMenuRef = useRef();
-
-//   const handleToggleMobileMenu = () => {
-//     setIsMobileMenuOpen(!isMobileMenuOpen);
-//   };
-
-//   // Close the mobile menu if clicked outside of it
-//   useEffect(() => {
-//     const handleClickOutside = (event) => {
-//       if (
-//         mobileMenuRef.current &&
-//         !mobileMenuRef.current.contains(event.target)
-//       ) {
-//         setIsMobileMenuOpen(false);
-//       }
-//     };
-//     document.addEventListener("mousedown", handleClickOutside);
-//     return () => {
-//       document.removeEventListener("mousedown", handleClickOutside);
-//     };
-//   }, [mobileMenuRef]);
-
-//   return (
-//     <div className="dark:shadow-md bg-[#FFFFFF] dark:bg-[#222222] h-[6vh] md:h-[5vh] w-full z-50 dark:shadow-black border-b dark:border-none border-b-gray-300 fixed top-0 left-0">
-//       {/* Navbar Content */}
-//       <div className="container mx-auto flex items-center justify-between sm:px-4 sm:py-2 gap-1 sm:gap-2 h-full">
-//         {/* Logo */}
-//         <Link to="/" className="text-xl font-bold dark:text-white">
-//           ChatApp
-//         </Link>
-
-//         {/* Links for desktop */}
-//         <div className="hidden md:flex gap-4 items-center">
-//           <Link to="/profile" className="text-gray-800 dark:text-gray-200">
-//             Profile
-//           </Link>
-//           <Link to="/settings" className="text-gray-800 dark:text-gray-200">
-//             Settings
-//           </Link>
-//           {/* Add more links here if necessary */}
-//         </div>
-
-//         {/* Hamburger icon for mobile */}
-//         <div className="md:hidden flex items-center">
-//           <button
-//             onClick={handleToggleMobileMenu}
-//             className="text-gray-800 dark:text-gray-200"
-//           >
-//             <FaBars size={24} />
-//           </button>
-//         </div>
-//       </div>
-
-//       {/* Mobile Menu */}
-//       <div
-//         ref={mobileMenuRef}
-//         className={`${
-//           isMobileMenuOpen
-//             ? "block opacity-100 scale-100"
-//             : "hidden opacity-0 scale-95"
-//         } transition-all duration-300 ease-in-out bg-white dark:bg-[#222222] md:hidden border-t border-gray-200 dark:border-gray-700 z-40 fixed top-[6vh] left-0 w-full`}
-//       >
-//         <ul className="flex flex-col gap-4 p-4">
-//           <li>
-//             <Link
-//               to="/profile"
-//               className="text-gray-800 dark:text-gray-200"
-//               onClick={() => setIsMobileMenuOpen(false)} // Close menu on click
-//             >
-//               Profile
-//             </Link>
-//           </li>
-//           <li>
-//             <Link
-//               to="/settings"
-//               className="text-gray-800 dark:text-gray-200"
-//               onClick={() => setIsMobileMenuOpen(false)} // Close menu on click
-//             >
-//               Settings
-//             </Link>
-//           </li>
-//           {/* Add more mobile menu links here if necessary */}
-//         </ul>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default Navbar;

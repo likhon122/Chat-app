@@ -52,15 +52,23 @@ const CheckUserIsLoggedOut = ({ user, isLoading, children }) => {
 const App = () => {
   const dispatch = useDispatch();
 
-  const {
-    data,
-    isLoading: mountLoading,
-    isError
-  } = useVerifyUserQuery();
+  const { data, isLoading: mountLoading, isError } = useVerifyUserQuery();
   const user = data?.payload?.user;
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    (async () => {
+      const user = await fetch(
+        "https://chat-app-backend-fawn-two.vercel.app//api/v1/auth",
+        {
+          method: "GET",
+          credentials: "include"
+        }
+      );
+
+      console.log(user);
+    })();
+
     if (!mountLoading && data && data.payload?.user) {
       dispatch(setUser(data.payload.user));
       setIsLoading(false);

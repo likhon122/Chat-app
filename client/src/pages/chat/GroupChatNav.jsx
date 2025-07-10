@@ -1,20 +1,22 @@
 import { useEffect } from "react";
-import { BsThreeDots } from "react-icons/bs";
 import { useDispatch, useSelector } from "react-redux";
-import { FaXmark } from "react-icons/fa6";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import { toast } from "react-toastify";
+import {
+  FaInfoCircle,
+  FaTimes,
+  // FaPhone,
+  FaVideo,
+  // FaUserFriends
+} from "react-icons/fa";
 
 import { setGroupInfoDrawer } from "../../app/features/otherSlice";
 import { useGetGroupDetailsQuery } from "../../app/api/api";
 import CallButtons from "./message/CallButtons";
-import SingleSpinner from "../../components/Loaders/SingleSpinner";
 
 const GroupChatNav = ({ chatId }) => {
   const { groupInfoDrawer } = useSelector((state) => state.other);
-
-  // console.log(chatMembers);
-
   const user = useSelector((state) => state.auth.user);
   const { data, isLoading, isError } = useGetGroupDetailsQuery(chatId);
 
@@ -45,99 +47,113 @@ const GroupChatNav = ({ chatId }) => {
     }
   }, [isError, navigate]);
 
-  const isGroupChat = data?.payload?.chat.groupChat;
-  const member = data?.payload?.chat.members.filter(
+  const isGroupChat = data?.payload?.chat?.groupChat;
+  const member = data?.payload?.chat?.members?.filter(
     (member) => member._id !== user._id
   );
-
   const chat = data?.payload?.chat;
-
-  const friendMembers = chat?.members.filter(
+  const friendMembers = chat?.members?.filter(
     (member) => member._id !== user._id
   );
 
   return (
-    <>
-      <div className="dark:bg-[#292c33] h-[5%]  bg-[#F3F4F6] px-3 border-gray-300 border-b dark:shadow-gray-600 dark:border-b-gray-600 dark:shadow-md">
-        <div className="flex items-center justify-between h-full">
-          <div className="flex items-center justify-between w-full h-full">
-            {isLoading ? (
-              <SingleSpinner size="h-6 w-6" />
-            ) : (
-              <div>
-                {isGroupChat ? (
-                  <div className="flex items-center cursor-default">
-                    <div className="grid grid-cols-2  w-8 h-8 sm:w-8 overflow-hidden rounded-full">
-                      {chat.members.slice(0, 3).map((member, index) => (
-                        <img
-                          key={member._id}
-                          src={member.avatar}
-                          alt={member.name}
-                          className={`object-cover bg-center ${
-                            index === 2 ? "col-span-2" : ""
-                          } w-full h-full`}
-                        />
-                      ))}
-                    </div>
-                    <span className="dark:text-white text-gray-600 ml-1 font-semibold text-[11px]">
-                      {chat.chatName
-                        ?.split("-")
-                        .filter((name) => name !== user.name)}
-                    </span>
-                  </div>
-                ) : (
-                  <div
-                    className="flex items-center cursor-pointer"
-                    onClick={handleClick}
-                  >
-                    {friendMembers?.map((member) => (
+    <header className="h-16 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 flex items-center justify-between">
+      {/* Left Side - User/Group Info */}
+      <div className="flex items-center">
+        {isLoading ? (
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 animate-pulse"></div>
+            <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+          </div>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3 }}
+            className={`flex items-center space-x-3 ${
+              !isGroupChat ? "cursor-pointer" : ""
+            }`}
+            onClick={!isGroupChat ? handleClick : undefined}
+          >
+            {isGroupChat ? (
+              <div className="relative">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900 dark:to-indigo-900 rounded-full p-0.5 shadow-md">
+                  <div className="relative w-full h-full grid grid-cols-2 rounded-full overflow-hidden border-2 border-white dark:border-gray-800">
+                    {chat?.members?.slice(0, 3).map((member, index) => (
                       <img
                         key={member._id}
                         src={member.avatar}
                         alt={member.name}
-                        className="w-8 h-8 rounded-full mr-2 object-cover bg-cover"
+                        className={`object-cover ${
+                          index === 2 ? "col-span-2" : ""
+                        } w-full h-full`}
                       />
                     ))}
-                    <span className="dark:text-white text-gray-600  font-semibold text-[11px]">
-                      {
-                        chat?.chatName
-                          .split("-")
-                          .filter((name) => name !== user.name)[0]
-                      }
-                    </span>
                   </div>
-                )}
+                </div>
+                <div className="absolute -bottom-1 -right-1 bg-green-500 rounded-full w-3 h-3 border-2 border-white dark:border-gray-800"></div>
+              </div>
+            ) : (
+              <div className="relative">
+                <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white dark:border-gray-800 shadow-md">
+                  {friendMembers?.[0] && (
+                    <img
+                      src={friendMembers[0].avatar}
+                      alt={friendMembers[0].name}
+                      className="w-full h-full object-cover"
+                    />
+                  )}
+                </div>
+                <div className="absolute -bottom-1 -right-1 bg-green-500 rounded-full w-3 h-3 border-2 border-white dark:border-gray-800"></div>
               </div>
             )}
-            <div className="mr-6 ">
-              {!isGroupChat ? (
-                <CallButtons chatId={chatId} member={member} />
-              ) : (
-                <div className="dark:text-white text-gray-600  text-xs">
-                  Group Call is coming soon
-                </div>
-              )}
+
+            <div>
+              <h3 className="font-medium text-gray-800 dark:text-gray-200">
+                {isGroupChat
+                  ? chat?.chatName
+                  : chat?.chatName
+                      ?.split("-")
+                      ?.filter((name) => name !== user.name)[0]}
+              </h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {isGroupChat ? `${chat?.members?.length} members` : "Online"}
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </div>
+
+      {/* Right Side - Actions */}
+      <div className="flex items-center space-x-2">
+        {!isGroupChat ? (
+          <div className="flex items-center">
+            <CallButtons chatId={chatId} member={member} />
+          </div>
+        ) : (
+          <div className="flex items-center space-x-2">
+            <div className="text-xs text-gray-500 dark:text-gray-400 hidden sm:block">
+              Group call coming soon
+            </div>
+            <div className="opacity-60 cursor-not-allowed">
+              <FaVideo className="text-gray-400 dark:text-gray-500" />
             </div>
           </div>
-          <div
-            className="flex items-center justify-end dark:bg-gray-600 bg-gray-400 hover:bg-gray-500 dark:hover:bg-gray-400 duration-500 cursor-pointer h-[3.7vh] rounded-md px-1 mr-1"
-            onClick={handleInfoButton}
-          >
-            {groupInfoDrawer ? (
-              <FaXmark
-                size={23}
-                className="cursor-pointer dark:text-white text-white"
-              />
-            ) : (
-              <BsThreeDots
-                size={23}
-                className="cursor-pointer dark:text-white text-white"
-              />
-            )}
-          </div>
-        </div>
+        )}
+
+        <button
+          onClick={handleInfoButton}
+          className={`p-2 rounded-full transition-colors duration-200 ${
+            groupInfoDrawer
+              ? "bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400"
+              : "hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
+          }`}
+          title={groupInfoDrawer ? "Close info" : "View info"}
+        >
+          {groupInfoDrawer ? <FaTimes /> : <FaInfoCircle />}
+        </button>
       </div>
-    </>
+    </header>
   );
 };
 
