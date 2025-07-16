@@ -6,6 +6,7 @@ import { FaRegComments } from "react-icons/fa";
 import MyChats from "./MyChats";
 import { setMessageNotification } from "../../app/features/chatSlice";
 import { useGetSocket } from "../../SocketHelper";
+import { setShowSearch } from "../../app/features/otherSlice";
 
 const ShowChat = () => {
   const dispatch = useDispatch();
@@ -23,8 +24,12 @@ const ShowChat = () => {
     };
   }, [dispatch, socket]);
 
+  useEffect(() => {
+    dispatch(setShowSearch(true));
+  }, [dispatch]);
+
   return (
-    <div className="h-[92vh] bg-gray-50 dark:bg-gray-900 p-4">
+    <div className="h-[92vh] bg-gray-50 dark:bg-gray-900 p-4 ">
       <motion.div
         className="h-full flex"
         initial={{ opacity: 0 }}
@@ -33,7 +38,7 @@ const ShowChat = () => {
       >
         {/* Chat List */}
         <motion.div
-          className="w-80 flex-shrink-0 mr-4"
+          className="md:w-80 mt-10 md:mt-0  w-full flex-shrink-0 mr-4"
           initial={{ x: -20, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{ duration: 0.3, delay: 0.1 }}

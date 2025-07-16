@@ -16,6 +16,7 @@ const Search = () => {
   const [searchValue, setSearchValue] = useState("");
   const sender = useSelector((state) => state.auth?.user?._id);
   const userData = useSelector((state) => state.auth?.user);
+  const showSearch = useSelector((state) => state.other.search);
 
   const navigate = useNavigate();
 
@@ -86,7 +87,11 @@ const Search = () => {
   }, []);
 
   return (
-    <div className="relative w-full  sm:max-w-[400px] mx-auto">
+    <div
+      className={`${
+        showSearch ? "block" : "hidden"
+      } relative w-full  sm:max-w-[400px] mt-[10px] md:mt-0 mx-auto`}
+    >
       <form onSubmit={handleSubmit} className="flex items-center">
         <input
           type="search"

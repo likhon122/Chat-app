@@ -43,8 +43,8 @@ const Login = () => {
   }, [navigate, userData, data, dispatch]);
 
   return (
-    <div className="flex justify-center items-center h-screen md:h-screen ">
-      <div className="bg-white dark:bg-[#2B2B2B] rounded-lg shadow-lg p-8 max-w-md w-full">
+    <div className="flex justify-center items-center h-screen ">
+      <div className="bg-white dark:bg-[#2B2B2B] rounded-lg shadow-lg p-8 max-w-md w-full mx-4 md:mx-0">
         <h2 className="text-2xl font-semibold text-center text-gray-800 dark:text-white mb-6">
           Login
         </h2>

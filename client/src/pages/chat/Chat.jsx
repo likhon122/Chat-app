@@ -1,15 +1,28 @@
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import GroupChatNav from "./GroupChatNav";
 import GroupInfo from "./GroupInfo";
 import Message from "./message/Message";
 import MyChats from "./MyChats";
+import { useEffect } from "react";
+import { setShowSearch } from "../../app/features/otherSlice";
 
 const Chat = () => {
+  const showSearch = useSelector((state) => state.other.search);
+
   const { groupInfoDrawer } = useSelector((state) => state.other);
   const params = useParams();
   const { chatId } = params;
+  const dispatch = useDispatch();
+
+  console.log();
+
+  useEffect(() => {
+    if (showSearch && !window.matchMedia("(min-width: 768px)").matches) {
+      dispatch(setShowSearch(false));
+    }
+  }, [dispatch, showSearch]);
 
   return (
     <div className="w-full h-[92vh] bg-gray-50 dark:bg-gray-900 overflow-hidden">

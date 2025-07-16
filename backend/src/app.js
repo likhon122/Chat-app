@@ -32,10 +32,12 @@ const io = new Server(server, {
 
 app.set("io", io);
 
+// ✅ Middleware: Proper CORS Handling
 app.use(
   cors({
     origin: [frontendUrl1, frontendUrl2, frontendUrl3],
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true
   })
 );
@@ -44,13 +46,14 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// Health check route
+// ✅ Health Check Route
 app.get("/api/v1/health", (_, res) => {
   return res.status(200).send({
     message: "Server is running good!!"
   });
 });
 
+// ✅ API Routes
 app.use("/api/v1/seed", seedRoute);
 app.use("/api/v1/user", userRoute);
 app.use("/api/v1/auth", authRoute);
@@ -59,7 +62,7 @@ app.use("/api/v1/admin", adminRoute);
 app.use("/api/v1/support", supportRoute);
 app.use("/api/v1/notification", notificationRoute);
 
-// Socket.io Authentication Middleware
+// ✅ Socket.io Authentication Middleware
 io.use((socket, next) => {
   cookieParser()(socket.request, socket.request.res, async (err) => {
     if (err) {
@@ -69,12 +72,11 @@ io.use((socket, next) => {
   });
 });
 
-// Map for storing user socket IDs
+// ✅ Manage User Socket IDs
 export const userSocketIds = new Map();
-
 handleSocketEvents(io);
 
-// 404 Handler
+// ✅ 404 Not Found Handler
 app.use((req, res) => {
   return res.status(404).json({
     statusCode: 404,
@@ -82,17 +84,16 @@ app.use((req, res) => {
   });
 });
 
-// Error handling middleware
+// ✅ Global Error Handling Middleware
 app.use((err, req, res, next) => {
   if (res.headersSent) {
     return next(err);
   }
 
   if (err.kind === "ObjectId") {
-    const errorMessage = `Invalid object ID: ${err.path}. Please provide a valid object ID.`;
     return errorResponse(res, {
       statusCode: 400,
-      errorMessage
+      errorMessage: `Invalid object ID: ${err.path}. Please provide a valid object ID.`
     });
   }
 
