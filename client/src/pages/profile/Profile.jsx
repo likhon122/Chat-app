@@ -3,7 +3,10 @@ import { Link, redirect, useNavigate, useParams } from "react-router-dom";
 import { useGetUserQuery } from "../../app/api/api";
 import MakeGroup from "./MakeGroup";
 import { useDispatch, useSelector } from "react-redux";
-import { setMakeGroupDrawer } from "../../app/features/otherSlice";
+import {
+  setMakeGroupDrawer,
+  setShowSearch
+} from "../../app/features/otherSlice";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { removeUser } from "../../app/features/authSlice";
@@ -35,13 +38,22 @@ const Profile = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  const showSearch = useSelector((state) => state.other.search);
+
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
     };
+
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  useEffect(() => {
+    if (showSearch && !window.matchMedia("(min-width: 768px)").matches) {
+      dispatch(setShowSearch(false));
+    }
+  }, [dispatch, showSearch]);
 
   const handleClick = () => {
     dispatch(setMakeGroupDrawer(true));

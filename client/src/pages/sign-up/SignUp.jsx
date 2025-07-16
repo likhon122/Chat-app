@@ -117,7 +117,7 @@ const SignUp = () => {
 
   return (
     <div className="flex justify-center items-center h-screen md:h-screen ">
-      <div className="bg-white dark:bg-[#2B2B2B] rounded-lg shadow-lg p-8 max-w-md w-full relative">
+      <div className="bg-white dark:bg-[#2B2B2B] rounded-lg shadow-lg p-8 max-w-md w-full relative mx-4 md:mx-0">
         <div
           className="absolute top-4 right-4 cursor-pointer "
           onMouseEnter={() => setShowTooltip(true)}

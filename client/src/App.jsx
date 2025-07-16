@@ -59,15 +59,10 @@ const App = () => {
 
   useEffect(() => {
     (async () => {
-      const user = await fetch(
-        `${serverUrl}/api/v1/api/v1/auth`,
-        {
-          method: "GET",
-          credentials: "include"
-        }
-      );
-
-      console.log(user);
+      const user = await fetch(`${serverUrl}/api/v1/api/v1/auth`, {
+        method: "GET",
+        credentials: "include"
+      });
     })();
 
     if (!mountLoading && data && data.payload?.user) {

@@ -50,20 +50,14 @@ const Navbar = () => {
       document.removeEventListener("mousedown", handleClickOutside);
       window.removeEventListener("scroll", handleScroll);
     };
-  }, [scrolled, mobileMenuRef]);
+  }, []);
 
   const handleNavLinkClick = () => {
     closeMobileMenu();
   };
 
   return (
-    <nav
-      className={`h-[8vh] ${
-        scrolled
-          ? "bg-white/95 dark:bg-gray-900/95 backdrop-blur-md shadow-md"
-          : "bg-white dark:bg-gray-900"
-      }`}
-    >
+    <nav className={`h-[8vh] bg-white dark:bg-gray-900`}>
       <div className="container mx-auto px-4 h-16">
         <div className="flex items-center justify-between h-full">
           {/* Logo and Brand */}
