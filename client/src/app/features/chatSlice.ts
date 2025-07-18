@@ -1,6 +1,7 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { ChatState, MessageNotification } from "../../types";
 
-const initialState = {
+const initialState: ChatState = {
   requestNotification: 0,
   messageNotification: [
     {
@@ -11,7 +12,7 @@ const initialState = {
 };
 
 const chatSlice = createSlice({
-  name: "other",
+  name: "chat",
   initialState,
   reducers: {
     setRequestNotificationCount: (state) => {
@@ -20,7 +21,7 @@ const chatSlice = createSlice({
     resetRequestNotificationCount: (state) => {
       state.requestNotification = 0;
     },
-    setMessageNotification: (state, action) => {
+    setMessageNotification: (state, action: PayloadAction<{ chatId: string }>) => {
       const index = state.messageNotification.findIndex((item) => {
         return item.chatId === action.payload.chatId;
       });
@@ -34,7 +35,7 @@ const chatSlice = createSlice({
         });
       }
     },
-    resetMessageNotification: (state, action) => {
+    resetMessageNotification: (state, action: PayloadAction<string>) => {
       state.messageNotification = state.messageNotification.filter(
         (notification) => notification.chatId !== action.payload
       );

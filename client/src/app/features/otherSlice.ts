@@ -1,6 +1,7 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { OtherState, User, Chat, CallInfo } from "../../types";
 
-const initialState = {
+const initialState: OtherState = {
   notificationDrawer: false,
   members: [],
   makeGroupDrawer: false,
@@ -22,31 +23,31 @@ const otherSlice = createSlice({
   name: "other",
   initialState,
   reducers: {
-    setNotificationDrawer: (state, action) => {
+    setNotificationDrawer: (state, action: PayloadAction<boolean>) => {
       state.notificationDrawer = action.payload;
     },
-    setMembers: (state, action) => {
+    setMembers: (state, action: PayloadAction<User[]>) => {
       state.members = action.payload;
     },
-    setMakeGroupDrawer: (state, action) => {
+    setMakeGroupDrawer: (state, action: PayloadAction<boolean>) => {
       state.makeGroupDrawer = action.payload;
     },
-    setGroupInfoDrawer: (state, action) => {
+    setGroupInfoDrawer: (state, action: PayloadAction<boolean>) => {
       state.groupInfoDrawer = action.payload;
     },
-    setGroupId: (state, action) => {
+    setGroupId: (state, action: PayloadAction<string>) => {
       state.groupId = action.payload;
     },
     setTheme: (state) => {
       state.theme = state.theme === "light" ? "dark" : "light";
     },
-    setEditGroup: (state, action) => {
+    setEditGroup: (state, action: PayloadAction<boolean>) => {
       state.editGroup = action.payload;
     },
-    setChatId: (state, action) => {
+    setChatId: (state, action: PayloadAction<string>) => {
       state.chatId = action.payload;
     },
-    setRinging: (state, action) => {
+    setRinging: (state, action: PayloadAction<{ isRinging: boolean; callInfo?: CallInfo }>) => {
       state.isRinging = action.payload?.isRinging;
       state.callInfo = action.payload?.callInfo || null;
     },
@@ -54,19 +55,19 @@ const otherSlice = createSlice({
       state.isRinging = false;
       state.callInfo = null;
     },
-    callStarted: (state, action) => {
+    callStarted: (state, action: PayloadAction<boolean>) => {
       state.isCallStarted = action.payload;
     },
-    setIncomingOffer: (state, action) => {
+    setIncomingOffer: (state, action: PayloadAction<any>) => {
       state.incomingOffer = action.payload;
     },
-    setCallerDetails: (state, action) => {
+    setCallerDetails: (state, action: PayloadAction<User | null>) => {
       state.callerDetails = action.payload;
     },
-    setSelectedChat: (state, action) => {
+    setSelectedChat: (state, action: PayloadAction<Chat | null>) => {
       state.selectedChat = action.payload;
     },
-    setShowSearch: (state, action) => {
+    setShowSearch: (state, action: PayloadAction<boolean>) => {
       state.search = action.payload;
     }
   }

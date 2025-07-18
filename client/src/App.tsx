@@ -26,35 +26,36 @@ import PushNotificationManager from "./PushNotificationManager";
 import EditProfile from "./pages/profile/EditProfile";
 import ForgotPassword from "./pages/forgot-password/ForgotPassword";
 import ResetPassword from "./pages/forgot-password/ResetPassword";
-import { serverUrl } from "..";
+import { serverUrl } from "../index";
+import { RootState, User, ProtectedRouteProps } from "./types";
 
 const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY;
 
 // Protected Route component for authentication
-const ProtectedRoute = ({ user, isLoading, children }) => {
-  const userData = useSelector((state) => state.auth.user);
+const ProtectedRoute = ({ user, isLoading, children }: ProtectedRouteProps) => {
+  const userData = useSelector((state: RootState) => state.auth.user);
   if (!isLoading && !user && !userData) {
     return <Navigate to="/login" />;
   }
 
-  return children;
+  return <>{children}</>;
 };
 
 // Check if the user is already logged in to redirect to chat
-const CheckUserIsLoggedOut = ({ user, isLoading, children }) => {
-  const userData = useSelector((state) => state.auth.user);
+const CheckUserIsLoggedOut = ({ user, isLoading, children }: ProtectedRouteProps) => {
+  const userData = useSelector((state: RootState) => state.auth.user);
   if (!isLoading && user && userData) {
     return <Navigate to="/chat" />;
   }
 
-  return children;
+  return <>{children}</>;
 };
 
 const App = () => {
   const dispatch = useDispatch();
 
   const { data, isLoading: mountLoading, isError } = useVerifyUserQuery();
-  const user = data?.payload?.user;
+  const user: User | undefined = data?.payload?.user;
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -89,7 +90,7 @@ const App = () => {
           <Route
             index
             element={
-              <CheckUserIsLoggedOut user={user} isLoading={isLoading}>
+              <CheckUserIsLoggedOut user={user || null} isLoading={isLoading}>
                 <Home />
               </CheckUserIsLoggedOut>
             }
@@ -97,7 +98,7 @@ const App = () => {
           <Route
             path="sign-up"
             element={
-              <CheckUserIsLoggedOut user={user} isLoading={isLoading}>
+              <CheckUserIsLoggedOut user={user || null} isLoading={isLoading}>
                 <SignUp />
               </CheckUserIsLoggedOut>
             }
@@ -105,7 +106,7 @@ const App = () => {
           <Route
             path="login"
             element={
-              <CheckUserIsLoggedOut user={user} isLoading={isLoading}>
+              <CheckUserIsLoggedOut user={user || null} isLoading={isLoading}>
                 <Login />
               </CheckUserIsLoggedOut>
             }
@@ -113,7 +114,7 @@ const App = () => {
           <Route
             path="forgot-password"
             element={
-              <CheckUserIsLoggedOut user={user} isLoading={isLoading}>
+              <CheckUserIsLoggedOut user={user || null} isLoading={isLoading}>
                 <ForgotPassword />
               </CheckUserIsLoggedOut>
             }
@@ -121,7 +122,7 @@ const App = () => {
           <Route
             path="chat"
             element={
-              <ProtectedRoute user={user} isLoading={isLoading}>
+              <ProtectedRoute user={user || null} isLoading={isLoading}>
                 <ShowChat />
               </ProtectedRoute>
             }
@@ -129,7 +130,7 @@ const App = () => {
           <Route
             path="chat/:chatId"
             element={
-              <ProtectedRoute user={user} isLoading={isLoading}>
+              <ProtectedRoute user={user || null} isLoading={isLoading}>
                 <Chat />
               </ProtectedRoute>
             }
@@ -138,7 +139,7 @@ const App = () => {
           <Route
             path="profile/:userId"
             element={
-              <ProtectedRoute user={user} isLoading={isLoading}>
+              <ProtectedRoute user={user || null} isLoading={isLoading}>
                 <Profile />
               </ProtectedRoute>
             }
@@ -146,7 +147,7 @@ const App = () => {
           <Route
             path="friends/:userId"
             element={
-              <ProtectedRoute user={user} isLoading={isLoading}>
+              <ProtectedRoute user={user || null} isLoading={isLoading}>
                 <Friends />
               </ProtectedRoute>
             }
@@ -154,7 +155,7 @@ const App = () => {
           <Route
             path="my-groups/:groupId"
             element={
-              <ProtectedRoute user={user} isLoading={isLoading}>
+              <ProtectedRoute user={user || null} isLoading={isLoading}>
                 <MyGroups />
               </ProtectedRoute>
             }
@@ -162,7 +163,7 @@ const App = () => {
           <Route
             path="call/:chatId"
             element={
-              <ProtectedRoute user={user} isLoading={isLoading}>
+              <ProtectedRoute user={user || null} isLoading={isLoading}>
                 <CallWindowPage />
               </ProtectedRoute>
             }
@@ -170,7 +171,7 @@ const App = () => {
           <Route
             path="edit-profile/:userId"
             element={
-              <ProtectedRoute user={user} isLoading={isLoading}>
+              <ProtectedRoute user={user || null} isLoading={isLoading}>
                 <EditProfile />
               </ProtectedRoute>
             }
@@ -180,7 +181,7 @@ const App = () => {
         <Route
           path="/reset-password/:token"
           element={
-            <CheckUserIsLoggedOut user={user} isLoading={isLoading}>
+            <CheckUserIsLoggedOut user={user || null} isLoading={isLoading}>
               <ResetPassword />
             </CheckUserIsLoggedOut>
           }
