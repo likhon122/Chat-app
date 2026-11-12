@@ -8,25 +8,46 @@ const isLoggedIn = async (req, res, next) => {
     const { accessToken } = req.cookies;
 
     if (!accessToken) {
-      errorResponse(res, {
+      return errorResponse(res, {
         statusCode: 401,
         errorMessage: "Access token not found please login again!",
         nextURl: {
           login: "/api/v1/login"
         }
       });
-      return;
     }
-    const userInfo = verifyJsonWebToken(accessToken, accessTokenKey);
+
+    let userInfo;
+    try {
+      userInfo = verifyJsonWebToken(accessToken, accessTokenKey);
+    } catch (tokenError) {
+      res.clearCookie("accessToken", {
+        httpOnly: true,
+        secure: true,
+        sameSite: "none"
+      });
+      res.clearCookie("refreshToken", {
+        httpOnly: true,
+        secure: true,
+        sameSite: "none"
+      });
+      return errorResponse(res, {
+        statusCode: 401,
+        errorMessage: "Access token is invalid or expired, please login again!",
+        nextURl: {
+          login: "/api/v1/login"
+        }
+      });
+    }
+
     if (!userInfo) {
-      errorResponse(res, {
+      return errorResponse(res, {
         statusCode: 401,
         errorMessage: "Access token not valid please login again!",
         nextURl: {
           login: "/api/v1/login"
         }
       });
-      return;
     }
     req.userId = userInfo._id;
     next();
@@ -40,24 +61,22 @@ const isAdmin = async (req, res, next) => {
     const { userId } = req;
 
     if (!userId) {
-      errorResponse(res, {
+      return errorResponse(res, {
         statusCode: 404,
         errorMessage: "User not found with access token please login again",
         nextURl: {
           login: "/api/v1/login"
         }
       });
-      return;
     }
 
     const user = await User.findById(userId);
-    if (!user.isAdmin) {
-      errorResponse(res, {
+    if (!user || !user.isAdmin) {
+      return errorResponse(res, {
         statusCode: 401,
         errorMessage: "You are not admin please go back!!",
         nextURl: {}
       });
-      return;
     }
     next();
   } catch (error) {
@@ -70,16 +89,28 @@ const isLoggedOut = async (req, res, next) => {
     const { accessToken } = req.cookies;
 
     if (accessToken) {
-      const userInfo = verifyJsonWebToken(accessToken, accessTokenKey);
-      if (userInfo) {
-        errorResponse(res, {
-          statusCode: 401,
-          errorMessage: "You are already Logged In please logOut first!",
-          nextURl: {
-            logOut: "/api/v1/log-out"
-          }
+      try {
+        const userInfo = verifyJsonWebToken(accessToken, accessTokenKey);
+        if (userInfo) {
+          return errorResponse(res, {
+            statusCode: 400,
+            errorMessage: "You are already Logged In please logOut first!",
+            nextURl: {
+              logOut: "/api/v1/log-out"
+            }
+          });
+        }
+      } catch (tokenError) {
+        res.clearCookie("accessToken", {
+          httpOnly: true,
+          secure: true,
+          sameSite: "none"
         });
-        return;
+        res.clearCookie("refreshToken", {
+          httpOnly: true,
+          secure: true,
+          sameSite: "none"
+        });
       }
     }
 
@@ -91,7 +122,7 @@ const isLoggedOut = async (req, res, next) => {
 
 const socketAuthenticator = async (socket, next) => {
   try {
-    const { accessToken } = socket.request.cookies;
+    const { accessToken } = socket.request.cookies || {};
 
     if (!accessToken) {
       return next(
@@ -99,7 +130,15 @@ const socketAuthenticator = async (socket, next) => {
       );
     }
 
-    const userInfo = verifyJsonWebToken(accessToken, accessTokenKey);
+    let userInfo;
+    try {
+      userInfo = verifyJsonWebToken(accessToken, accessTokenKey);
+    } catch (tokenError) {
+      return next(
+        new Error("Authentication error: Please login and send messages!")
+      );
+    }
+
     if (!userInfo) {
       return next(
         new Error("Authentication error: Please login and send messages!")
@@ -110,7 +149,6 @@ const socketAuthenticator = async (socket, next) => {
 
     next();
   } catch (error) {
-    console.error("Authentication error:", error);
     return next(
       new Error("Authentication error: Please login and send messages!")
     );

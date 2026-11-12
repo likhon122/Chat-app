@@ -23,7 +23,28 @@ const getUser = async (req, res, next) => {
       });
     }
 
-    const existUser = verifyJsonWebToken(accessToken, accessTokenKey);
+    let existUser;
+    try {
+      existUser = verifyJsonWebToken(accessToken, accessTokenKey);
+    } catch (tokenError) {
+      res.clearCookie("accessToken", {
+        httpOnly: true,
+        secure: true,
+        sameSite: "none"
+      });
+      res.clearCookie("refreshToken", {
+        httpOnly: true,
+        secure: true,
+        sameSite: "none"
+      });
+      return errorResponse(res, {
+        statusCode: 401,
+        errorMessage: "Access token not valid please login again!",
+        nextURl: {
+          login: "/api/v1/login"
+        }
+      });
+    }
 
     const user = await User.findById({ _id: existUser._id })
       .select("-password")

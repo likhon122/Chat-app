@@ -90,6 +90,19 @@ app.use((err, req, res, next) => {
     return next(err);
   }
 
+  if (err.name === "JsonWebTokenError" || err.name === "TokenExpiredError") {
+    return errorResponse(res, {
+      statusCode: 401,
+      errorMessage:
+        err.name === "TokenExpiredError"
+          ? "Session expired, please login again"
+          : "Invalid authentication token, please login again",
+      nextURl: {
+        login: "/api/v1/login"
+      }
+    });
+  }
+
   if (err.kind === "ObjectId") {
     return errorResponse(res, {
       statusCode: 400,
