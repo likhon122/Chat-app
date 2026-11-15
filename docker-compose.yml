@@ -53,6 +53,7 @@ services:
       dockerfile: Dockerfile
       args:
         VITE_SERVER_URL: ${VITE_SERVER_URL:-http://localhost:7777}
+        VITE_VAPID_PUBLIC_KEY: ${VITE_VAPID_PUBLIC_KEY:-}
     container_name: chat_app_client
     restart: unless-stopped
     ports:
@@ -61,8 +62,6 @@ services:
     depends_on:
       backend:
         condition: service_healthy
-    env_file:
-      - ./client/.env
     healthcheck:
       test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1/healthz || exit 1"]
       interval: 10s

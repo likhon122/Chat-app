@@ -16,9 +16,11 @@ RUN npm ci
 # Copy client source code
 COPY . .
 
-# Build argument for backend server URL (optional; defaults to same-origin / reverse proxy)
+# Build arguments for frontend SPA bundle (injected at build time, not runtime file)
 ARG VITE_SERVER_URL=""
-ENV VITE_SERVER_URL=$VITE_SERVER_URL
+ARG VITE_VAPID_PUBLIC_KEY=""
+ENV VITE_SERVER_URL=$VITE_SERVER_URL \
+    VITE_VAPID_PUBLIC_KEY=$VITE_VAPID_PUBLIC_KEY
 
 # Build production bundle
 RUN npm run build
