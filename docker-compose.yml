@@ -1,14 +1,9 @@
-# ==============================================================================
 # Full-Stack Chat Application - Docker Compose Orchestration
 # Services: MongoDB (Database), Backend (Node.js API & Socket.IO), Client (React + Nginx)
-# ==============================================================================
-
 name: chat-app
 
 services:
-  # ----------------------------------------------------------------------------
   # MongoDB Database Service
-  # ----------------------------------------------------------------------------
   mongo:
     image: mongo:7.0
     container_name: chat_app_mongodb
@@ -28,9 +23,7 @@ services:
     networks:
       - chat_network
 
-  # ----------------------------------------------------------------------------
   # Backend API & WebSocket Service (Node.js + Express + Socket.IO)
-  # ----------------------------------------------------------------------------
   backend:
     build:
       context: ./backend
@@ -77,9 +70,7 @@ services:
     networks:
       - chat_network
 
-  # ----------------------------------------------------------------------------
   # Frontend Client Service (React SPA served by Nginx with reverse proxy)
-  # ----------------------------------------------------------------------------
   client:
     build:
       context: ./client
@@ -103,16 +94,14 @@ services:
     networks:
       - chat_network
 
-# ------------------------------------------------------------------------------
+ 
 # Bridge Network for Inter-Container Communication
-# ------------------------------------------------------------------------------
 networks:
   chat_network:
     driver: bridge
 
-# ------------------------------------------------------------------------------
+ 
 # Persistent Volumes
-# ------------------------------------------------------------------------------
 volumes:
   mongodb_data:
     driver: local
