@@ -499,30 +499,118 @@ sequenceDiagram
 
 ---
 
-## 🚀 Production Deployment Guidelines
+## 🚀 CI/CD Pipeline & Microsoft Azure Hosting (Azure for Students)
 
-### 1. Reverse Proxy & SSL/TLS Termination
-For public-facing production setups, terminate SSL/TLS before traffic enters the container:
-- **Cloudflare**: Place PulseChat behind Cloudflare with `Full (Strict)` SSL mode.
-- **Certbot / Let's Encrypt**: Mount SSL certificates into the `client` Nginx container and update `nginx.conf` with a port `443` block:
-  ```nginx
-  listen 443 ssl http2;
-  ssl_certificate /etc/letsencrypt/live/yourdomain.com/fullchain.pem;
-  ssl_certificate_key /etc/letsencrypt/live/yourdomain.com/privkey.pem;
-  ```
+PulseChat features a **Senior DevOps CI/CD pipeline** utilizing **GitHub Actions**, **Docker Hub**, and **Microsoft Azure Virtual Machines**.
 
-### 2. Cookie Security Over HTTPS
-When deploying to a public HTTPS domain:
-- Ensure `SameSite=None; Secure=true` is enabled in `backend/src/controllers/auth.controller.js` so cookies transmit securely across cross-origin requests.
+### Continuous Integration & Deployment Workflow
 
-### 3. Database Scaling
-- For large deployments, replace the local Docker MongoDB container with **MongoDB Atlas (M10+)** for automated backups, multi-region replication, and automated sharding. Update `MONGODB_URL` in `.env` accordingly.
+```mermaid
+flowchart LR
+    Dev["Developer Git Push"] -->|main branch| GHA["GitHub Actions"]
+    subgraph GHA_Pipeline["GitHub Actions CI/CD"]
+        Gate["1. Quality Gate (Node Check & Vite Build)"]
+        DockerBuild["2. Docker Buildx (Cache: GHA)"]
+        DeployStep["3. Azure VM SSH Deploy Trigger"]
+        Gate --> DockerBuild --> DeployStep
+    end
+    DockerBuild -->|"Push :latest & :sha"| DHub["Docker Hub Registry"]
+    DeployStep -->|"SSH Command Execution"| AzureVM["Azure Linux VM (B1s/B2s)"]
+    DHub -->|"docker compose pull"| AzureVM
+    AzureVM -->|"Nginx Gateway :80 / :443"| Users["End Users"]
+```
 
-### 4. Memory & Resource Allocation
-Recommended minimum server specifications:
-- **CPU**: 2 vCPU cores
-- **RAM**: 2 GB – 4 GB RAM
-- **Disk**: 20 GB SSD
+---
+
+### Step-by-Step Azure Deployment Guide (Student Access)
+
+With **Azure for Students**, you receive **\$100 free credit + 12 months of popular free services**, including free Linux Virtual Machine compute hours.
+
+#### 1. Create Your Azure Virtual Machine
+1. Log in to the [Azure Portal](https://portal.azure.com/).
+2. Search for **Virtual Machines** and click **Create** > **Azure virtual machine**.
+3. Configure the VM settings:
+   - **Subscription**: Azure for Students
+   - **Resource Group**: Create new (e.g., `chat-app-rg`)
+   - **Virtual Machine Name**: `chat-app-vm`
+   - **Region**: Choose closest region (e.g., `East US`, `Southeast Asia`, `Central India`)
+   - **Image**: **Ubuntu Server 22.04 LTS - x64 Gen2** or **Ubuntu 24.04 LTS**
+   - **Size**: **Standard_B1s** (1 vCPU, 1 GiB RAM - eligible for free student tier) or **Standard_B2s** (2 vCPUs, 4 GiB RAM for higher concurrency)
+   - **Authentication Type**: **SSH public key**
+   - **Username**: `azureuser`
+   - **SSH Public Key Source**: Generate new key pair (download the `.pem` private key file to your computer)
+   - **Inbound Port Rules**: Allow **SSH (22)**, **HTTP (80)**, and **HTTPS (443)**
+4. Click **Review + Create**, then click **Create**.
+5. Once deployment completes, note down the **Public IP address** of your VM (e.g., `20.xxx.xxx.xxx`).
+
+---
+
+#### 2. Configure the Azure VM with 1 Command
+Connect to your Azure VM from your terminal:
+```bash
+ssh -i /path/to/chat-app-vm.pem azureuser@<YOUR_AZURE_VM_PUBLIC_IP>
+```
+
+Run the automated setup script to install Docker, Docker Compose, configure the UFW firewall, and set up `/opt/chat-app`:
+```bash
+curl -fsSL https://raw.githubusercontent.com/likhon122/Chat-app/main/deploy/azure-vm-setup.sh | bash
+```
+
+Log out and reconnect for Docker user permissions to take effect:
+```bash
+exit
+ssh -i /path/to/chat-app-vm.pem azureuser@<YOUR_AZURE_VM_PUBLIC_IP>
+```
+
+Clone your repository into `/opt/chat-app` and create your production environment file:
+```bash
+cd /opt/chat-app
+git clone https://github.com/likhon122/Chat-app.git .
+cp .env.example backend/.env
+nano backend/.env # Paste your real Cloudinary, MongoDB Atlas, and JWT credentials
+```
+
+---
+
+#### 3. Configure Docker Hub Access Tokens
+1. Log in to [Docker Hub](https://hub.docker.com/).
+2. Go to **Account Settings** > **Security** > **New Access Token**.
+3. Name it `github-actions-ci` with **Read, Write, Delete** permissions.
+4. Copy the generated personal access token.
+
+---
+
+#### 4. Configure GitHub Repository Secrets
+In your GitHub repository, navigate to **Settings** > **Secrets and variables** > **Actions** > **New repository secret** and add:
+
+| Secret Name | Description / Value |
+| :--- | :--- |
+| `DOCKERHUB_USERNAME` | Your Docker Hub account username |
+| `DOCKERHUB_TOKEN` | Your Docker Hub personal access token |
+| `AZURE_VM_HOST` | The Public IP address of your Azure VM |
+| `AZURE_VM_USER` | `azureuser` (or your configured VM username) |
+| `AZURE_SSH_KEY` | Entire content of your downloaded private SSH `.pem` key file |
+| `AZURE_SSH_PORT` | `22` (optional, defaults to 22) |
+| `VITE_SERVER_URL` | Your domain or backend URL (e.g., `https://chat.yourdomain.com` or `http://<AZURE_IP>`) |
+
+---
+
+#### 5. Automated SSL/TLS Setup (Let's Encrypt / Certbot)
+Once your domain's DNS A-record points to your Azure VM Public IP:
+```bash
+cd /opt/chat-app
+chmod +x ./deploy/init-ssl.sh
+./deploy/init-ssl.sh chat.yourdomain.com admin@yourdomain.com
+```
+This automated script creates placeholder certificates, starts the web server, satisfies the Let's Encrypt ACME challenge, and reloads Nginx with production TLS certificates.
+
+---
+
+#### 6. Continuous Deployment in Action
+Every time you push new code to `main`:
+1. GitHub Actions automatically validates backend syntax and client compilation.
+2. Builds optimized Docker images with GitHub Actions caching and pushes them to Docker Hub.
+3. Securely SSHs into your Azure VM, executes zero-downtime rolling updates via `docker-compose.prod.yml`, validates container health checks, and prunes unused layers.
 
 ---
 
