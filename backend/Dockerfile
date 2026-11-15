@@ -30,8 +30,8 @@ USER node
 EXPOSE 7777
 
 # Built-in container health check
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:7777/api/v1/health || exit 1
+HEALTHCHECK --interval=10s --timeout=5s --start-period=20s --retries=5 \
+  CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:7777/api/v1/health || exit 1
 
 # Launch application via dumb-init for graceful shutdown
 CMD ["dumb-init", "node", "src/server.js"]

@@ -13,15 +13,24 @@ const vapidKeys = {
   privateKey: pushNotificationPrivateKey
 };
 
-// console.log(vapidKeys);
-
-webpush.setVapidDetails(
-  "mailto:md.likhonislam2x@gmail.com", // Your email address
-  vapidKeys.publicKey,
-  vapidKeys.privateKey
-);
+if (vapidKeys.publicKey && vapidKeys.privateKey) {
+  try {
+    webpush.setVapidDetails(
+      "mailto:md.likhonislam2x@gmail.com",
+      vapidKeys.publicKey,
+      vapidKeys.privateKey
+    );
+  } catch (error) {
+    console.warn("Failed to initialize WebPush VAPID details:", error.message);
+  }
+} else {
+  console.warn("WebPush VAPID keys not configured. Push notifications will be skipped.");
+}
 
 const sendPushNotification = async (subscription, payload) => {
+  if (!vapidKeys.publicKey || !vapidKeys.privateKey) {
+    return;
+  }
   try {
     await webpush.sendNotification(subscription, payload);
   } catch (error) {
