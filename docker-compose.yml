@@ -1,0 +1,118 @@
+# ==============================================================================
+# Full-Stack Chat Application - Docker Compose Orchestration
+# Services: MongoDB (Database), Backend (Node.js API & Socket.IO), Client (React + Nginx)
+# ==============================================================================
+
+name: chat-app
+
+services:
+  # ----------------------------------------------------------------------------
+  # MongoDB Database Service
+  # ----------------------------------------------------------------------------
+  mongo:
+    image: mongo:7.0
+    container_name: chat_app_mongodb
+    restart: unless-stopped
+    ports:
+      - "${MONGO_PORT:-27017}:27017"
+    volumes:
+      - mongodb_data:/data/db
+    environment:
+      MONGO_INITDB_DATABASE: ${MONGO_DB_NAME:-chat_app}
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --quiet --eval 'db.adminCommand(\"ping\").ok' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - chat_network
+
+  # ----------------------------------------------------------------------------
+  # Backend API & WebSocket Service (Node.js + Express + Socket.IO)
+  # ----------------------------------------------------------------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: chat_app_backend
+    restart: unless-stopped
+    ports:
+      - "${PORT:-7777}:7777"
+    depends_on:
+      mongo:
+        condition: service_healthy
+    env_file:
+      - path: ./.env
+        required: false
+      - path: ./backend/.env
+        required: false
+    environment:
+      NODE_ENV: production
+      PORT: 7777
+      MONGODB_URL: ${MONGODB_URL:-mongodb://mongo:27017/chat_app}
+      FRONTEND_URL1: ${FRONTEND_URL1:-http://localhost}
+      FRONTEND_URL2: ${FRONTEND_URL2:-http://localhost:5173}
+      FRONTEND_URL3: ${FRONTEND_URL3:-http://localhost:80}
+      JSON_WEB_TOKEN_KEY: ${JSON_WEB_TOKEN_KEY:-default_chat_app_jwt_secret_key_32chars}
+      ACCESS_TOKEN_KEY: ${ACCESS_TOKEN_KEY:-default_chat_app_access_token_secret_key}
+      REFRESH_TOKEN_KEY: ${REFRESH_TOKEN_KEY:-default_chat_app_refresh_token_secret_key}
+      RESET_PASSWORD_KEY: ${RESET_PASSWORD_KEY:-default_chat_app_reset_password_secret_key}
+      CLOUDINARY_CLOUDE_NAME: ${CLOUDINARY_CLOUDE_NAME:-}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY:-}
+      CLOUDINARY_SECRET_KEY: ${CLOUDINARY_SECRET_KEY:-}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      PUBLIC_VAPID_KEY: ${PUBLIC_VAPID_KEY:-}
+      PRIVATE_VAPID_KEY: ${PRIVATE_VAPID_KEY:-}
+      ADMIN_LOGIN_PATH: ${ADMIN_LOGIN_PATH:-/admin}
+      ADMIN_LOGIN_EMAIL: ${ADMIN_LOGIN_EMAIL:-admin@chat.com}
+      ADMIN_LOGIN_PASSWORD: ${ADMIN_LOGIN_PASSWORD:-Admin12345!}
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:7777/api/v1/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    networks:
+      - chat_network
+
+  # ----------------------------------------------------------------------------
+  # Frontend Client Service (React SPA served by Nginx with reverse proxy)
+  # ----------------------------------------------------------------------------
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+      args:
+        VITE_SERVER_URL: ${VITE_SERVER_URL:-}
+    container_name: chat_app_client
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "5173:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:80/healthz || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    networks:
+      - chat_network
+
+# ------------------------------------------------------------------------------
+# Bridge Network for Inter-Container Communication
+# ------------------------------------------------------------------------------
+networks:
+  chat_network:
+    driver: bridge
+
+# ------------------------------------------------------------------------------
+# Persistent Volumes
+# ------------------------------------------------------------------------------
+volumes:
+  mongodb_data:
+    driver: local
