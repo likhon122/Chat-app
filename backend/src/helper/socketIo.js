@@ -8,10 +8,17 @@ import {
   NEW_MESSAGE_ALERT,
   REFETCH_CHATS,
   START_TYPING,
-  STOP_TYPING
+  STOP_TYPING,
+  USER_ONLINE,
+  USER_OFFLINE,
+  ONLINE_USERS_LIST,
+  MESSAGES_SEEN,
+  MESSAGES_DELIVERED
 } from "../constants/event.js";
 import { sendNotificationToUser } from "./sendPushNotification.js";
 import Message from "../models/message.model.js";
+import User from "../models/user.model.js";
+import Chat from "../models/chat.model.js";
 
 const getSockets = (members = []) => {
   const sockets =
@@ -45,7 +52,51 @@ const handleSocketEvents = (io) => {
       return;
     }
 
-    userSocketIds.set(user._id.toString(), socket.id);
+    const userIdStr = user._id.toString();
+    userSocketIds.set(userIdStr, socket.id);
+
+    // Update DB with isOnline and lastSeen
+    User.findByIdAndUpdate(user._id, {
+      isOnline: true,
+      lastSeen: new Date()
+    }).catch((err) => console.error("Error updating user online status:", err));
+
+    // Send current online user IDs to the connected client
+    socket.emit(ONLINE_USERS_LIST, Array.from(userSocketIds.keys()));
+
+    // Broadcast to everyone that this user is now online
+    io.emit(USER_ONLINE, {
+      userId: userIdStr,
+      isOnline: true,
+      lastSeen: new Date().toISOString()
+    });
+
+    // Mark pending "sent" messages in this user's direct/group chats as "delivered"
+    Chat.find({ members: user._id })
+      .distinct("_id")
+      .then(async (chatIds) => {
+        if (chatIds && chatIds.length > 0) {
+          await Message.updateMany(
+            {
+              chat: { $in: chatIds },
+              sender: { $ne: user._id },
+              status: "sent"
+            },
+            {
+              $set: { status: "delivered" }
+            }
+          );
+          io.emit(MESSAGES_DELIVERED, {
+            deliveredTo: userIdStr,
+            chatIds: chatIds.map((id) => id.toString())
+          });
+        }
+      })
+      .catch((err) => console.error("Error updating delivered messages:", err));
+
+    socket.on("GET_ONLINE_USERS", () => {
+      socket.emit(ONLINE_USERS_LIST, Array.from(userSocketIds.keys()));
+    });
 
     // Handle new message
     socket.on(
@@ -80,6 +131,15 @@ const handleSocketEvents = (io) => {
           }
         }
 
+        // Check if other members are online
+        const otherMembers = (members || []).filter(
+          (m) => m.toString() !== user._id.toString()
+        );
+        const hasOnlineRecipient = otherMembers.some((m) =>
+          userSocketIds.has(m.toString())
+        );
+        const deliveryStatus = hasOnlineRecipient ? "delivered" : "sent";
+
         const messageForRealTime = {
           content: message,
           replyTo: replyToMessageDetails,
@@ -90,6 +150,8 @@ const handleSocketEvents = (io) => {
             avatar: user?.avatar
           },
           chatId,
+          status: deliveryStatus,
+          readBy: [],
           createdAt: new Date().toISOString()
         };
 
@@ -98,6 +160,8 @@ const handleSocketEvents = (io) => {
           sender: user._id,
           chat: chatId,
           replyTo: replyTo ? replyTo : null,
+          status: deliveryStatus,
+          readBy: [],
           realTimeId: messageForRealTime.realTimeId
         };
 
@@ -141,6 +205,44 @@ const handleSocketEvents = (io) => {
       }
     );
 
+    // Handle messages seen/viewed in a chat
+    socket.on(MESSAGES_SEEN, async ({ chatId, members }) => {
+      try {
+        if (!chatId) return;
+
+        await Message.updateMany(
+          {
+            chat: chatId,
+            sender: { $ne: user._id },
+            readBy: { $ne: user._id }
+          },
+          {
+            $addToSet: { readBy: user._id },
+            $set: { status: "seen" }
+          }
+        );
+
+        const allTargetMembers = Array.from(
+          new Set(
+            (members || []).map((m) => (m?._id || m).toString())
+          )
+        ).filter((mId) => mId !== user._id.toString());
+
+        const membersSocket = getSockets(allTargetMembers);
+
+        io.to(membersSocket).emit(MESSAGES_SEEN, {
+          chatId,
+          seenBy: {
+            _id: user._id.toString(),
+            name: user.name,
+            avatar: user.avatar?.url || user.avatar || ""
+          }
+        });
+      } catch (err) {
+        console.error("Error handling MESSAGES_SEEN:", err);
+      }
+    });
+
     // Handle typing events
     socket.on(START_TYPING, async ({ members, chatId }) => {
       const membersSocket = getSockets(members);
@@ -153,76 +255,284 @@ const handleSocketEvents = (io) => {
       socket.to(membersSocket).emit(STOP_TYPING, { chatId });
     });
 
-    // Call user (audio/video)
+    // Call user (audio/video - direct & group)
     socket.on(
       "CALL_USER",
-      async ({ to, offer, callType, chatId, callerInfo }) => {
-        const memberIds = to.filter((id) => id !== user._id);
+      async ({
+        to,
+        offer,
+        callType,
+        chatId,
+        callerInfo,
+        isGroup = false,
+        chatTitle = ""
+      }) => {
+        const toArray = Array.isArray(to) ? to : [to];
+        const callerId = user._id.toString();
+        const allParticipants = Array.from(
+          new Set([callerId, ...toArray.map((id) => id && id.toString())])
+        ).filter(Boolean);
 
-        // console.log(userSocketIds);
+        const targetMemberIds = allParticipants.filter((id) => id !== callerId);
 
-        const userSocketId = userSocketIds.get(user._id.toString());
-
-        const targetSocketIds = getSockets(memberIds);
+        const userSocketId = userSocketIds.get(callerId);
+        const targetSocketIds = getSockets(targetMemberIds);
 
         // Emit the call to all valid socket IDs
-        if (!targetSocketIds.length) {
+        if (!targetSocketIds || !targetSocketIds.length) {
           io.to(userSocketId).emit("USER_OFFLINE", to);
           return;
         }
 
         io.to(targetSocketIds).emit("INCOMING_CALL", {
-          from: user._id,
+          from: callerId,
           offer,
           callType,
           fromName: user.name,
           chatId,
-          members: to,
-          callerInfo
+          members: allParticipants,
+          callerInfo,
+          isGroup: Boolean(isGroup),
+          chatTitle: chatTitle || (isGroup ? "Group Call" : user.name)
         });
       }
     );
 
-    // Answer call
-    socket.on("ANSWER_CALL", ({ to, answer, chatId }) => {
-      const memberIds = to.filter((id) => id !== user._id);
-      const targetSocketId = getSockets(memberIds);
+    // Answer call (direct & group)
+    socket.on("ANSWER_CALL", ({ to, answer, chatId, isGroup = false }) => {
+      const toArray = Array.isArray(to) ? to : [to];
+      const memberIds = toArray.filter(
+        (id) => id && id.toString() !== user._id.toString()
+      );
+      const targetSocketIds = getSockets(memberIds);
 
-      if (targetSocketId) {
-        io.to(targetSocketId).emit("CALL_ANSWERED", { answer, chatId });
+      if (targetSocketIds && targetSocketIds.length > 0) {
+        io.to(targetSocketIds).emit("CALL_ANSWERED", {
+          answer,
+          chatId,
+          from: user._id.toString(),
+          fromName: user.name,
+          avatar: user.avatar,
+          isGroup: Boolean(isGroup)
+        });
       } else {
-        console.warn(`User ${memberIds} is not connected.`);
+        console.warn(`User ${memberIds} is not connected for ANSWER_CALL.`);
       }
     });
 
     // Handle ICE candidate exchange
-    socket.on("ICE_CANDIDATE", ({ to, candidate }) => {
-      const targetSocketId = getSockets(to);
+    socket.on("ICE_CANDIDATE", ({ to, candidate, chatId }) => {
+      const toArray = Array.isArray(to) ? to : [to];
+      const memberIds = toArray.filter(
+        (id) => id && id.toString() !== user._id.toString()
+      );
+      const targetSocketIds = getSockets(memberIds);
 
-      if (targetSocketId && candidate) {
-        io.to(targetSocketId).emit("ICE_CANDIDATE", { candidate });
-      } else {
-        console.warn(
-          `ICE candidate not sent. User ${to} not connected or invalid candidate.`
-        );
+      if (targetSocketIds && targetSocketIds.length > 0 && candidate) {
+        io.to(targetSocketIds).emit("ICE_CANDIDATE", {
+          candidate,
+          chatId,
+          from: user._id.toString()
+        });
       }
     });
 
-    // Call rejection
-    socket.on("REJECT_CALL", ({ to }) => {
-      const targetSocketId = getSockets(to);
+    // Mesh signaling for group calls
+    socket.on("GROUP_CALL_JOIN", ({ chatId, members }) => {
+      const toArray = Array.isArray(members) ? members : [members];
+      const memberIds = toArray.filter(
+        (id) => id && id.toString() !== user._id.toString()
+      );
+      const targetSocketIds = getSockets(memberIds);
 
+      if (targetSocketIds && targetSocketIds.length > 0) {
+        io.to(targetSocketIds).emit("GROUP_CALL_USER_JOINED", {
+          chatId,
+          userId: user._id.toString(),
+          userName: user.name,
+          avatar: user.avatar
+        });
+      }
+    });
+
+    socket.on("GROUP_CALL_OFFER", ({ to, offer, chatId }) => {
+      const targetSocketId = userSocketIds.get(to?.toString());
       if (targetSocketId) {
-        io.to(targetSocketId).emit("CALL_REJECTED");
-      } else {
-        console.warn(`User ${to} is not connected. Call rejection failed.`);
+        io.to(targetSocketId).emit("GROUP_CALL_OFFER", {
+          from: user._id.toString(),
+          fromName: user.name,
+          avatar: user.avatar,
+          offer,
+          chatId
+        });
       }
     });
+
+    socket.on("GROUP_CALL_ANSWER", ({ to, answer, chatId }) => {
+      const targetSocketId = userSocketIds.get(to?.toString());
+      if (targetSocketId) {
+        io.to(targetSocketId).emit("GROUP_CALL_ANSWER", {
+          from: user._id.toString(),
+          fromName: user.name,
+          answer,
+          chatId
+        });
+      }
+    });
+
+    socket.on("GROUP_CALL_ICE", ({ to, candidate, chatId }) => {
+      const targetSocketId = userSocketIds.get(to?.toString());
+      if (targetSocketId && candidate) {
+        io.to(targetSocketId).emit("GROUP_CALL_ICE", {
+          from: user._id.toString(),
+          candidate,
+          chatId
+        });
+      }
+    });
+
+    socket.on("LEAVE_GROUP_CALL", ({ chatId, members }) => {
+      const toArray = Array.isArray(members) ? members : [members];
+      const memberIds = toArray.filter(
+        (id) => id && id.toString() !== user._id.toString()
+      );
+      const targetSocketIds = getSockets(memberIds);
+
+      if (targetSocketIds && targetSocketIds.length > 0) {
+        io.to(targetSocketIds).emit("GROUP_CALL_USER_LEFT", {
+          chatId,
+          userId: user._id.toString(),
+          userName: user.name
+        });
+      }
+    });
+
+    // Call rejection / end
+    socket.on("REJECT_CALL", ({ to, chatId, isGroup = false }) => {
+      const toArray = Array.isArray(to) ? to : [to];
+      const memberIds = toArray.filter(
+        (id) => id && id.toString() !== user._id.toString()
+      );
+      const targetSocketIds = getSockets(memberIds);
+
+      if (targetSocketIds && targetSocketIds.length > 0) {
+        if (isGroup) {
+          io.to(targetSocketIds).emit("GROUP_CALL_USER_LEFT", {
+            chatId,
+            userId: user._id.toString(),
+            userName: user.name
+          });
+        } else {
+          io.to(targetSocketIds).emit("CALL_REJECTED", { chatId });
+        }
+      }
+    });
+
+    // Record call log to DB and broadcast to chat in real-time
+    socket.on(
+      "RECORD_CALL",
+      async ({
+        chatId,
+        members = [],
+        callType = "audio",
+        status = "completed",
+        duration = 0,
+        isGroup = false
+      }) => {
+        try {
+          const m = Math.floor(duration / 60)
+            .toString()
+            .padStart(2, "0");
+          const s = (duration % 60).toString().padStart(2, "0");
+          const formattedDuration = `${m}:${s}`;
+
+          const typePrefix = isGroup ? "Group " : "";
+          const callTypeName = callType === "video" ? "Video" : "Audio";
+
+          let content = "";
+          if (status === "completed") {
+            content = `${typePrefix}${callTypeName} Call • ${formattedDuration}`;
+          } else if (status === "missed") {
+            content = `Missed ${typePrefix}${callTypeName} Call`;
+          } else if (status === "rejected") {
+            content = `Declined ${typePrefix}${callTypeName} Call`;
+          } else {
+            content = `${typePrefix}${callTypeName} Call (${status})`;
+          }
+
+          const realTimeId = uuid();
+
+          const messageForRealTime = {
+            content,
+            callInfo: {
+              callType,
+              status,
+              duration
+            },
+            chatId,
+            realTimeId,
+            sender: {
+              _id: user._id,
+              name: user.name,
+              avatar: user.avatar
+            },
+            createdAt: new Date().toISOString()
+          };
+
+          const messageForDb = {
+            content,
+            callInfo: {
+              callType,
+              status,
+              duration
+            },
+            sender: user._id,
+            chat: chatId,
+            realTimeId
+          };
+
+          const allMembers = Array.from(
+            new Set([...(members || []), user._id.toString()])
+          );
+          const membersSocket = getSockets(allMembers);
+
+          io.to(membersSocket).emit(NEW_MESSAGE, {
+            chatId,
+            message: messageForRealTime
+          });
+
+          io.to(membersSocket).emit(NEW_MESSAGE_ALERT, {
+            chatId,
+            sender: user._id
+          });
+          io.to(membersSocket).emit(REFETCH_CHATS, { chatId });
+
+          await Message.create(messageForDb);
+        } catch (error) {
+          console.error("Error recording call to DB:", error);
+        }
+      }
+    );
 
     // Handle disconnect
     socket.on("disconnect", () => {
-      userSocketIds.delete(user._id.toString());
-      console.log("User disconnected");
+      const userIdStr = user._id.toString();
+      userSocketIds.delete(userIdStr);
+      const lastSeen = new Date();
+
+      User.findByIdAndUpdate(user._id, {
+        isOnline: false,
+        lastSeen
+      }).catch((err) =>
+        console.error("Error updating user offline status:", err)
+      );
+
+      io.emit(USER_OFFLINE, {
+        userId: userIdStr,
+        isOnline: false,
+        lastSeen: lastSeen.toISOString()
+      });
+      console.log("User disconnected:", userIdStr);
     });
   });
 };

@@ -34,14 +34,21 @@ const verifyJsonWebToken = (token, jwtSecretKey) => {
   }
 };
 
+const getCookieOptions = () => {
+  const isProduction = process.env.NODE_ENV === "production";
+  return {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax"
+  };
+};
+
 const createAccessToken = (res, user) => {
   try {
     const accessToken = jwt.sign(user, accessTokenKey, { expiresIn: "1d" });
     res.cookie("accessToken", accessToken, {
       maxAge: 24 * 60 * 60 * 1000,
-      secure: true,
-      httpOnly: true,
-      sameSite: "none"
+      ...getCookieOptions()
     });
   } catch (error) {
     throw error;
@@ -53,9 +60,7 @@ const createRefreshToken = (res, user) => {
     const refreshToken = jwt.sign(user, refreshTokenKey, { expiresIn: "15d" });
     res.cookie("refreshToken", refreshToken, {
       maxAge: 15 * 24 * 60 * 60 * 1000,
-      secure: true,
-      httpOnly: true,
-      sameSite: "none"
+      ...getCookieOptions()
     });
   } catch (error) {
     throw error;
@@ -66,5 +71,6 @@ export {
   createJsonWebToken,
   verifyJsonWebToken,
   createAccessToken,
-  createRefreshToken
+  createRefreshToken,
+  getCookieOptions
 };

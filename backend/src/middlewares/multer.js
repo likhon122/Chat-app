@@ -1,7 +1,9 @@
 import multer from "multer";
 
 const upload = multer({
-  limits: 1000 * 60 * 5
+  limits: {
+    fileSize: 1024 * 1024 * 25 // 25MB max per file
+  }
 });
 
 const singleAvatar = upload.single("avatar");

@@ -1,5 +1,8 @@
+import dotenv from "dotenv";
 import { v2 as cloudinary } from "cloudinary";
 import { v4 as uuid } from "uuid";
+
+dotenv.config();
 
 const getBase64 = (file) =>
   `data:${file.mimetype};base64,${file.buffer.toString("base64")}`;
@@ -13,12 +16,14 @@ cloudinary.config({
 const uploadFilesFromCloudinary = async (files = []) => {
   const uploadPromises = files.map((file) => {
     return new Promise((resolve, reject) => {
+      const ext = file.originalname?.split(".").pop();
+      const publicId = ext ? `${uuid()}.${ext}` : uuid();
       cloudinary.uploader.upload(
         getBase64(file),
         {
           resource_type: "auto",
           folder: "Friends-chat",
-          public_id: uuid()
+          public_id: publicId
         },
         (error, result) => {
           if (error) {

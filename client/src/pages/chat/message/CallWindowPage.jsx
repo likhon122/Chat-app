@@ -1,147 +1,95 @@
 import { useParams, useLocation, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import CallWindow from "../message/CallWindow";
-import { useWebRTC } from "../../../hooks/useWebRTC";
-import { useSelector } from "react-redux";
-import { useGetSocket } from "../../../SocketHelper";
-import { useEffect, useState } from "react";
-import { useGetGroupDetailsQuery } from "../../../app/api/api";
-import { toast } from "react-toastify";
+import { useEffect, useMemo } from "react";
+import CallWindow from "./CallWindow";
+import { useCall } from "../../../context/CallContext";
 
 const CallWindowPage = () => {
   const { chatId } = useParams();
   const location = useLocation();
-  // const dispatch = useDispatch();
   const navigate = useNavigate();
-  const [muted, setMuted] = useState(false);
-  const [videoEnabled, setVideoEnabled] = useState(true);
-
-  const queryParams = new URLSearchParams(location.search);
-  const callType = queryParams.get("type");
-  const to = queryParams.get("to");
-  const toName = queryParams.get("toName");
-  const toImage = queryParams.get("toImage");
-
-  const { data, isLoading } = useGetGroupDetailsQuery(chatId, false);
-
-  const members =
-    data?.payload?.chat?.members.map((member) => member._id) || [];
-
-  if (!isLoading && members.length < 1) {
-    toast.error("No members found");
-  }
-
-  const callStarted = useSelector((state) => state.other.isCallStarted);
-  const socket = useGetSocket();
-  const isVideoCall = callType === "video";
 
   const {
+    callStatus,
     localStream,
     remoteStream,
-    startCall,
+    remoteStreams,
+    isCaller,
+    isMuted,
+    isVideoEnabled,
+    activeCall,
     handleAnswerCall,
     endCall,
-    isRinging,
-    isInCall
-  } = useWebRTC(socket, chatId, members, isVideoCall);
+    muteAudio,
+    toggleVideo,
+    switchCamera,
+    minimizeCall,
+    resetCallState
+  } = useCall();
 
-  const handleMuteAudio = () => {
-    if (localStream) {
-      const audioTracks = localStream.getAudioTracks();
-      if (audioTracks.length > 0) {
-        const enabled = !audioTracks[0].enabled;
-        audioTracks[0].enabled = enabled;
-        setMuted(!enabled);
-      }
-    }
-  };
-
-  const handleToggleVideo = () => {
-    if (localStream) {
-      const videoTracks = localStream.getVideoTracks();
-      if (videoTracks.length > 0) {
-        const enabled = !videoTracks[0].enabled;
-        videoTracks[0].enabled = enabled;
-        setVideoEnabled(enabled);
-      }
-    }
-  };
-
+  // Lock document body scroll while on call page
   useEffect(() => {
-    if (callStarted) {
-      (async () => {
-        await startCall();
-      })();
-    }
-
-    // Set up call timer
-    let callTimer;
-    let seconds = 0;
-    let minutes = 0;
-
-    if (isInCall) {
-      callTimer = setInterval(() => {
-        seconds++;
-        if (seconds === 60) {
-          minutes++;
-          seconds = 0;
-        }
-
-        const timerElement = document.getElementById("call-timer");
-        if (timerElement) {
-          timerElement.textContent = `${minutes
-            .toString()
-            .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
-        }
-      }, 1000);
-    }
-
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     return () => {
-      if (callTimer) clearInterval(callTimer);
+      document.body.style.overflow = originalOverflow;
     };
-  }, [callStarted, startCall, isInCall]);
+  }, []);
+
+  const queryParams = useMemo(
+    () => new URLSearchParams(location.search),
+    [location.search]
+  );
+  const callType = queryParams.get("type") || activeCall?.callType || "audio";
+  const to = queryParams.get("to") || queryParams.get("from") || activeCall?.to;
+  const toName =
+    queryParams.get("toName") ||
+    queryParams.get("name") ||
+    queryParams.get("fromName") ||
+    activeCall?.toName;
+  const toImage = queryParams.get("toImage") || activeCall?.toImage;
+  const isGroup = Boolean(
+    activeCall?.isGroup ||
+      queryParams.get("isGroup") === "true" ||
+      queryParams.get("chatTitle")
+  );
+  const chatTitle =
+    queryParams.get("chatTitle") ||
+    activeCall?.chatTitle ||
+    (isGroup ? toName : "");
+
+  const isVideoCall = callType === "video";
 
   const handleRejectCall = () => {
-    endCall();
+    endCall("rejected");
     navigate("/chat");
   };
 
-  if (isLoading) {
-    return (
-      <div className="h-screen flex items-center justify-center bg-gray-900">
-        <div className="flex flex-col items-center">
-          <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-          <p className="text-white">Connecting call...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <motion.div
-      className="h-screen bg-gray-900 overflow-hidden"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.3 }}
-    >
+    <div className="w-full h-[calc(100dvh-4rem)] max-h-[calc(100dvh-4rem)] overflow-hidden bg-[#08090d] flex flex-col relative select-none">
       <CallWindow
+        callStatus={callStatus}
         localStream={localStream}
         remoteStream={remoteStream}
-        onEndCall={endCall}
+        remoteStreams={remoteStreams}
+        isGroup={isGroup}
+        chatTitle={chatTitle}
+        onEndCall={() => endCall()}
         isVideoCall={isVideoCall}
-        isRinging={isRinging}
-        isInCall={isInCall}
+        isCaller={isCaller}
         handleAnswerCall={handleAnswerCall}
         handleRejectCall={handleRejectCall}
-        muteAudio={handleMuteAudio}
-        toggleVideo={handleToggleVideo}
-        isMuted={muted}
-        isVideoEnabled={videoEnabled}
+        resetCallState={resetCallState}
+        muteAudio={muteAudio}
+        toggleVideo={toggleVideo}
+        switchCamera={switchCamera}
+        isMuted={isMuted}
+        isVideoEnabled={isVideoEnabled}
         toName={toName}
         toImage={toImage}
         to={to}
+        onMinimize={minimizeCall}
       />
-    </motion.div>
+    </div>
   );
 };
 

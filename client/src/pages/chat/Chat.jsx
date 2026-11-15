@@ -10,13 +10,10 @@ import { setShowSearch } from "../../app/features/otherSlice";
 
 const Chat = () => {
   const showSearch = useSelector((state) => state.other.search);
-
   const { groupInfoDrawer } = useSelector((state) => state.other);
   const params = useParams();
   const { chatId } = params;
   const dispatch = useDispatch();
-
-  console.log();
 
   useEffect(() => {
     if (showSearch && !window.matchMedia("(min-width: 768px)").matches) {
@@ -25,21 +22,21 @@ const Chat = () => {
   }, [dispatch, showSearch]);
 
   return (
-    <div className="w-full h-[92vh] bg-gray-50 dark:bg-gray-900 overflow-hidden">
-      {/* Mobile Layout */}
-      <div className="md:hidden h-full flex flex-col">
+    <div className="w-full h-full bg-gray-50 dark:bg-[#0c0d12] overflow-hidden p-1 sm:p-2">
+      {/* Mobile Layout (< md) */}
+      <div className="md:hidden h-full flex flex-col bg-white dark:bg-[#12131a] rounded-2xl overflow-hidden border border-gray-200/80 dark:border-white/10 shadow-xl">
         <div className="flex-shrink-0">
           <GroupChatNav chatId={chatId} />
         </div>
 
-        <div className="flex-1 h-0 overflow-hidden">
+        <div className="flex-1 min-h-0 overflow-hidden relative">
           <AnimatePresence mode="wait">
             {groupInfoDrawer ? (
               <motion.div
                 key="group-info"
-                initial={{ opacity: 0, x: 10 }}
+                initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 10 }}
+                exit={{ opacity: 0, x: 20 }}
                 transition={{ duration: 0.2 }}
                 className="h-full overflow-y-auto"
               >
@@ -48,11 +45,11 @@ const Chat = () => {
             ) : (
               <motion.div
                 key="message-area"
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -10 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
                 transition={{ duration: 0.2 }}
-                className="h-full"
+                className="h-full flex flex-col"
               >
                 <Message chatId={chatId} />
               </motion.div>
@@ -61,52 +58,39 @@ const Chat = () => {
         </div>
       </div>
 
-      {/* Desktop Layout */}
-      <div className="hidden md:flex h-full p-3">
-        <div
-          className={`flex w-full h-full gap-4 ${
-            groupInfoDrawer ? "pr-0" : ""
-          }`}
-        >
-          {/* Chat List */}
-          <div className="w-[350px] flex-shrink-0">
-            <MyChats />
-          </div>
-
-          {/* Chat Area */}
-          <div
-            className={`flex-1 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-sm ${
-              groupInfoDrawer &&
-              !window.matchMedia("(min-width: 1280px)").matches
-                ? "hidden"
-                : ""
-            }`}
-          >
-            <div className="flex flex-col h-full">
-              <div className="flex-shrink-0">
-                <GroupChatNav chatId={chatId} />
-              </div>
-              <div className="flex-1 overflow-hidden">
-                <Message chatId={chatId} />
-              </div>
-            </div>
-          </div>
-
-          {/* Group Info */}
-          <AnimatePresence>
-            {groupInfoDrawer && (
-              <motion.div
-                className={`w-[350px] flex-shrink-0 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-sm`}
-                initial={{ opacity: 0, width: 0 }}
-                animate={{ opacity: 1, width: 350 }}
-                exit={{ opacity: 0, width: 0 }}
-                transition={{ duration: 0.3 }}
-              >
-                <GroupInfo chatId={chatId} />
-              </motion.div>
-            )}
-          </AnimatePresence>
+      {/* Desktop Layout (>= md) - Full Width Screen Utilization */}
+      <div className="hidden md:flex h-full w-full gap-2">
+        {/* Sidebar Chat List */}
+        <div className="w-[290px] lg:w-[330px] flex-shrink-0 h-full">
+          <MyChats />
         </div>
+
+        {/* Center Chat Area */}
+        <div className="flex-1 bg-white dark:bg-[#12131a] rounded-2xl overflow-hidden border border-gray-200/80 dark:border-white/10 shadow-xl flex flex-col min-w-0 h-full">
+          <div className="flex-shrink-0">
+            <GroupChatNav chatId={chatId} />
+          </div>
+          <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
+            <Message chatId={chatId} />
+          </div>
+        </div>
+
+        {/* Right Info Drawer (Desktop) */}
+        <AnimatePresence>
+          {groupInfoDrawer && (
+            <motion.div
+              initial={{ opacity: 0, width: 0 }}
+              animate={{ opacity: 1, width: 310 }}
+              exit={{ opacity: 0, width: 0 }}
+              transition={{ duration: 0.2, ease: "easeInOut" }}
+              className="flex-shrink-0 h-full overflow-hidden"
+            >
+              <div className="w-[310px] h-full">
+                <GroupInfo chatId={chatId} />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

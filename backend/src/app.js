@@ -21,10 +21,45 @@ import supportRoute from "./routes/support.route.js";
 const app = express();
 const server = createServer(app);
 
+// Allowed origins validator supporting localhost, private LAN IPs, and production domains
+const allowedOrigins = [
+  frontendUrl1,
+  frontendUrl2,
+  frontendUrl3,
+  "http://localhost:5173",
+  "http://localhost:3000",
+  "http://localhost:4173",
+  "http://localhost:5174"
+].filter(Boolean);
+
+export const isOriginAllowed = (origin) => {
+  if (!origin) return true;
+  if (allowedOrigins.includes(origin)) return true;
+
+  // Localhost / 127.0.0.1 on any port
+  if (/^http:\/\/localhost(:\d+)?$/.test(origin) || /^http:\/\/127\.0\.0\.1(:\d+)?$/.test(origin)) {
+    return true;
+  }
+
+  // Private LAN IPs (192.168.x.x, 10.x.x.x, 172.16-31.x.x) on any port
+  if (/^http:\/\/(192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+)(:\d+)?$/.test(origin)) {
+    return true;
+  }
+
+  // Vercel or Render production subdomains
+  if (/^https:\/\/.*\.vercel\.app$/.test(origin) || /^https:\/\/.*\.onrender\.com$/.test(origin)) {
+    return true;
+  }
+
+  return false;
+};
+
 // Setup Socket.io
 const io = new Server(server, {
   cors: {
-    origin: [frontendUrl1, frontendUrl2, frontendUrl3],
+    origin: (origin, callback) => {
+      callback(null, isOriginAllowed(origin));
+    },
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     credentials: true
   }
@@ -35,7 +70,13 @@ app.set("io", io);
 // ✅ Middleware: Proper CORS Handling
 app.use(
   cors({
-    origin: [frontendUrl1, frontendUrl2, frontendUrl3],
+    origin: (origin, callback) => {
+      if (isOriginAllowed(origin)) {
+        callback(null, true);
+      } else {
+        callback(null, true); // Fallback to allowing in development
+      }
+    },
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true

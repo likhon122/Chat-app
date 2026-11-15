@@ -11,7 +11,8 @@ import {
   sendAttachments,
   getChatDetails,
   renameGroupChat,
-  getMessages
+  getMessages,
+  deleteSingleMessage
 } from "../controllers/chat.controller.js";
 import { isLoggedIn } from "../middlewares/auth.js";
 import { uploadSendAttachments } from "../middlewares/multer.js";
@@ -77,6 +78,8 @@ chatRoute.get(
   getMessages
 );
 
+
+chatRoute.delete("/message/single/:messageId", deleteSingleMessage);
 
 // Dynamic Route
 chatRoute

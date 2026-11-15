@@ -21,23 +21,15 @@ const createGroupChatValidation = [
 ];
 
 const addGroupMemberValidation = [
-  body("groupId")
-    .trim()
-    .notEmpty()
-    .withMessage(
-      "Adding a new person to this group make sure you provide groupId. Adding a new person must be required groupId!"
-    ),
-
+  body().custom((value) => {
+    if (!value.groupId && !value.chatId) {
+      throw new Error("Group ID is required to add members!");
+    }
+    return true;
+  }),
   body("members")
-    .trim()
-    .notEmpty()
-    .withMessage(
-      "Members is must be an array. Please sent members an array type!!"
-    )
     .isArray({ min: 1 })
-    .withMessage(
-      "Members is must be an array. Please sent members an array type! And make sure it's length minimum 1!!"
-    )
+    .withMessage("Members must be an array with at least 1 member ID!")
 ];
 
 const removeMemberValidation = [

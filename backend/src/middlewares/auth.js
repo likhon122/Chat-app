@@ -1,4 +1,4 @@
-import { verifyJsonWebToken } from "../helper/jsonWebToken.js";
+import { verifyJsonWebToken, getCookieOptions } from "../helper/jsonWebToken.js";
 import { errorResponse } from "../helper/responseHandler.js";
 import User from "../models/user.model.js";
 import { accessTokenKey } from "../secret.js";
@@ -21,16 +21,8 @@ const isLoggedIn = async (req, res, next) => {
     try {
       userInfo = verifyJsonWebToken(accessToken, accessTokenKey);
     } catch (tokenError) {
-      res.clearCookie("accessToken", {
-        httpOnly: true,
-        secure: true,
-        sameSite: "none"
-      });
-      res.clearCookie("refreshToken", {
-        httpOnly: true,
-        secure: true,
-        sameSite: "none"
-      });
+      res.clearCookie("accessToken", getCookieOptions());
+      res.clearCookie("refreshToken", getCookieOptions());
       return errorResponse(res, {
         statusCode: 401,
         errorMessage: "Access token is invalid or expired, please login again!",
@@ -101,16 +93,8 @@ const isLoggedOut = async (req, res, next) => {
           });
         }
       } catch (tokenError) {
-        res.clearCookie("accessToken", {
-          httpOnly: true,
-          secure: true,
-          sameSite: "none"
-        });
-        res.clearCookie("refreshToken", {
-          httpOnly: true,
-          secure: true,
-          sameSite: "none"
-        });
+        res.clearCookie("accessToken", getCookieOptions());
+        res.clearCookie("refreshToken", getCookieOptions());
       }
     }
 

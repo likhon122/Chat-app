@@ -1,8 +1,7 @@
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
-import { motion } from "framer-motion";
-import { FaRegComments } from "react-icons/fa";
-
+import { FaRegComments, FaShieldAlt, FaBolt, FaVideo } from "react-icons/fa";
+import { HiChatBubbleLeftRight, HiSparkles } from "react-icons/hi2";
 import MyChats from "./MyChats";
 import { setMessageNotification } from "../../app/features/chatSlice";
 import { useGetSocket } from "../../SocketHelper";
@@ -29,44 +28,48 @@ const ShowChat = () => {
   }, [dispatch]);
 
   return (
-    <div className="h-[92vh] bg-gray-50 dark:bg-gray-900 p-4 ">
-      <motion.div
-        className="h-full flex"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.3 }}
-      >
-        {/* Chat List */}
-        <motion.div
-          className="md:w-80 mt-10 md:mt-0  w-full flex-shrink-0 mr-4"
-          initial={{ x: -20, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          transition={{ duration: 0.3, delay: 0.1 }}
-        >
+    <div className="w-full h-full bg-gray-50 dark:bg-[#0c0d12] p-1 sm:p-2 overflow-hidden">
+      <div className="h-full flex w-full gap-2">
+        {/* Sidebar Chat List */}
+        <div className="w-full md:w-[290px] lg:w-[330px] flex-shrink-0 h-full">
           <MyChats />
-        </motion.div>
+        </div>
 
-        {/* Empty State */}
-        <motion.div
-          className="flex-1 bg-white dark:bg-gray-800 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-lg hidden md:flex items-center justify-center"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3, delay: 0.2 }}
-        >
-          <div className="text-center p-8">
-            <div className="w-20 h-20 bg-blue-50 dark:bg-blue-900/20 rounded-full mx-auto flex items-center justify-center mb-4">
-              <FaRegComments className="text-blue-500 text-3xl" />
+        {/* Modern Empty State (Desktop) */}
+        <div className="hidden md:flex flex-1 bg-white dark:bg-[#12131a] rounded-2xl overflow-hidden border border-gray-200/80 dark:border-white/10 shadow-xl flex-col items-center justify-center p-8 text-center relative">
+          {/* Subtle ambient accent */}
+          <div className="absolute w-80 h-80 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none -z-10" />
+
+          <div className="w-20 h-20 rounded-3xl bg-gradient-to-tr from-[#16222A] via-[#1c2e3d] to-[#26a0da] p-0.5 shadow-2xl mb-6">
+            <div className="w-full h-full bg-[#12131a] rounded-[22px] flex items-center justify-center text-cyan-400">
+              <HiChatBubbleLeftRight className="w-10 h-10" />
             </div>
-            <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-2">
-              Select a conversation
-            </h2>
-            <p className="text-gray-500 dark:text-gray-400 max-w-xs mx-auto">
-              Choose a chat from the list to start messaging or continue a
-              conversation
-            </p>
           </div>
-        </motion.div>
-      </motion.div>
+
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight mb-2">
+            Select a Conversation
+          </h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm mb-8">
+            Choose a contact or group from the left to start sending real-time messages, media, and voice calls.
+          </p>
+
+          {/* Feature Badges */}
+          <div className="flex flex-wrap items-center justify-center gap-3 max-w-md">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-xs text-gray-600 dark:text-gray-300">
+              <FaShieldAlt className="text-cyan-500" />
+              <span>End-to-End Encrypted</span>
+            </div>
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-xs text-gray-600 dark:text-gray-300">
+              <FaBolt className="text-amber-500" />
+              <span>Instant WebSockets</span>
+            </div>
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-xs text-gray-600 dark:text-gray-300">
+              <FaVideo className="text-purple-500" />
+              <span>WebRTC Voice & Video</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

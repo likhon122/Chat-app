@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { toast } from "react-toastify";
+import { toast } from "../utils/alert";
 
 const useAsyncMutation = (mutationHook) => {
   const [isLoading, setIsLoading] = useState(false);
@@ -9,32 +9,26 @@ const useAsyncMutation = (mutationHook) => {
   const [mutate] = mutationHook();
 
   const executeMutation = async (tostMessage, ...args) => {
-    let loadingToastId = toast.loading(
+    setIsLoading(true);
+    const loadingToastId = toast.loading(
       tostMessage || "Updating something...!!"
     );
 
     try {
-      const data = await mutate(...args).unwrap();
-      setData(data);
-      if (data.successMessage) {
-        toast.update(loadingToastId, {
-          render: data.successMessage,
-          type: "success",
-          isLoading: false,
-          autoClose: 2000,
-          closeButton: true
-        });
+      const response = await mutate(...args).unwrap();
+      setData(response);
+      if (response?.successMessage) {
+        toast.success(response.successMessage, { id: loadingToastId });
+      } else {
+        toast.dismiss(loadingToastId);
       }
+      return { success: true, data: response };
     } catch (err) {
-      setIsLoading(false);
       setError(err);
-      toast.update(loadingToastId, {
-        render: err.data?.errorMessage || "Something went wrong!!",
-        type: "error",
-        isLoading: false,
-        autoClose: 2000,
-        closeButton: true
+      toast.error(err?.data?.errorMessage || "Something went wrong!!", {
+        id: loadingToastId
       });
+      return { success: false, error: err };
     } finally {
       setIsLoading(false);
     }

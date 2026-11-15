@@ -1,19 +1,23 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import {
   FaInfoCircle,
   FaCamera,
   FaUser,
   FaEnvelope,
-  FaQuoteRight
+  FaQuoteRight,
+  FaArrowLeft
 } from "react-icons/fa";
+import { HiSparkles, HiShieldCheck } from "react-icons/hi2";
 import { useAsyncMutation } from "../../hooks/useAsyncMutationHook";
 import { useEditProfileMutation } from "../../app/api/api";
 import { setUser } from "../../app/features/authSlice";
+import { toast } from "../../utils/alert";
 
 const EditProfile = () => {
   const params = useParams();
+  const navigate = useNavigate();
   const user = useSelector((state) => state.auth.user);
   const userId = params.userId;
 
@@ -23,8 +27,6 @@ const EditProfile = () => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [changeImage, setChangeImage] = useState(null);
   const [imageChangeButton, setImageChangeButton] = useState(true);
-  const [showTooltip, setShowTooltip] = useState(false);
-  const [tooltipShowImage, setTooltipShowImage] = useState(false);
 
   const [editProfile, isLoading, data] = useAsyncMutation(
     useEditProfileMutation
@@ -33,9 +35,9 @@ const EditProfile = () => {
 
   useEffect(() => {
     if (user) {
-      setName(user.name);
-      setBio(user.bio);
-      setAvatar(user.avatar);
+      setName(user.name || "");
+      setBio(user.bio || "");
+      setAvatar(user.avatar || "");
     }
   }, [user]);
 
@@ -43,27 +45,23 @@ const EditProfile = () => {
     if (data?.payload?.updatedUser) {
       const updatedUser = data.payload.updatedUser;
       dispatch(setUser(updatedUser));
-      setName(updatedUser.name);
-      setBio(updatedUser.bio);
-      setAvatar(updatedUser.avatar);
+      setName(updatedUser.name || "");
+      setBio(updatedUser.bio || "");
+      setAvatar(updatedUser.avatar || "");
     }
   }, [data, dispatch]);
 
-  const handleMouseEnter = () => setShowTooltip(true);
-  const handleMouseLeave = () => setShowTooltip(false);
-  const handleMouseEnterImage = () => setTooltipShowImage(true);
-  const handleMouseLeaveImage = () => setTooltipShowImage(false);
-
   const handleImageChange = (e) => {
-    setChangeImage(e.target.files[0]);
-    setImageChangeButton(false);
-    if (e.target.files[0]) {
+    const file = e.target.files[0];
+    if (file) {
+      setChangeImage(file);
+      setImageChangeButton(false);
       const reader = new FileReader();
       reader.onloadend = () => {
         setSelectedImage(reader.result);
         setAvatar(reader.result);
       };
-      reader.readAsDataURL(e.target.files[0]);
+      reader.readAsDataURL(file);
     }
   };
 
@@ -75,52 +73,68 @@ const EditProfile = () => {
     formData.append("avatar", changeImage);
     formData.append("userId", userId);
 
-    await editProfile("Updating Profile picture...", formData);
+    await editProfile("Updating profile picture...", formData);
+    setImageChangeButton(true);
   };
 
   const handleNameChange = async (e) => {
     e.preventDefault();
-    if (!name || !userId) return;
+    if (!name.trim() || !userId) return;
 
     const formData = new FormData();
-    formData.append("name", name);
+    formData.append("name", name.trim());
     formData.append("userId", userId);
-    await editProfile("Updating Name...", formData);
+    await editProfile("Updating name...", formData);
   };
 
   const handleBioChange = async (e) => {
     e.preventDefault();
-    if (!bio || !userId) return;
+    if (!userId) return;
 
     const formData = new FormData();
-    formData.append("bio", bio);
+    formData.append("bio", bio.trim());
     formData.append("userId", userId);
-    await editProfile("Updating Bio...", formData);
+    await editProfile("Updating bio...", formData);
   };
 
   return (
-    <div className=" flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-black p-4 sm:p-6">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-8 w-full max-w-md transition-all duration-300">
-        <h2 className="text-2xl font-bold text-center text-gray-800 dark:text-white mb-6 flex items-center justify-center">
-          <span className="bg-gradient-to-r from-blue-600 to-indigo-600 text-transparent bg-clip-text">
-            Edit Profile
+    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center py-10 px-4 sm:px-6 bg-gray-50 dark:bg-[#0c0d12] text-gray-900 dark:text-gray-100 relative selection:bg-cyan-500 selection:text-white">
+      {/* Background ambient accents */}
+      <div className="absolute top-12 left-1/2 -translate-x-1/2 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none -z-10" />
+
+      <div className="bg-white dark:bg-[#12131a] rounded-3xl shadow-2xl border border-gray-200/80 dark:border-white/10 p-6 sm:p-8 w-full max-w-lg transition-all duration-300">
+        <div className="flex items-center justify-between mb-6">
+          <button
+            onClick={() => navigate(`/profile/${userId}`)}
+            className="text-xs font-semibold text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white inline-flex items-center gap-1.5 transition"
+          >
+            <FaArrowLeft className="w-3 h-3" />
+            Back to Profile
+          </button>
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+            <HiSparkles className="w-3 h-3" />
+            Customization
           </span>
-        </h2>
+        </div>
+
+        <h1 className="text-2xl font-extrabold text-center mb-6 bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-500 bg-clip-text text-transparent">
+          Edit Profile
+        </h1>
 
         {/* Avatar Section */}
-        <form onSubmit={handleImageSubmit} className="mb-[10px]">
-          <div className="relative flex flex-col items-center">
-            <div className="group relative">
-              <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-white dark:border-gray-700 shadow-lg relative mx-auto">
+        <form onSubmit={handleImageSubmit} className="mb-8">
+          <div className="flex flex-col items-center">
+            <div className="relative group cursor-pointer">
+              <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-gray-100 dark:border-[#1a1c26] shadow-xl ring-2 ring-cyan-500/40 relative">
                 <img
                   src={
                     selectedImage || avatar || "https://via.placeholder.com/150"
                   }
                   alt="Avatar"
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
                 />
                 <div
-                  className="absolute inset-0 bg-black bg-opacity-40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-300 cursor-pointer"
+                  className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition duration-200"
                   onClick={() => document.getElementById("image-input").click()}
                 >
                   <FaCamera className="text-white text-xl" />
@@ -135,139 +149,89 @@ const EditProfile = () => {
               />
             </div>
 
-            <div className="mt-4 text-center">
-              <div className="flex items-center justify-center text-sm text-gray-500 dark:text-gray-400 mb-2">
-                <span className="mr-1">Click image to change</span>
-                <div className="relative inline-block">
-                  <FaInfoCircle
-                    className="cursor-pointer text-blue-500 hover:text-blue-600 transition-colors"
-                    onMouseEnter={handleMouseEnterImage}
-                    onMouseLeave={handleMouseLeaveImage}
-                  />
-                  {tooltipShowImage && (
-                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-48 p-2 bg-gray-800 text-white text-xs rounded-lg shadow-lg z-10">
-                      When you select a new image, click the Update Avatar
-                      button to save your changes.
-                      <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-800 rotate-45"></div>
-                    </div>
-                  )}
-                </div>
-              </div>
-              <button
-                type="submit"
-                disabled={imageChangeButton}
-                className={`
-                  px-4 py-2 rounded-full text-sm font-medium transition-all duration-200
-                  ${
-                    imageChangeButton
-                      ? "bg-gray-300 text-gray-500 dark:bg-gray-700 dark:text-gray-400 cursor-not-allowed"
-                      : "bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:shadow-md hover:translate-y-[-1px]"
-                  }
-                `}
-              >
-                Update Avatar
-              </button>
-            </div>
+            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+              Click photo to choose a new avatar
+            </p>
+
+            <button
+              type="submit"
+              disabled={imageChangeButton}
+              className={`mt-3 text-xs font-semibold px-4 py-2 rounded-xl transition ${
+                imageChangeButton
+                  ? "bg-gray-100 text-gray-400 dark:bg-white/5 dark:text-gray-600 cursor-not-allowed"
+                  : "btn-grad"
+              }`}
+            >
+              Save New Photo
+            </button>
           </div>
         </form>
 
-        {/* Name Section */}
-        <form onSubmit={handleNameChange} className="mb-6">
-          <div className="space-y-2">
-            <label className="flex items-center text-gray-700 dark:text-gray-300 text-sm font-medium mb-1">
-              <FaUser className="mr-2 text-blue-500" />
-              Display Name
-            </label>
+        {/* Display Name Section */}
+        <form onSubmit={handleNameChange} className="mb-6 space-y-2">
+          <label className="flex items-center text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-400">
+            <FaUser className="mr-2 text-cyan-500" />
+            Display Name
+          </label>
+          <div className="flex gap-2">
             <input
               type="text"
               value={name}
               spellCheck="false"
               onChange={(e) => setName(e.target.value)}
-              className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white transition-all duration-200"
-              placeholder="Enter your name"
+              className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-[#161822] text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-cyan-500 transition"
+              placeholder="Your full name"
             />
-            <div className="pt-2">
-              <button
-                type="submit"
-                className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white py-2 px-4 rounded-lg transition-all duration-200 hover:shadow-md hover:translate-y-[-1px] text-sm font-medium"
-              >
-                Update Name
-              </button>
-            </div>
+            <button
+              type="submit"
+              className="btn-grad text-xs font-semibold px-4 py-2.5 rounded-xl flex-shrink-0"
+            >
+              Update
+            </button>
           </div>
         </form>
 
-        {/* Email Section (Read-only) */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-1">
-            <label className="flex items-center text-gray-700 dark:text-gray-300 text-sm font-medium">
-              <FaEnvelope className="mr-2 text-blue-500" />
+        {/* Read-Only Email Section */}
+        <div className="mb-6 space-y-2">
+          <div className="flex items-center justify-between">
+            <label className="flex items-center text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-400">
+              <FaEnvelope className="mr-2 text-cyan-500" />
               Email Address
             </label>
-            <div className="relative inline-block">
-              <FaInfoCircle
-                className="cursor-pointer text-blue-500 hover:text-blue-600 transition-colors"
-                onMouseEnter={handleMouseEnter}
-                onMouseLeave={handleMouseLeave}
-              />
-              {showTooltip && (
-                <div className="absolute bottom-full right-0 mb-2 w-48 p-2 bg-gray-800 text-white text-xs rounded-lg shadow-lg z-10">
-                  You cannot change your email. Please contact our customer
-                  service for assistance.
-                  <div className="absolute -bottom-1 right-1 w-2 h-2 bg-gray-800 rotate-45"></div>
-                </div>
-              )}
-            </div>
+            <span className="text-[10px] text-gray-400">Verified & Locked</span>
           </div>
-
-          <div className="relative">
-            <input
-              type="text"
-              value={user?.email || ""}
-              readOnly
-              disabled
-              className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 select-none pointer-events-none"
-            />
-            <div className="absolute inset-y-0 right-3 flex items-center">
-              <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                Read only
-              </span>
-            </div>
-          </div>
+          <input
+            type="text"
+            value={user?.email || ""}
+            readOnly
+            disabled
+            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-white/5 bg-gray-100/70 dark:bg-white/5 text-sm text-gray-400 cursor-not-allowed"
+          />
         </div>
 
         {/* Bio Section */}
-        <form onSubmit={handleBioChange} className="mb-6">
-          <div className="space-y-2">
-            <label className="flex items-center text-gray-700 dark:text-gray-300 text-sm font-medium mb-1">
-              <FaQuoteRight className="mr-2 text-blue-500" />
-              About Me
-            </label>
-            <textarea
-              value={bio || ""}
-              onChange={(e) => setBio(e.target.value)}
-              className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white transition-all duration-200"
-              rows="4"
-              spellCheck="true"
-              placeholder="Tell the world about yourself..."
-            ></textarea>
-            <div className="pt-2">
-              <button
-                type="submit"
-                className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white py-2 px-4 rounded-lg transition-all duration-200 hover:shadow-md hover:translate-y-[-1px] text-sm font-medium"
-              >
-                Update Bio
-              </button>
-            </div>
+        <form onSubmit={handleBioChange} className="space-y-2">
+          <label className="flex items-center text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-400">
+            <FaQuoteRight className="mr-2 text-cyan-500" />
+            Bio / About Me
+          </label>
+          <textarea
+            value={bio}
+            onChange={(e) => setBio(e.target.value)}
+            rows="3"
+            spellCheck="true"
+            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-[#161822] text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-cyan-500 transition resize-none"
+            placeholder="Tell friends what you are building or passionate about..."
+          />
+          <div className="flex justify-end pt-1">
+            <button
+              type="submit"
+              className="btn-grad text-xs font-semibold px-5 py-2.5 rounded-xl"
+            >
+              Save Bio
+            </button>
           </div>
         </form>
-
-        {/* Status indicator */}
-        {isLoading && (
-          <div className="mt-4 p-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 text-sm rounded-lg text-center">
-            Saving changes...
-          </div>
-        )}
       </div>
     </div>
   );

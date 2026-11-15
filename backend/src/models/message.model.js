@@ -35,7 +35,43 @@ const messageModel = new mongoose.Schema(
     realTimeId: {
       type: String,
       required: [true, "Real time id is required!"]
-    }
+    },
+    callInfo: {
+      type: new mongoose.Schema(
+        {
+          callType: {
+            type: String,
+            enum: ["audio", "video"]
+          },
+          status: {
+            type: String,
+            enum: ["completed", "missed", "rejected", "cancelled", "unanswered"]
+          },
+          duration: {
+            type: Number
+          }
+        },
+        { _id: false }
+      ),
+      default: undefined
+    },
+    readBy: [
+      {
+        type: mongoose.Schema.ObjectId,
+        ref: "User"
+      }
+    ],
+    status: {
+      type: String,
+      enum: ["sent", "delivered", "seen"],
+      default: "sent"
+    },
+    deletedFor: [
+      {
+        type: mongoose.Schema.ObjectId,
+        ref: "User"
+      }
+    ]
   },
   { timestamps: true }
 );

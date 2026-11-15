@@ -6,7 +6,8 @@ import {
   NEW_ATTACHMENT,
   NEW_MESSAGE,
   NEW_MESSAGE_ALERT,
-  REFETCH_CHATS
+  REFETCH_CHATS,
+  MESSAGES_SEEN
 } from "../constants/event.js";
 import { checkIsChatAdmin, deleteChatWithId } from "../helper/Chat.js";
 import {
@@ -35,7 +36,7 @@ const createGroupChat = async (req, res, next) => {
 
     const allMembers = [...members, userId];
 
-    await Chat.create({
+    const chat = await Chat.create({
       chatName,
       creator: userId,
       groupChat: true,
@@ -43,11 +44,12 @@ const createGroupChat = async (req, res, next) => {
     });
 
     emitEvent(req, ALERT, allMembers, `Welcome to ${chatName} group`);
-    emitEvent(req, REFETCH_CHATS, members);
+    emitEvent(req, REFETCH_CHATS, allMembers);
 
     return successResponse(res, {
       statusCode: 201,
       successMessage: "New chat created successfully!",
+      payload: { chat },
       nextURl: {}
     });
   } catch (error) {
@@ -61,7 +63,7 @@ const getMyChats = async (req, res, next) => {
     const { userId } = req;
     const chats = await Chat.find({ members: userId }).populate(
       "members",
-      "avatar name email"
+      "avatar name email lastSeen updatedAt isOnline"
     );
 
     if (!chats) {
@@ -75,10 +77,12 @@ const getMyChats = async (req, res, next) => {
     }
 
     const allChats = await Promise.all(
-      chats.map(async ({ members, _id, groupChat, chatName }) => {
-        // Finding last message of the chat
-
-        const lastMessage = await Message.findOne({ chat: _id }).sort({
+      chats.map(async ({ members, _id, groupChat, chatName, createdAt, updatedAt }) => {
+        // Finding last message of the chat (excluding messages deleted for this user)
+        const lastMessage = await Message.findOne({
+          chat: _id,
+          deletedFor: { $ne: userId }
+        }).sort({
           createdAt: -1
         });
 
@@ -90,6 +94,9 @@ const getMyChats = async (req, res, next) => {
 
         const membersId = members.map((member) => member._id);
 
+        const other = otherMember();
+        const otherIsOnline = other ? userSocketIds.has(other._id.toString()) : false;
+
         return {
           chatName,
           _id,
@@ -98,18 +105,36 @@ const getMyChats = async (req, res, next) => {
             ? members.slice(0, 3).map((member) => {
                 return member.avatar?.url;
               })
-            : otherMember()?.avatar?.url,
+            : other?.avatar?.url,
+          otherMember: other
+            ? {
+                _id: other._id,
+                name: other.name,
+                avatar: other.avatar?.url,
+                lastSeen: other.lastSeen || other.updatedAt || new Date(),
+                isOnline: otherIsOnline
+              }
+            : null,
           members: membersId,
           lastMessage:
             lastMessage?.content || lastMessage?.attachment
               ? {
                   lastMessage: lastMessage?.content,
-                  lastAttachment: lastMessage?.attachment
+                  lastAttachment: lastMessage?.attachment,
+                  time: lastMessage?.createdAt
                 }
-              : "No messages yet"
+              : null,
+          updatedAt: lastMessage?.createdAt || updatedAt || createdAt
         };
       })
     );
+
+    // Sort all chats descending so latest conversation is always at the top
+    allChats.sort((a, b) => {
+      const timeA = new Date(a.lastMessage?.time || a.updatedAt || 0).getTime();
+      const timeB = new Date(b.lastMessage?.time || b.updatedAt || 0).getTime();
+      return timeB - timeA;
+    });
 
     return successResponse(res, {
       statusCode: 200,
@@ -171,16 +196,23 @@ const getMyGroups = async (req, res, next) => {
   }
 };
 
-// Bug is here
 const addGroupMember = async (req, res, next) => {
   try {
-    const { groupId, members } = req.body;
+    const groupId = req.body.groupId || req.body.chatId;
+    const { members } = req.body;
+
+    if (!groupId) {
+      return errorResponse(res, {
+        statusCode: 400,
+        errorMessage: "Group ID is required to add members!"
+      });
+    }
 
     if (!members || !Array.isArray(members) || members.length < 1) {
       return errorResponse(res, {
         statusCode: 400,
         errorMessage:
-          "Add to member any group to send member id is required! Members is always an array type! Please sent data on array type and add at least one member on the group!",
+          "Please provide members as an array with at least one user ID!",
         nextURl: {
           createGroup: "/api/v1/chat/new",
           getMyGroup: "/api/v1/chat/my-group",
@@ -205,49 +237,44 @@ const addGroupMember = async (req, res, next) => {
       return User.findById(memberId, "name");
     });
 
-    const allNewMembersName = await Promise.all(allNewMembersNamePromise);
+    const allNewMembers = await Promise.all(allNewMembersNamePromise);
+    const validUsers = allNewMembers.filter(Boolean);
 
-    if (!allNewMembersName) {
+    if (!validUsers.length) {
       return errorResponse(res, {
         statusCode: 404,
-        errorMessage: "User not found!",
-        nextURl: {
-          registerUser: "/api/v1/user/process-register",
-          login: "/api/v1/auth/login"
-        }
+        errorMessage: "No valid users found to add!"
       });
     }
 
-    members.map((memberId) => {
-      if (!group.members.includes(memberId)) {
-        return group.members.push(memberId);
+    members.forEach((memberId) => {
+      const alreadyInGroup = group.members.some(
+        (m) => (m?._id || m)?.toString() === memberId.toString()
+      );
+      if (!alreadyInGroup) {
+        group.members.push(memberId);
       }
-      return true;
     });
 
     if (group.members.length > 100) {
       return errorResponse(res, {
         statusCode: 400,
         errorMessage:
-          "Reach the group members! Please remove some member first!",
+          "Reached maximum group members limit (100)! Please remove some members first.",
         nextURl: {}
       });
     }
 
-    const uniqueNames = [
-      ...new Set(
-        allNewMembersName.map((user) => {
-          return user.name;
-        })
-      )
-    ];
+    const uniqueNames = [...new Set(validUsers.map((u) => u.name))];
+    const namesString = uniqueNames.join(", ");
 
     emitEvent(
       req,
       ALERT,
       group.members,
-      `${uniqueNames.map((name) => name)}has been added to ${group.chatName}`
+      `${namesString} has been added to ${group.chatName}`
     );
+    emitEvent(req, REFETCH_CHATS, group.members);
 
     await group.save();
 
@@ -255,7 +282,7 @@ const addGroupMember = async (req, res, next) => {
       statusCode: 200,
       successMessage: "Group member added successfully",
       payload: {
-        addedPeople: `${uniqueNames.map((name) => name)}has been added to ${group.chatName}`
+        addedPeople: `${namesString} has been added to ${group.chatName}`
       },
       nextURl: {}
     });
@@ -494,7 +521,7 @@ const sendAttachments = async (req, res, next) => {
 
     const { files } = req;
 
-    if (files.length < 0) {
+    if (!files || files.length === 0) {
       return errorResponse(res, {
         statusCode: 400,
         errorMessage: "Please provide any attachments at least 1 and upto 5!!",
@@ -526,10 +553,20 @@ const sendAttachments = async (req, res, next) => {
 
     const attachments = await uploadFilesFromCloudinary(files);
 
+    const otherMembers = (chat.members || []).filter(
+      (m) => m.toString() !== userId.toString()
+    );
+    const hasOnlineRecipient = otherMembers.some((m) =>
+      userSocketIds.has(m.toString())
+    );
+    const deliveryStatus = hasOnlineRecipient ? "delivered" : "sent";
+
     const messageForRealTime = {
       content: formMessage ? formMessage : "",
       attachment: attachments,
       chatId,
+      status: deliveryStatus,
+      readBy: [],
       realTimeId: uuid(),
       sender: {
         _id: userId,
@@ -544,6 +581,8 @@ const sendAttachments = async (req, res, next) => {
       content: formMessage ? formMessage : "",
       attachment: attachments,
       chat: chatId,
+      status: deliveryStatus,
+      readBy: [],
       realTimeId: messageForRealTime.realTimeId
     };
 
@@ -577,6 +616,7 @@ const sendAttachments = async (req, res, next) => {
     }
 
     emitEvent(req, NEW_MESSAGE_ALERT, chat.members, { chatId });
+    emitEvent(req, REFETCH_CHATS, chat.members, { chatId });
 
     return successResponse(res, {
       statusCode: 200,
@@ -593,10 +633,10 @@ const getChatDetails = async (req, res, next) => {
   try {
     if (req.query.populate === "true") {
       const chat = await Chat.findById(req.params.id)
-        .populate("members", "name avatar")
+        .populate("members", "name avatar lastSeen updatedAt isOnline")
         .lean();
       if (!chat) {
-        errorResponse(res, {
+        return errorResponse(res, {
           statusCode: 404,
           errorMessage: "Chat not found!",
           nextURl: {
@@ -604,11 +644,18 @@ const getChatDetails = async (req, res, next) => {
           }
         });
       }
-      chat.members = chat.members.map(({ avatar, _id, name }) => ({
-        _id,
-        name,
-        avatar: avatar?.url
-      }));
+      chat.members = chat.members.map(
+        ({ avatar, _id, name, lastSeen, updatedAt }) => {
+          const isCurrentlyOnline = userSocketIds.has(_id.toString());
+          return {
+            _id,
+            name,
+            avatar: avatar?.url,
+            lastSeen: lastSeen || updatedAt || new Date(),
+            isOnline: isCurrentlyOnline
+          };
+        }
+      );
       return successResponse(res, {
         statusCode: 200,
         successMessage: "Chat details with populate returned successfully!",
@@ -737,62 +784,19 @@ const deleteChat = async (req, res, next) => {
     }
 
     if (!chat.groupChat) {
-      const user = await User.findOne({ _id: userId }).select("-password");
-
-      const messageWithAttachments = await Message.find({
-        chat: chatId,
-        attachment: { $exists: true, $ne: [] }
-      });
-
-      const publicIds = [];
-
-      messageWithAttachments.forEach(({ attachment }) => {
-        attachment.forEach(({ public_id }) => publicIds.push(public_id));
-      });
-
-      if (publicIds.length > 0) {
-        await deleteFilesFromCloudinary(publicIds);
-      }
-
-      const deletedFriend = chat.members.filter(
-        (member) => member._id.toString() !== userId.toString()
+      // "Delete for Me": Clear chat messages on the requesting user's side only.
+      // 1. DO NOT unfriend the user - keep friendship completely intact!
+      // 2. Mark all messages in this chat as deleted for THIS user only.
+      await Message.updateMany(
+        { chat: chatId },
+        { $addToSet: { deletedFor: userId } }
       );
 
-      const deletedFriendDetails = await User.findOne({
-        _id: deletedFriend[0]
-      }).select("-password");
-
-      if (!deletedFriendDetails) {
-        return errorResponse(res, {
-          statusCode: 404,
-          errorMessage:
-            "Friend not found!! Please provide correct information!!",
-          nextURl: {}
-        });
-      }
-
-      const newFriends = user.friends.filter(
-        (friend) => friend.toString() !== deletedFriend[0].toString()
-      );
-
-      const newFriendForDeletedFriend = deletedFriendDetails.friends.filter(
-        (friend) => friend.toString() !== userId.toString()
-      );
-
-      user.friends = newFriends;
-      deletedFriendDetails.friends = newFriendForDeletedFriend;
-
-      await Promise.all([
-        user.save(),
-        deletedFriendDetails.save(),
-        Chat.findByIdAndDelete(chatId)
-      ]);
-
-      emitEvent(req, REFETCH_CHATS, chat.members);
+      emitEvent(req, REFETCH_CHATS, [userId]);
 
       return successResponse(res, {
         statusCode: 200,
-        successMessage: "Chat delete and unfriend successfully!",
+        successMessage: "Messages deleted on your side successfully!",
         payload: {},
         nextURl: {}
       });
@@ -856,14 +860,56 @@ const getMessages = async (req, res, next) => {
     const limit = 20;
     const skip = (page - 1) * limit;
 
+    const filter = {
+      chat: chatId,
+      deletedFor: { $ne: req.userId }
+    };
+
+    // Mark messages sent by others in this chat as read by current viewer
+    const updateResult = await Message.updateMany(
+      {
+        chat: chatId,
+        sender: { $ne: req.userId },
+        readBy: { $ne: req.userId }
+      },
+      {
+        $addToSet: { readBy: req.userId },
+        $set: { status: "seen" }
+      }
+    ).catch(() => null);
+
+    if (updateResult && updateResult.modifiedCount > 0) {
+      Chat.findById(chatId, "members")
+        .then((chatDoc) => {
+          if (chatDoc) {
+            User.findById(req.userId, "name avatar")
+              .then((viewer) => {
+                if (viewer) {
+                  emitEvent(req, MESSAGES_SEEN, chatDoc.members, {
+                    chatId,
+                    seenBy: {
+                      _id: viewer._id.toString(),
+                      name: viewer.name,
+                      avatar: viewer.avatar?.url || viewer.avatar || ""
+                    }
+                  });
+                }
+              })
+              .catch(() => {});
+          }
+        })
+        .catch(() => {});
+    }
+
     const [messages, totalMessagesCount] = await Promise.all([
-      Message.find({ chat: chatId })
+      Message.find(filter)
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
         .populate("sender", "name avatar")
+        .populate("readBy", "name avatar")
         .lean(),
-      Message.countDocuments({ chat: chatId })
+      Message.countDocuments(filter)
     ]);
 
     if (!messages.length) {
@@ -879,7 +925,6 @@ const getMessages = async (req, res, next) => {
       .map((message) => message.replyTo);
 
     // Fetch original messages based on UUIDs (if you have a way to do that)
-    // Here we assume you have some function to get messages by UUIDs
     const originalMessages = await fetchOriginalMessagesByUUID(replyToUUIDs);
 
     // Create a lookup for original messages
@@ -903,11 +948,26 @@ const getMessages = async (req, res, next) => {
 
     // Map original messages to the messages array, including replyTo details
     messages.forEach((message) => {
+      // Ensure faulty callInfo with no callType is null
+      if (message.callInfo && !message.callInfo.callType) {
+        message.callInfo = null;
+      }
+
+      // Format readBy avatars
+      if (Array.isArray(message.readBy)) {
+        message.readBy = message.readBy.map((r) => ({
+          _id: r._id,
+          name: r.name,
+          avatar: r.avatar?.url || r.avatar
+        }));
+      } else {
+        message.readBy = [];
+      }
+
       if (message.replyTo && originalMessagesMap[message.replyTo]) {
         message.replyTo = originalMessagesMap[message.replyTo];
       } else {
-        // If replyTo is not found, you can either set it to null or keep it as is
-        message.replyTo = null; // or keep it unchanged
+        message.replyTo = null;
       }
     });
 
@@ -932,6 +992,37 @@ const getMessages = async (req, res, next) => {
   }
 };
 
+const deleteSingleMessage = async (req, res, next) => {
+  try {
+    const { messageId } = req.params;
+    const { userId } = req;
+
+    const query = mongoose.Types.ObjectId.isValid(messageId)
+      ? { $or: [{ _id: messageId }, { realTimeId: messageId }] }
+      : { realTimeId: messageId };
+
+    const message = await Message.findOne(query);
+    if (!message) {
+      return errorResponse(res, {
+        statusCode: 404,
+        errorMessage: "Message not found!"
+      });
+    }
+
+    await Message.updateOne(query, {
+      $addToSet: { deletedFor: userId }
+    });
+
+    return successResponse(res, {
+      statusCode: 200,
+      successMessage: "Message deleted for you successfully!",
+      payload: { messageId: message._id, realTimeId: message.realTimeId }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export {
   createGroupChat,
   getMyChats,
@@ -943,5 +1034,6 @@ export {
   sendAttachments,
   getChatDetails,
   renameGroupChat,
-  getMessages
+  getMessages,
+  deleteSingleMessage
 };

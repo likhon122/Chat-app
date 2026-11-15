@@ -164,7 +164,8 @@ const api = createApi({
         body: { name: data.name }
       }),
       invalidatesTags: (result, error, { chatId }) => [
-        { type: "Chat", id: chatId }
+        { type: "Chat", id: chatId },
+        "Chat"
       ]
     }),
 
@@ -195,8 +196,9 @@ const api = createApi({
         credentials: "include",
         body: data
       }),
-      invalidatesTags: (result, error, { chatId }) => [
-        { type: "Chat", id: chatId }
+      invalidatesTags: (result, error, arg) => [
+        { type: "Chat", id: arg?.chatId || arg?.groupId },
+        "Chat"
       ]
     }),
 
@@ -219,9 +221,13 @@ const api = createApi({
         credentials: "include",
         body: data
       }),
-      invalidatesTags: (result, error, { chatId }) => [
-        { type: "Message", id: chatId }
-      ],
+      invalidatesTags: (result, error, arg) => {
+        const chatId =
+          arg instanceof FormData ? arg.get("chatId") : arg?.chatId;
+        return chatId
+          ? [{ type: "Message", id: chatId }, "Message", "Chat"]
+          : ["Message", "Chat"];
+      },
       keepUnusedDataFor: 0
     }),
 
@@ -289,7 +295,10 @@ const api = createApi({
         method: "DELETE",
         credentials: "include"
       }),
-      invalidatesTags: (result, error, chatId) => [{ type: "Chat", id: chatId }]
+      invalidatesTags: (result, error, chatId) => [
+        { type: "Chat", id: chatId },
+        "Chat"
+      ]
     }),
 
     leaveGroup: builder.mutation({
@@ -317,6 +326,14 @@ const api = createApi({
         credentials: "include",
         body: data
       })
+    }),
+    deleteSingleMessage: builder.mutation({
+      query: (messageId) => ({
+        url: `chat/message/single/${messageId}`,
+        method: "DELETE",
+        credentials: "include"
+      }),
+      invalidatesTags: ["Message"]
     })
   })
 });
@@ -344,6 +361,9 @@ export const {
   useRemoveGroupMembersMutation,
   useDeleteGroupMutation,
   useLeaveGroupMutation,
+  useEditProfileMutation,
+  useSendSupportMessageMutation,
+  useDeleteSingleMessageMutation,
   useGetPendingFriendRequestQuery,
   useMakeNotificationMutation,
   useGetNotificationsQuery,
@@ -351,9 +371,7 @@ export const {
   useMakeFriendRequestNotificationMutation,
   useGetFriendRequestNotificationCountQuery,
   useReadFriendRequestNotificationMutation,
-  useEditProfileMutation,
   useForgotPasswordMutation,
   useResetPasswordMutation,
-  useGetOnlineUsersQuery,
-  useSendSupportMessageMutation
+  useGetOnlineUsersQuery
 } = api;

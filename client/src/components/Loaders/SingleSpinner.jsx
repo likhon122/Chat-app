@@ -1,19 +1,28 @@
-const SingleSpinner = ({
-  size = "w-20 h-20",
-  color = "border-t-black border-l-black",
-  darkColor = "dark:border-t-gray-200 dark:border-l-gray-200",
-  borderWidth = "border-t-2 border-l-2",
-  speed = "animate-spin-fast"
+import React, { memo } from "react";
+
+const SingleSpinner = memo(({
+  size = "w-8 h-8",
+  color = "border-t-indigo-600 dark:border-t-indigo-400",
+  trackColor = "border-gray-200 dark:border-white/[0.08]",
+  borderWidth = "border-2",
+  speed = "animate-spin"
 }) => {
   return (
-    <div className="flex items-center justify-center">
+    <div className="inline-flex items-center justify-center">
       <div className={`relative ${size}`}>
+        {/* Track */}
         <div
-          className={`absolute ${borderWidth}  border-transparent ${color}  ${darkColor} rounded-full ${speed} w-full h-full`}
-        ></div>
+          className={`w-full h-full rounded-full ${borderWidth} ${trackColor}`}
+        />
+        {/* Active Arc */}
+        <div
+          className={`absolute inset-0 w-full h-full rounded-full ${borderWidth} border-transparent ${color} ${speed}`}
+        />
       </div>
     </div>
   );
-};
+});
+
+SingleSpinner.displayName = "SingleSpinner";
 
 export default SingleSpinner;

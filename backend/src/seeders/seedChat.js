@@ -17,8 +17,8 @@ const createSingleChat = async (req, res, next) => {
           Chat.create({
             chatName: faker.lorem.words(2),
             members: [users[i], users[j]],
-            creator: users[i]
-          })
+            creator: users[i],
+          }),
         );
       }
     }
@@ -27,7 +27,7 @@ const createSingleChat = async (req, res, next) => {
       statusCode: 201,
       successMessage: "Single chat created successfully!",
       payload: chatPromise,
-      nextURl: {}
+      nextURl: {},
     });
   } catch (error) {
     next(error);
@@ -59,7 +59,7 @@ const createGroupChat = async (req, res, next) => {
         groupChat: true,
         chatName: faker.lorem.words(2),
         members,
-        creator: members[0]
+        creator: members[0],
       });
       chatPromise.push(chat);
     }
@@ -70,7 +70,7 @@ const createGroupChat = async (req, res, next) => {
       statusCode: 201,
       successMessage: "Group Chat created successfully!",
       payload: chatPromise,
-      nextURl: {}
+      nextURl: {},
     });
   } catch (error) {
     next(error);
@@ -94,8 +94,8 @@ const createMessages = async (req, res, next) => {
         Message.create({
           chat: randomChat,
           sender: randomUser,
-          content: faker.lorem.sentence({ min: 1, max: 5 })
-        })
+          content: faker.lorem.sentence({ min: 1, max: 5 }),
+        }),
       );
     }
     await Promise.all(messagesPromise);
@@ -104,7 +104,7 @@ const createMessages = async (req, res, next) => {
       statusCode: 201,
       successMessage: `New ${numMessages} messages created successfully!`,
       payload: messagesPromise,
-      nextURl: {}
+      nextURl: {},
     });
   } catch (error) {
     next(error);
@@ -125,8 +125,8 @@ const createMessagesInChat = async (req, res, next) => {
         Message.create({
           chat: chatId,
           sender: randomUser,
-          content: faker.lorem.sentence()
-        })
+          content: faker.lorem.sentence(),
+        }),
       );
     }
     await Promise.all(messagesPromise);
@@ -134,7 +134,7 @@ const createMessagesInChat = async (req, res, next) => {
       statusCode: 201,
       successMessage: `New group ${numMessages} messages created successfully!`,
       payload: messagesPromise,
-      nextURl: {}
+      nextURl: {},
     });
   } catch (error) {
     next(error);
@@ -145,5 +145,5 @@ export {
   createSingleChat,
   createGroupChat,
   createMessages,
-  createMessagesInChat
+  createMessagesInChat,
 };

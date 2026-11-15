@@ -3,6 +3,41 @@
 @tailwind components;
 @tailwind utilities;
 
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 5rem;
+}
+
+/* Custom Gradient Button (#314755 -> #26a0da -> #314755) */
+.btn-grad {
+  background-image: linear-gradient(to right, #314755 0%, #26a0da 51%, #314755 100%);
+  background-size: 200% auto;
+  transition: 0.5s all ease;
+  color: white;
+  outline: none;
+  border: none;
+  box-shadow: 0 4px 15px rgba(38, 160, 218, 0.35);
+}
+
+.btn-grad:hover {
+  background-position: right center;
+  color: #fff;
+  text-decoration: none;
+  box-shadow: 0 6px 20px rgba(38, 160, 218, 0.5);
+}
+
+/* High-performance hardware acceleration & rendering hints */
+.gpu-accelerated {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+.content-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 500px;
+}
+
 /* Global styles for section animations */
 .section {
   opacity: 0;
@@ -66,26 +101,37 @@ body {
 
 /* Add this file under src/assets/styles/ or any folder structure you prefer */
 
-.custom-scrollbar {
-  scrollbar-width: thin; /* Firefox */
-  scrollbar-color: #232931 #222222; /* scrollbar thumb and track colors */
+/* Hide big clunky scrollbars while keeping smooth scrolling */
+.custom-scrollbar,
+.no-scrollbar {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
 }
 
-.custom-scrollbar::-webkit-scrollbar {
-  width: 8px;
+.custom-scrollbar::-webkit-scrollbar,
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+  width: 0px;
+  height: 0px;
 }
 
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background-color: #4b5563; /* Dark grey scrollbar thumb */
-  border-radius: 8px;
+/* Global sleek subtle scrollbars for any unclassed containers */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
 }
 
-.custom-scrollbar::-webkit-scrollbar-track {
-  background-color: #1f2937; /* Darker background for the track */
+::-webkit-scrollbar-track {
+  background: transparent;
 }
 
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background-color: #6b7280; /* Slightly lighter on hover */
+::-webkit-scrollbar-thumb {
+  background-color: rgba(156, 163, 175, 0.2);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(156, 163, 175, 0.4);
 }
 
 .no-select {

@@ -1,269 +1,350 @@
-import { useEffect, useRef, useState } from "react";
-import { FaXmark, FaUserGroup, FaUsers, FaCheck } from "react-icons/fa6";
+import { useEffect, useRef, useState, useMemo } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { FaXmark, FaCheck } from "react-icons/fa6";
+import {
+  HiUsers,
+  HiUserPlus,
+  HiMagnifyingGlass,
+  HiXMark,
+  HiSparkles,
+  HiArrowPath,
+} from "react-icons/hi2";
 import {
   useGetFriendsQuery,
-  useMakeGroupChatMutation
+  useMakeGroupChatMutation,
 } from "../../app/api/api";
-import { useDispatch, useSelector } from "react-redux";
 import { setMakeGroupDrawer } from "../../app/features/otherSlice";
-import { Link } from "react-router-dom";
 import { useAsyncMutation } from "../../hooks/useAsyncMutationHook";
-import useClickOutside from "../../hooks/useClickOutsideHook";
+import { toast } from "../../utils/alert";
 
 const MakeGroup = (props) => {
-  const { makeGroupDrawer } = useSelector((state) => state.other);
-  const userId = useSelector((state) => state.auth.user._id);
-  const id = props?.userId;
   const dispatch = useDispatch();
-  const createGroupRef = useRef();
+  const navigate = useNavigate();
+
+  const { makeGroupDrawer } = useSelector((state) => state.other);
+  const loggedInUserId = useSelector((state) => state.auth?.user?._id);
+  const targetUserId = props?.userId || loggedInUserId;
 
   const [selectedFriends, setSelectedFriends] = useState([]);
   const [groupName, setGroupName] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const { data, isLoading } = useGetFriendsQuery(id);
+  const modalRef = useRef();
+
+  const { data, isLoading } = useGetFriendsQuery(targetUserId, {
+    skip: !targetUserId || !makeGroupDrawer,
+  });
+
   const [makeGroupChat, makingGroupLoading] = useAsyncMutation(
     useMakeGroupChatMutation
   );
 
-  const handleClick = () => {
+  const friends = useMemo(
+    () => data?.payload?.friends || [],
+    [data?.payload?.friends]
+  );
+
+  // Filtered friends based on live search
+  const filteredFriends = useMemo(() => {
+    if (!searchQuery.trim()) return friends;
+    const q = searchQuery.toLowerCase().trim();
+    return friends.filter(
+      (f) =>
+        f.name?.toLowerCase().includes(q) ||
+        f.username?.toLowerCase().includes(q)
+    );
+  }, [friends, searchQuery]);
+
+  const handleClose = () => {
     dispatch(setMakeGroupDrawer(false));
+    setGroupName("");
+    setSelectedFriends([]);
+    setSearchQuery("");
   };
 
   const handleCheckboxChange = (friendId) => {
-    setSelectedFriends((prevSelected) =>
-      prevSelected.includes(friendId)
-        ? prevSelected.filter((id) => id !== friendId)
-        : [...prevSelected, friendId]
+    setSelectedFriends((prev) =>
+      prev.includes(friendId)
+        ? prev.filter((id) => id !== friendId)
+        : [...prev, friendId]
     );
   };
 
-  const handleMakeGroup = () => {
-    if (selectedFriends.length > 1 && groupName) {
-      const makeGroupData = {
-        chatName: groupName,
-        members: selectedFriends
-      };
-
-      makeGroupChat("Creating group chat..", makeGroupData);
+  const handleToggleAll = () => {
+    if (selectedFriends.length === filteredFriends.length) {
+      setSelectedFriends([]);
     } else {
-      alert(
-        "Please select at least two friends and enter a chat name to create a group."
-      );
+      setSelectedFriends(filteredFriends.map((f) => f._id));
     }
   };
 
-  useClickOutside(createGroupRef, () => {
-    if (makeGroupDrawer) {
-      dispatch(setMakeGroupDrawer(false));
+  const handleMakeGroup = async (e) => {
+    e?.preventDefault();
+    if (!groupName.trim()) {
+      toast.warning("Please enter a group name.");
+      return;
     }
-  });
+    if (selectedFriends.length < 2) {
+      toast.warning(
+        "Please select at least 2 friends to form a group channel."
+      );
+      return;
+    }
 
-  useEffect(() => {
-    if (userId !== id) {
-      dispatch(setMakeGroupDrawer(false));
+    const makeGroupData = {
+      chatName: groupName.trim(),
+      members: selectedFriends,
+    };
+
+    const res = await makeGroupChat("Creating group channel...", makeGroupData);
+    if (res?.success) {
+      handleClose();
+      const newChatId = res.data?.payload?.chat?._id;
+      if (newChatId) {
+        navigate(`/chat/${newChatId}?group-chat=true`);
+      }
     }
-  }, [id, userId, dispatch]);
+  };
+
+  // Close on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape" && makeGroupDrawer) {
+        handleClose();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [makeGroupDrawer]);
+
+  if (!makeGroupDrawer) return null;
 
   return (
     <div
-      className="bg-gradient-to-br from-gray-900 to-gray-800 text-white w-full max-w-md mx-auto rounded-xl shadow-2xl overflow-hidden border border-gray-700/50"
-      ref={createGroupRef}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) handleClose();
+      }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in select-none"
     >
-      {/* Header */}
-      <div className="bg-gradient-to-r from-orange-500 to-amber-600 p-5">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <FaUserGroup className="text-white text-xl" />
-            <h2 className="text-xl font-bold">Create Group Chat</h2>
+      <div
+        ref={modalRef}
+        className="w-full max-w-lg bg-[#0f1017] border border-white/10 rounded-3xl shadow-2xl overflow-hidden relative text-gray-100 flex flex-col max-h-[90vh]"
+      >
+        {/* Subtle Ambient Glow */}
+        <div className="absolute top-0 right-0 w-48 h-48 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+
+        {/* Modal Header */}
+        <div className="p-5 sm:p-6 border-b border-white/10 flex items-center justify-between bg-white/[0.02]">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-cyan-500/15 border border-cyan-500/30 text-cyan-400 flex items-center justify-center shadow-lg shadow-cyan-500/10">
+              <HiUsers className="w-5 h-5 text-cyan-400" />
+            </div>
+            <div>
+              <h2 className="text-base sm:text-lg font-extrabold text-white tracking-tight">
+                Create Group Channel
+              </h2>
+              <p className="text-xs text-gray-400">
+                Select at least 2 friends to start a group
+              </p>
+            </div>
           </div>
           <button
-            onClick={handleClick}
-            className="bg-white/20 hover:bg-white/30 transition-colors p-2 rounded-full"
+            type="button"
+            onClick={handleClose}
+            className="text-gray-400 hover:text-white p-2 rounded-xl hover:bg-white/10 transition cursor-pointer"
+            title="Close"
           >
-            <FaXmark className="text-white text-lg" />
+            <FaXmark className="w-4 h-4" />
           </button>
         </div>
-      </div>
 
-      {/* Body */}
-      <div className="p-6">
-        {isLoading ? (
-          <div className="flex justify-center items-center py-10">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500"></div>
+        {/* Modal Body */}
+        <div className="p-5 sm:p-6 space-y-4 overflow-y-auto custom-scrollbar flex-1">
+          {/* Group Name Input */}
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">
+              Group Title
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. Project Core Team, Gaming Squad..."
+              value={groupName}
+              maxLength={50}
+              onChange={(e) => setGroupName(e.target.value)}
+              className="w-full px-4 py-2.5 rounded-xl border border-white/10 bg-white/[0.04] text-xs sm:text-sm text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/60 focus:bg-white/[0.07] transition-all"
+            />
           </div>
-        ) : (
-          <>
-            {data && data.payload?.friends.length < 2 && (
-              <div className="bg-gradient-to-r from-red-600 to-red-500 p-4 rounded-lg mb-5 shadow-md">
-                <div className="flex items-center space-x-3">
-                  <div className="bg-white/20 p-2 rounded-full">
-                    <FaUsers className="text-white text-lg" />
-                  </div>
-                  <p className="text-sm font-medium">
-                    You need at least 2 friends to create a group chat. Please
-                    add more friends.
-                  </p>
-                </div>
+
+          {/* Members Selection Header & Search */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-xs font-bold uppercase tracking-wider text-gray-400">
+                Select Members ({selectedFriends.length} selected)
+              </label>
+              <span className="text-[11px] text-cyan-400 font-semibold">
+                Min 2 required
+              </span>
+            </div>
+
+            {/* Friend Filter Input */}
+            {friends.length > 0 && (
+              <div className="relative mb-2">
+                <HiMagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Filter friends..."
+                  className="w-full pl-8 pr-7 py-1.5 rounded-xl bg-white/[0.03] border border-white/10 text-white placeholder-gray-500 text-xs focus:outline-none focus:border-cyan-500/50 transition-all"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-white transition cursor-pointer"
+                  >
+                    <HiXMark className="w-3 h-3" />
+                  </button>
+                )}
               </div>
             )}
 
-            {/* Group Name Input */}
-            <div className="mb-6">
-              <label
-                htmlFor="chatName"
-                className="block text-gray-300 text-sm font-medium mb-2"
-              >
-                GROUP NAME
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  id="chatName"
-                  value={groupName}
-                  onChange={(e) => setGroupName(e.target.value)}
-                  placeholder="Enter a memorable name for your group"
-                  className="w-full p-3 pl-4 border border-gray-600 rounded-lg bg-gray-800/70 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all"
-                />
-                {groupName && (
-                  <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-orange-400">
-                    <FaCheck />
-                  </span>
-                )}
-              </div>
-              <p className="mt-2 text-xs text-gray-400">
-                Choose a name that represents your group purpose
-              </p>
-            </div>
-
-            {/* Selected Friends Counter */}
-            {data && data.payload?.friends.length > 1 && (
-              <div className="mb-4 bg-gray-800/70 rounded-lg p-3 flex justify-between items-center">
-                <span className="text-sm text-gray-300">Selected friends</span>
-                <span
-                  className={`text-sm font-medium px-3 py-1 rounded-full ${
-                    selectedFriends.length > 1
-                      ? "bg-orange-500/20 text-orange-400"
-                      : "bg-gray-700 text-gray-400"
-                  }`}
+            {/* Quick Toggle All Button */}
+            {filteredFriends.length > 0 && (
+              <div className="flex items-center justify-between text-xs mb-2 px-1">
+                <button
+                  type="button"
+                  onClick={handleToggleAll}
+                  className="text-cyan-400 hover:text-cyan-300 font-semibold transition cursor-pointer text-[11px]"
                 >
-                  {selectedFriends.length} / {data.payload.friends.length}
+                  {selectedFriends.length === filteredFriends.length
+                    ? "Deselect All"
+                    : "Select All Friends"}
+                </button>
+                <span className="text-[11px] text-gray-500">
+                  {filteredFriends.length} available
                 </span>
               </div>
             )}
 
-            {/* Friends List */}
-            {data && data.payload?.friends.length > 1 && (
-              <div className="space-y-2 max-h-60 overflow-y-auto pr-1 custom-scrollbar">
-                {data.payload.friends.map((friend) => {
+            {/* Friends List Roster */}
+            {isLoading ? (
+              <div className="py-8 flex justify-center">
+                <div className="w-8 h-8 rounded-full border-2 border-cyan-400 border-t-transparent animate-spin" />
+              </div>
+            ) : friends.length === 0 ? (
+              <div className="py-8 text-center rounded-2xl bg-white/[0.02] border border-white/5 p-4">
+                <HiUsers className="w-8 h-8 text-gray-500 mx-auto mb-2 opacity-60" />
+                <p className="text-xs font-bold text-white mb-1">
+                  No Friends Found
+                </p>
+                <p className="text-[11px] text-gray-400 max-w-xs mx-auto">
+                  You need connected friends to start a group channel. Send a friend
+                  request from the Friends tab first!
+                </p>
+              </div>
+            ) : filteredFriends.length === 0 ? (
+              <div className="py-6 text-center text-xs text-gray-400">
+                No friends match "{searchQuery}"
+              </div>
+            ) : (
+              <div className="max-h-56 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+                {filteredFriends.map((friend) => {
                   const isSelected = selectedFriends.includes(friend._id);
                   return (
                     <div
                       key={friend._id}
-                      className={`
-                        p-3 rounded-lg flex items-center justify-between transition-all duration-200
-                        ${
-                          isSelected
-                            ? "bg-gradient-to-r from-orange-500/20 to-amber-500/20 border border-orange-500/30"
-                            : "bg-gray-800/70 hover:bg-gray-700/70 border border-transparent"
-                        }
-                      `}
+                      onClick={() => handleCheckboxChange(friend._id)}
+                      className={`flex items-center justify-between p-3 rounded-2xl cursor-pointer border transition-all ${
+                        isSelected
+                          ? "bg-cyan-500/15 border-cyan-500/40 shadow-md shadow-cyan-500/5"
+                          : "bg-white/[0.02] border-white/5 hover:bg-white/[0.05]"
+                      }`}
                     >
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center">
-                          {friend.avatar ? (
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-10 h-10 rounded-xl overflow-hidden border border-white/10 bg-gray-800 flex-shrink-0">
+                          {friend.avatar?.url || friend.avatar ? (
                             <img
-                              src={friend.avatar}
+                              src={friend.avatar?.url || friend.avatar}
                               alt={friend.name}
-                              className="w-full h-full rounded-full object-cover"
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                e.target.style.display = "none";
+                              }}
                             />
                           ) : (
-                            <span className="text-lg font-semibold text-gray-300">
-                              {friend.name.charAt(0)}
-                            </span>
+                            <div className="w-full h-full flex items-center justify-center bg-cyan-500/20 text-cyan-300 font-bold text-xs">
+                              {friend.name ? friend.name.charAt(0).toUpperCase() : "U"}
+                            </div>
                           )}
                         </div>
-                        <div>
-                          <Link
-                            to={`/profile/${friend._id}`}
-                            className="font-medium text-gray-200 hover:text-orange-400 transition-colors"
-                          >
+                        <div className="min-w-0">
+                          <p className="text-xs sm:text-sm font-bold text-white truncate">
                             {friend.name}
-                          </Link>
-                          <p className="text-xs text-gray-400">
-                            @{friend.username || "username"}
+                          </p>
+                          <p className="text-[11px] text-gray-400 truncate">
+                            {friend.username ? `@${friend.username}` : "Friend"}
                           </p>
                         </div>
                       </div>
-                      <label className="relative inline-flex items-center cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => handleCheckboxChange(friend._id)}
-                          className="sr-only"
-                        />
-                        <div
-                          className={`
-                          w-5 h-5 border rounded transition-colors
-                          ${
-                            isSelected
-                              ? "bg-orange-500 border-orange-600"
-                              : "bg-gray-700 border-gray-600"
-                          }
-                        `}
-                        >
-                          {isSelected && (
-                            <FaCheck className="text-white text-xs mx-auto my-auto h-full" />
-                          )}
-                        </div>
-                      </label>
+
+                      <div
+                        className={`w-5 h-5 rounded-lg flex items-center justify-center border transition-all ${
+                          isSelected
+                            ? "bg-cyan-500 border-cyan-400 text-white"
+                            : "border-white/20 bg-white/5"
+                        }`}
+                      >
+                        {isSelected && (
+                          <FaCheck className="w-3 h-3 stroke-[3]" />
+                        )}
+                      </div>
                     </div>
                   );
                 })}
               </div>
             )}
+          </div>
+        </div>
 
-            {/* Create Button */}
-            <div className="mt-6">
-              <button
-                className={`
-                  w-full py-3 rounded-lg font-medium transition-all duration-200 flex items-center justify-center space-x-2
-                  ${
-                    selectedFriends.length > 1 && groupName
-                      ? "bg-gradient-to-r from-orange-500 to-amber-600 text-white shadow-lg hover:shadow-orange-500/30 hover:-translate-y-0.5"
-                      : "bg-gray-700 text-gray-400 cursor-not-allowed"
-                  }
-                `}
-                onClick={handleMakeGroup}
-                disabled={
-                  !(selectedFriends.length > 1 && groupName) ||
-                  makingGroupLoading
-                }
-              >
-                {makingGroupLoading ? (
-                  <>
-                    <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></div>
-                    <span>Creating...</span>
-                  </>
-                ) : (
-                  <>
-                    <FaUserGroup />
-                    <span>Create Group Chat</span>
-                  </>
-                )}
-              </button>
-
-              <p className="text-center text-xs text-gray-400 mt-2">
-                {selectedFriends.length <= 1 && groupName
-                  ? "Select at least 2 friends to continue"
-                  : !groupName && selectedFriends.length > 1
-                  ? "Enter a group name to continue"
-                  : selectedFriends.length <= 1 && !groupName
-                  ? "Select friends and enter a group name"
-                  : "Ready to create your group chat!"}
-              </p>
-            </div>
-          </>
-        )}
+        {/* Modal Footer Actions */}
+        <div className="p-4 sm:p-5 border-t border-white/10 flex items-center justify-end gap-3 bg-white/[0.02]">
+          <button
+            type="button"
+            onClick={handleClose}
+            className="px-4 py-2 rounded-xl text-xs font-semibold bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white transition active:scale-95 cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleMakeGroup}
+            disabled={
+              makingGroupLoading ||
+              selectedFriends.length < 2 ||
+              !groupName.trim()
+            }
+            className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-bold shadow-lg shadow-cyan-500/20 active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
+          >
+            {makingGroupLoading ? (
+              <>
+                <HiArrowPath className="w-3.5 h-3.5 animate-spin" />
+                <span>Creating Group...</span>
+              </>
+            ) : (
+              <>
+                <HiUserPlus className="w-4 h-4" />
+                <span>
+                  Create Group{" "}
+                  {selectedFriends.length > 0
+                    ? `(${selectedFriends.length + 1})`
+                    : ""}
+                </span>
+              </>
+            )}
+          </button>
+        </div>
       </div>
     </div>
   );

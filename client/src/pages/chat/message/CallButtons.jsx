@@ -1,49 +1,64 @@
 import { FaPhoneAlt, FaVideo } from "react-icons/fa";
-import { useNavigate } from "react-router-dom";
-import { callStarted } from "../../../app/features/otherSlice";
-import { useDispatch } from "react-redux";
-import { motion } from "framer-motion";
+import { useCall } from "../../../context/CallContext";
 
-const CallButtons = ({ chatId, member }) => {
-  const navigate = useNavigate();
-  const dispatch = useDispatch();
+const CallButtons = ({ chatId, member, isGroup = false, chatTitle = "" }) => {
+  const { initiateCall } = useCall();
+
+  const memberList = Array.isArray(member) ? member : [member];
+  const targetIds = memberList.map((m) => m?._id || m).filter(Boolean);
+  const target = memberList[0];
 
   const handleAudioCall = () => {
-    dispatch(callStarted(true));
-    navigate(
-      `/call/${chatId}?type=audio&&to=${member[0]._id}&&toName=${member[0].name}&&toImage=${member[0].avatar}`
-    );
+    if (!targetIds.length) return;
+    initiateCall({
+      chatId,
+      callType: "audio",
+      to: isGroup ? targetIds[0] : target?._id,
+      toName: isGroup
+        ? chatTitle || "Group Audio Call"
+        : target?.name || "Friend",
+      toImage: isGroup ? "" : target?.avatar || "",
+      members: targetIds,
+      isGroup,
+      chatTitle
+    });
   };
 
   const handleVideoCall = () => {
-    dispatch(callStarted(true));
-    navigate(
-      `/call/${chatId}?type=video&&to=${member[0]._id}&&toName=${member[0].name}&&toImage=${member[0].avatar}`
-    );
+    if (!targetIds.length) return;
+    initiateCall({
+      chatId,
+      callType: "video",
+      to: isGroup ? targetIds[0] : target?._id,
+      toName: isGroup
+        ? chatTitle || "Group Video Call"
+        : target?.name || "Friend",
+      toImage: isGroup ? "" : target?.avatar || "",
+      members: targetIds,
+      isGroup,
+      chatTitle
+    });
   };
 
   return (
-    <div className="flex space-x-3">
-      <motion.button
+    <div className="flex items-center gap-1.5 sm:gap-2">
+      <button
         onClick={handleAudioCall}
-        className="flex items-center justify-center w-9 h-9 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md shadow-blue-500/30"
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
+        className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-500 border border-cyan-500/20 transition shadow-sm active:scale-95"
         aria-label="Audio Call"
-        title="Start audio call"
+        title={isGroup ? "Start group audio call" : "Start audio call"}
       >
-        <FaPhoneAlt className="text-sm" />
-      </motion.button>
-      <motion.button
+        <FaPhoneAlt className="text-xs" />
+      </button>
+
+      <button
         onClick={handleVideoCall}
-        className="flex items-center justify-center w-9 h-9 rounded-full bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-md shadow-green-500/30"
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
+        className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 border border-emerald-500/20 transition shadow-sm active:scale-95"
         aria-label="Video Call"
-        title="Start video call"
+        title={isGroup ? "Start group video call" : "Start video call"}
       >
-        <FaVideo className="text-sm" />
-      </motion.button>
+        <FaVideo className="text-xs" />
+      </button>
     </div>
   );
 };

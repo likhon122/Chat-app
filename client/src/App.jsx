@@ -5,7 +5,7 @@ import {
   createRoutesFromElements,
   Navigate,
   Route,
-  RouterProvider
+  RouterProvider,
 } from "react-router-dom";
 import { useVerifyUserQuery } from "./app/api/api";
 import { setUser } from "./app/features/authSlice";
@@ -26,6 +26,7 @@ import PushNotificationManager from "./PushNotificationManager";
 import EditProfile from "./pages/profile/EditProfile";
 import ForgotPassword from "./pages/forgot-password/ForgotPassword";
 import ResetPassword from "./pages/forgot-password/ResetPassword";
+import Demo from "./components/Demo";
 import { serverUrl } from "..";
 
 const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY;
@@ -58,15 +59,10 @@ const App = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    (async () => {
-      const user = await fetch(`${serverUrl}/api/v1/api/v1/auth`, {
-        method: "GET",
-        credentials: "include"
-      });
-    })();
-
-    if (!mountLoading && data && data.payload?.user) {
-      dispatch(setUser(data.payload.user));
+    if (!mountLoading) {
+      if (data && data.payload?.user) {
+        dispatch(setUser(data.payload.user));
+      }
       setIsLoading(false);
     }
     if (isError) {
@@ -75,11 +71,7 @@ const App = () => {
   }, [dispatch, data, mountLoading, isError]);
 
   if (isLoading) {
-    return (
-      <div className="h-screen dark:bg-darkBg flex items-center justify-center">
-        <DuelSpinner />
-      </div>
-    );
+    return <DuelSpinner fullScreen text="Initializing ChatApp..." />;
   }
 
   const router = createBrowserRouter(
@@ -152,6 +144,14 @@ const App = () => {
             }
           />
           <Route
+            path="my-groups"
+            element={
+              <ProtectedRoute user={user} isLoading={isLoading}>
+                <MyGroups />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="my-groups/:groupId"
             element={
               <ProtectedRoute user={user} isLoading={isLoading}>
@@ -185,9 +185,10 @@ const App = () => {
             </CheckUserIsLoggedOut>
           }
         />
+        <Route path="/demo" element={<Demo />} />
         <Route path="*" element={<NotFound />} />
-      </>
-    )
+      </>,
+    ),
   );
 
   return (

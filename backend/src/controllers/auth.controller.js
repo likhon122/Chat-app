@@ -5,7 +5,8 @@ import { errorResponse, successResponse } from "../helper/responseHandler.js";
 import {
   createAccessToken,
   createRefreshToken,
-  verifyJsonWebToken
+  verifyJsonWebToken,
+  getCookieOptions
 } from "../helper/jsonWebToken.js";
 import { accessTokenKey } from "../secret.js";
 
@@ -27,16 +28,8 @@ const getUser = async (req, res, next) => {
     try {
       existUser = verifyJsonWebToken(accessToken, accessTokenKey);
     } catch (tokenError) {
-      res.clearCookie("accessToken", {
-        httpOnly: true,
-        secure: true,
-        sameSite: "none"
-      });
-      res.clearCookie("refreshToken", {
-        httpOnly: true,
-        secure: true,
-        sameSite: "none"
-      });
+      res.clearCookie("accessToken", getCookieOptions());
+      res.clearCookie("refreshToken", getCookieOptions());
       return errorResponse(res, {
         statusCode: 401,
         errorMessage: "Access token not valid please login again!",
@@ -139,17 +132,8 @@ const logOutUser = async (req, res, next) => {
       });
     }
 
-    res.clearCookie("accessToken", {
-      httpOnly: true,
-      secure: true,
-      sameSite: "none"
-    });
-
-    res.clearCookie("refreshToken", {
-      httpOnly: true,
-      secure: true,
-      sameSite: "none"
-    });
+    res.clearCookie("accessToken", getCookieOptions());
+    res.clearCookie("refreshToken", getCookieOptions());
 
     return successResponse(res, {
       statusCode: 200,

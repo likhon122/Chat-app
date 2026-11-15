@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   FaFilePdf,
   FaReply,
@@ -8,9 +8,21 @@ import {
   FaImage,
   FaFileAlt,
   FaCheck,
-  FaCheckDouble
+  FaCheckDouble,
+  FaPhone,
+  FaPhoneSlash,
+  FaTrash
 } from "react-icons/fa";
-import { motion, AnimatePresence } from "framer-motion";
+import { useCall } from "../../../context/CallContext";
+import { useDeleteSingleMessageMutation } from "../../../app/api/api";
+import { toast } from "../../../utils/alert";
+
+const truncateReplyText = (text, maxLength = 65) => {
+  if (!text || typeof text !== "string") return "";
+  const cleaned = text.replace(/\s+/g, " ").trim();
+  if (cleaned.length <= maxLength) return cleaned;
+  return cleaned.slice(0, maxLength).trim() + "...";
+};
 
 const ShowMessages = ({
   containerRef,
@@ -22,12 +34,53 @@ const ShowMessages = ({
   bottomRef,
   highlightedMessageId,
   messagePage,
-  isFetching
+  isFetching,
+  onDeleteMessage,
+  realtimeOnlineIds,
+  recipient
 }) => {
   const [startTouchX, setStartTouchX] = useState(null);
   const [swipeDirection, setSwipeDirection] = useState({});
-  const [swipeThreshold] = useState(50);
+  const swipeThreshold = 50;
   const [clickedMessageId, setClickedMessageId] = useState(null);
+  const { initiateCall } = useCall();
+  const [deleteSingleMessageApi] = useDeleteSingleMessageMutation();
+
+  const handleDeleteForMe = async (msg) => {
+    const targetId = msg._id || msg.realTimeId;
+    if (!targetId) return;
+
+    try {
+      if (onDeleteMessage) {
+        onDeleteMessage(msg);
+      }
+      await deleteSingleMessageApi(targetId).unwrap();
+      toast.success("Message deleted for you");
+    } catch (err) {
+      console.error("Failed to delete message:", err);
+      toast.error("Could not delete message");
+    }
+  };
+
+  const handleCallBack = (msg, isSameSender) => {
+    const isVideo =
+      msg.callInfo?.callType === "video" ||
+      msg.content?.toLowerCase().includes("video");
+    const targetUserId = isSameSender
+      ? msg.chat || msg.chatId
+      : msg.sender?._id;
+    const targetUserName = msg.sender?.name || "Friend";
+    const targetUserAvatar = msg.sender?.avatar || "";
+
+    initiateCall({
+      chatId: msg.chatId || msg.chat,
+      callType: isVideo ? "video" : "audio",
+      to: targetUserId,
+      toName: targetUserName,
+      toImage: targetUserAvatar,
+      members: [targetUserId]
+    });
+  };
 
   const handleTouchStart = (e) => {
     setStartTouchX(e.touches[0].clientX);
@@ -61,13 +114,6 @@ const ShowMessages = ({
     setSwipeDirection((prev) => ({ ...prev, [messageId]: null }));
   };
 
-  // Utility to check if two dates are more than 10 minutes apart
-  const isMoreThanTenMinutes = (currentDate, previousDate) => {
-    const difference = currentDate - previousDate;
-    return difference > 10 * 60 * 1000; // 10 minutes in milliseconds
-  };
-
-  // Utility to check if two messages are on different days
   const isDifferentDay = (currentDate, previousDate) => {
     return (
       currentDate.getDate() !== previousDate.getDate() ||
@@ -76,7 +122,6 @@ const ShowMessages = ({
     );
   };
 
-  // Format time from Date object
   const formatTime = (date) => {
     return new Date(date).toLocaleTimeString([], {
       hour: "2-digit",
@@ -84,7 +129,6 @@ const ShowMessages = ({
     });
   };
 
-  // Format date from Date object
   const formatDate = (date) => {
     const today = new Date();
     const yesterday = new Date(today);
@@ -117,74 +161,122 @@ const ShowMessages = ({
     }
   }, [highlightedMessageId, messageRefs]);
 
+  const lastSentMessageIndex = useMemo(() => {
+    if (!allMessages || allMessages.length === 0) return -1;
+    for (let i = allMessages.length - 1; i >= 0; i--) {
+      if (allMessages[i]?.sender?._id === userId) {
+        return i;
+      }
+    }
+    return -1;
+  }, [allMessages, userId]);
+
   return (
     <div
-      className="flex-1 overflow-y-auto custom-scrollbar bg-gray-50 dark:bg-gray-900 p-4"
+      className="flex-1 overflow-y-auto custom-scrollbar p-3 sm:p-5 space-y-3"
       ref={containerRef}
     >
       {messagePage > 0 && isFetching && (
         <div className="flex justify-center my-2">
-          <div className="w-8 h-8 rounded-full border-2 border-blue-500 border-t-transparent animate-spin"></div>
+          <div className="w-6 h-6 rounded-full border-2 border-cyan-500 border-t-transparent animate-spin" />
         </div>
       )}
 
       {allMessages &&
         allMessages.length > 0 &&
-        allMessages.map((message, index) => {
-          const isSameSender = message.sender._id === userId;
-          const messageId = message._id || message.realTimeId;
+        allMessages.map((msg, index) => {
+          const isSameSender = msg.sender?._id === userId;
+          const messageId = msg._id || msg.realTimeId;
           const previousMessage = allMessages[index - 1];
 
-          // Show date if the message is on a different day or if more than 10 minutes have passed since the previous message
+          const recipientId = recipient?._id;
+          const recipientName = recipient?.name || "Friend";
+          const recipientAvatar =
+            recipient?.avatar?.url ||
+            recipient?.avatar ||
+            "https://via.placeholder.com/150";
+
+          const isRecipientOnline = Boolean(
+            recipientId && realtimeOnlineIds?.has(recipientId.toString())
+          );
+
+          // Strictly identify real call log messages
+          const isCallMessage = Boolean(
+            (msg.callInfo && msg.callInfo.callType) ||
+            (typeof msg.content === "string" && (
+              msg.content.includes(" Call •") ||
+              msg.content.includes("Audio Call •") ||
+              msg.content.includes("Video Call •") ||
+              msg.content.startsWith("Missed Audio Call") ||
+              msg.content.startsWith("Missed Video Call") ||
+              msg.content.startsWith("Declined Audio Call") ||
+              msg.content.startsWith("Declined Video Call")
+            ))
+          );
+
+          // Read/Seen resolution
+          const readByList = Array.isArray(msg.readBy) ? msg.readBy : [];
+          const isSeenByRecipient = recipientId
+            ? readByList.some(
+                (u) => (u?._id || u).toString() === recipientId.toString()
+              )
+            : readByList.length > 0;
+          const isSeen =
+            msg.status === "seen" || isSeenByRecipient || readByList.length > 0;
+
+          let viewerAvatar = recipientAvatar;
+          let viewerName = recipientName;
+          if (readByList.length > 0) {
+            const firstReader = readByList[0];
+            viewerAvatar =
+              firstReader.avatar?.url || firstReader.avatar || recipientAvatar;
+            viewerName = firstReader.name || recipientName;
+          }
+
+          const isDelivered =
+            !isSeen && (msg.status === "delivered" || isRecipientOnline);
+          const isSent = !isSeen && !isDelivered;
+          const isLastSentMessage = isSameSender && index === lastSentMessageIndex;
+
           const showDate =
             index === 0 ||
             (previousMessage &&
               isDifferentDay(
-                new Date(message.createdAt),
+                new Date(msg.createdAt),
                 new Date(previousMessage.createdAt)
               ));
 
-          // Show time if this is the first message or if more than 10 minutes have passed since the previous message
-          const showTime =
-            index === 0 ||
-            (previousMessage &&
-              isMoreThanTenMinutes(
-                new Date(message.createdAt),
-                new Date(previousMessage.createdAt)
-              ));
-
-          // Check who replied to whom
           let whoReplied = "";
-          if (message?.replyTo) {
-            const repliedToUserId = message.replyTo.sender._id;
-            const senderId = message.sender._id;
+          if (msg.replyTo) {
+            const repliedToUserId = msg.replyTo.sender?._id;
+            const senderId = msg.sender?._id;
 
             if (userId === repliedToUserId && userId === senderId) {
               whoReplied = "You replied to yourself";
             } else if (userId === repliedToUserId && userId !== senderId) {
-              whoReplied = `${message.sender.name} replied to you`;
+              whoReplied = `${msg.sender?.name || "Friend"} replied to you`;
             } else if (userId !== repliedToUserId && userId === senderId) {
-              whoReplied = `You replied to ${message.replyTo.sender.name}`;
+              whoReplied = `You replied to ${msg.replyTo.sender?.name || "Friend"}`;
             } else {
-              whoReplied = `${message.sender.name} replied to ${message.replyTo.sender.name}`;
+              whoReplied = `${msg.sender?.name || "Friend"} replied to ${msg.replyTo.sender?.name || "Friend"}`;
             }
           }
 
           return (
-            <div key={messageId} className="mb-3">
-              {/* Date Separator */}
+            <div key={messageId || index} className="space-y-2">
+              {/* Day Separator Pill */}
               {showDate && (
                 <div className="flex justify-center my-4">
-                  <div className="bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-xs font-medium px-4 py-1 rounded-full shadow-sm">
-                    {formatDate(message.createdAt)}
-                  </div>
+                  <span className="px-3 py-1 rounded-full text-[11px] font-semibold bg-gray-200/70 dark:bg-white/10 text-gray-600 dark:text-gray-300 backdrop-blur-sm shadow-sm">
+                    {formatDate(msg.createdAt)}
+                  </span>
                 </div>
               )}
 
-              {/* Message */}
+              {/* Message Bubble Item */}
               <div
                 ref={(el) => {
-                  if (messageId) {
+                  if (messageId && messageRefs?.current) {
                     messageRefs.current[messageId] = el;
                   }
                 }}
@@ -192,200 +284,319 @@ const ShowMessages = ({
                 onTouchStart={handleTouchStart}
                 onTouchMove={(e) => handleTouchMove(e, messageId)}
                 onTouchEnd={(e) => handleTouchEnd(e, messageId)}
-                className={`group flex ${
+                className={`group flex items-end gap-1.5 sm:gap-2 ${
                   isSameSender ? "justify-end" : "justify-start"
-                } items-end mb-1.5`}
+                }`}
               >
-                {/* Sender Avatar (only show for received messages) */}
+                {/* Received sender avatar */}
                 {!isSameSender && (
-                  <div className="flex-shrink-0 mr-2">
-                    <div className="relative">
-                      <img
-                        src={message.sender.avatar.url || message.sender.avatar}
-                        alt={message.sender.name}
-                        className="w-8 h-8 rounded-full object-cover border-2 border-white dark:border-gray-700 shadow-sm"
-                      />
-                    </div>
+                  <div className="flex-shrink-0 mb-1">
+                    <img
+                      src={
+                        msg.sender?.avatar?.url ||
+                        msg.sender?.avatar ||
+                        "https://via.placeholder.com/150"
+                      }
+                      alt={msg.sender?.name || "Avatar"}
+                      className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border border-gray-200 dark:border-white/10 shadow-sm"
+                    />
                   </div>
                 )}
 
-                {/* Message Content */}
-                <motion.div
-                  className={`flex flex-col max-w-[75%]`}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  {/* Reply Message (if exists) */}
-                  {message.replyTo && (
+                {/* Left Side (For Sent Messages): Hover Time + Delivery Receipt + Quick Reply + Delete for Me */}
+                {isSameSender && (
+                  <div
+                    className={`flex items-center gap-1.5 flex-shrink-0 self-end mb-1 transition-opacity duration-200 ${
+                      clickedMessageId === messageId
+                        ? "opacity-100"
+                        : "opacity-0 group-hover:opacity-100"
+                    }`}
+                  >
+                    <span className="text-[11px] font-medium text-gray-400 dark:text-gray-500 whitespace-nowrap select-none">
+                      {formatTime(msg.createdAt)}
+                    </span>
+
+                    {!isCallMessage && (
+                      <>
+                        {isSeen ? (
+                          <span
+                            className="text-[10px] text-cyan-500 font-semibold"
+                            title={`Seen by ${viewerName}`}
+                          >
+                            Seen
+                          </span>
+                        ) : isDelivered ? (
+                          <span
+                            className="text-[10px] text-cyan-500 font-medium"
+                            title="Delivered"
+                          >
+                            <FaCheckDouble className="text-[10px]" />
+                          </span>
+                        ) : (
+                          <span
+                            className="text-[10px] text-gray-400 font-medium"
+                            title="Sent"
+                          >
+                            <FaCheck className="text-[10px]" />
+                          </span>
+                        )}
+                      </>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={() => handleReplyMessage(msg)}
+                      className="p-1 rounded-full text-gray-400 hover:text-blue-500 hover:bg-gray-100 dark:hover:bg-white/10 transition"
+                      title="Reply"
+                    >
+                      <FaReply className="w-3 h-3" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteForMe(msg)}
+                      className="p-1 rounded-full text-gray-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition"
+                      title="Delete for me"
+                    >
+                      <FaTrash className="w-2.5 h-2.5" />
+                    </button>
+                  </div>
+                )}
+
+                {/* Main Bubble Column */}
+                <div className="flex flex-col max-w-[85%] sm:max-w-[70%] min-w-0">
+                  {/* Quoted Reply Message */}
+                  {msg.replyTo && (
                     <div
-                      onClick={() => handleShowReplyMessage(message)}
-                      className={`flex items-start mb-1 cursor-pointer mx-1 ${
-                        isSameSender ? "self-end" : "self-start"
+                      onClick={() => handleShowReplyMessage(msg)}
+                      className={`cursor-pointer mb-1 p-2 rounded-xl text-xs border-l-2 transition max-w-full overflow-hidden ${
+                        isSameSender
+                          ? "bg-blue-700/60 border-white/80 text-white self-end"
+                          : "bg-gray-100 dark:bg-white/5 border-gray-400 dark:border-gray-500 text-gray-600 dark:text-gray-300 self-start"
                       }`}
                     >
-                      <div
-                        className={`
-                      relative py-1.5 px-3 rounded-lg max-w-full
-                      ${
-                        isSameSender
-                          ? "bg-blue-100 dark:bg-blue-900/30 border-l-4 border-blue-500 dark:border-blue-600"
-                          : "bg-gray-100 dark:bg-gray-800/70 border-l-4 border-gray-400 dark:border-gray-600"
-                      }
-                    `}
-                      >
-                        <div className="flex items-center mb-0.5">
-                          <FaReply
-                            className={`text-xs mr-1.5 ${
-                              isSameSender ? "text-blue-500" : "text-gray-500"
-                            }`}
-                          />
-                          <span
-                            className={`text-xs font-medium ${
-                              isSameSender
-                                ? "text-blue-600 dark:text-blue-400"
-                                : "text-gray-600 dark:text-gray-400"
-                            }`}
-                          >
-                            {whoReplied}
-                          </span>
-                        </div>
-
-                        {Array.isArray(message.replyTo.attachment) &&
-                        message.replyTo.attachment.length > 0 ? (
-                          <div className="flex items-center space-x-1 text-xs text-gray-600 dark:text-gray-400">
-                            <FaImage className="text-xs" />
-                            <span>Media attachment</span>
-                          </div>
-                        ) : (
-                          <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-1">
-                            {message.replyTo.content || "No text content"}
-                          </p>
-                        )}
+                      <div className="flex items-center gap-1 font-bold text-[10px] mb-0.5 truncate max-w-full">
+                        <FaReply className="w-2.5 h-2.5 flex-shrink-0" />
+                        <span className="truncate">{whoReplied}</span>
                       </div>
+                      <p className="line-clamp-1 italic text-[11px] opacity-80 truncate max-w-full break-all">
+                        {truncateReplyText(msg.replyTo.content, 65) || "Media attachment"}
+                      </p>
                     </div>
                   )}
 
-                  {/* Main Message Bubble */}
+                  {/* Speech Bubble - Modern Solid Background (No Gradient) */}
                   <div
                     onClick={() =>
                       setClickedMessageId(
                         clickedMessageId === messageId ? null : messageId
                       )
                     }
-                    className={`
-                    relative rounded-xl shadow-sm
-                    ${
+                    className={`relative px-4 py-2.5 shadow-sm transition-all ${
                       highlightedMessageId === messageId
-                        ? "ring-2 ring-blue-500 dark:ring-blue-400 transform scale-[1.02] z-10 transition-all duration-300"
+                        ? "ring-2 ring-cyan-400 scale-[1.02]"
                         : ""
-                    }
-                    ${
+                    } ${
                       isSameSender
-                        ? "bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 text-white rounded-tr-md rounded-bl-xl rounded-br-xl"
-                        : "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 rounded-tl-md rounded-bl-md rounded-br-xl"
-                    }
-                  `}
+                        ? "bg-blue-600 dark:bg-blue-600 text-white rounded-2xl rounded-tr-xs"
+                        : "bg-white dark:bg-[#161822] border border-gray-200/80 dark:border-white/10 text-gray-900 dark:text-gray-100 rounded-2xl rounded-tl-xs"
+                    }`}
                   >
-                    {isSameSender ? (
-                      <>
+                    {/* Call Log Message vs Standard Chat Bubble */}
+                    {isCallMessage ? (
+                      <div className="flex items-center gap-3 py-1 px-1 min-w-[210px] sm:min-w-[240px]">
                         <div
-                          className={`absolute opacity-0 group-hover:opacity-100 transition-opacity duration-200 -left-7 ${
-                            isSameSender ? "mr-2" : "ml-2"
+                          className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 shadow-sm ${
+                            msg.callInfo?.status === "completed" ||
+                            msg.content?.includes("•")
+                              ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                              : msg.callInfo?.status === "missed" ||
+                                msg.content?.startsWith("Missed")
+                              ? "bg-rose-500/20 text-rose-400 border border-rose-500/30"
+                              : "bg-amber-500/20 text-amber-400 border border-amber-500/30"
                           }`}
                         >
-                          <button
-                            onClick={() => handleReplyMessage(message)}
-                            className="p-1.5 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 shadow-sm transition-colors"
+                          {msg.callInfo?.callType === "video" ||
+                          msg.content?.toLowerCase().includes("video") ? (
+                            <FaVideo className="w-4 h-4" />
+                          ) : (
+                            <FaPhone className="w-4 h-4" />
+                          )}
+                        </div>
+
+                        <div className="flex-1 min-w-0 text-left">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-xs font-bold leading-tight">
+                              {msg.callInfo?.callType === "video" ||
+                              msg.content?.toLowerCase().includes("video")
+                                ? "Video Call"
+                                : "Audio Call"}
+                            </span>
+                            <span
+                              className={`text-[9px] px-1.5 py-0.5 rounded-full font-semibold ${
+                                msg.callInfo?.status === "completed" ||
+                                msg.content?.includes("•")
+                                  ? "bg-emerald-500/20 text-emerald-300"
+                                  : msg.callInfo?.status === "missed" ||
+                                    msg.content?.startsWith("Missed")
+                                  ? "bg-rose-500/20 text-rose-300"
+                                  : "bg-amber-500/20 text-amber-300"
+                              }`}
+                            >
+                              {msg.callInfo?.status === "completed" ||
+                              msg.content?.includes("•")
+                                ? "Completed"
+                                : msg.callInfo?.status === "missed" ||
+                                  msg.content?.startsWith("Missed")
+                                ? "Missed"
+                                : "Declined"}
+                            </span>
+                          </div>
+
+                          <p className="text-[11px] opacity-80 mt-0.5 truncate">
+                            {msg.callInfo?.duration > 0
+                              ? `Duration: ${Math.floor(
+                                  msg.callInfo.duration / 60
+                                )
+                                  .toString()
+                                  .padStart(2, "0")}:${(
+                                  msg.callInfo.duration % 60
+                                )
+                                  .toString()
+                                  .padStart(2, "0")}`
+                              : msg.content}
+                          </p>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCallBack(msg, isSameSender);
+                          }}
+                          className="p-2 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 text-white transition shrink-0"
+                          title="Call back"
+                        >
+                          {msg.callInfo?.callType === "video" ||
+                          msg.content?.toLowerCase().includes("video") ? (
+                            <FaVideo className="w-3.5 h-3.5 text-cyan-400" />
+                          ) : (
+                            <FaPhone className="w-3.5 h-3.5 text-emerald-400" />
+                          )}
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        {/* Text Content */}
+                        {msg.content && (
+                          <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
+                            {msg.content}
+                          </p>
+                        )}
+
+                        {/* Attachments */}
+                        {msg.attachment?.length > 0 && (
+                          <div
+                            className={`space-y-2 ${
+                              msg.content
+                                ? "mt-2 pt-2 border-t border-white/10"
+                                : ""
+                            }`}
                           >
-                            <FaReply size={12} />
-                          </button>
+                            {msg.attachment.map((att, attIndex) => {
+                              const fileType = getFileType(att.url);
+                              return (
+                                <AttachmentRenderer
+                                  key={att.public_id || attIndex}
+                                  attachment={att}
+                                  fileType={fileType}
+                                />
+                              );
+                            })}
+                          </div>
+                        )}
+
+                        {/* Timestamp in bottom right of message text */}
+                        <div
+                          className={`flex items-center justify-end gap-1 mt-1 pt-0.5 text-[10px] select-none ${
+                            isSameSender
+                              ? "text-white/70"
+                              : "text-gray-400 dark:text-gray-500"
+                          }`}
+                        >
+                          <span>{formatTime(msg.createdAt)}</span>
                         </div>
                       </>
-                    ) : null}
-
-                    {/* Message Text Content */}
-                    {message.content && (
-                      <div className="px-4 py-2.5 break-words">
-                        <p className="text-sm">{message.content}</p>
-                      </div>
-                    )}
-
-                    {/* Attachments */}
-                    {message.attachment?.length > 0 && (
-                      <div
-                        className={`
-                      ${message.content ? "mt-1.5 mb-1 px-3" : "p-2"} 
-                      ${
-                        message.attachment.length > 1
-                          ? "grid grid-cols-2 gap-2"
-                          : ""
-                      }
-                    `}
-                      >
-                        {message.attachment.map((att, attIndex) => {
-                          const fileType = getFileType(att.url);
-
-                          return (
-                            <div
-                              key={att.public_id || attIndex}
-                              className={`
-                              rounded-lg overflow-hidden
-                              ${
-                                fileType === "image"
-                                  ? "bg-transparent"
-                                  : "bg-gray-100 dark:bg-gray-700 p-2"
-                              }
-                            `}
-                            >
-                              <AttachmentRenderer
-                                attachment={att}
-                                fileType={fileType}
-                              />
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-
-                    {/* Message Time (only show when clicked or for the latest message) */}
-                    {(clickedMessageId === messageId ||
-                      index === allMessages.length - 1) && (
-                      <div
-                        className={`absolute bottom-0 ${
-                          isSameSender
-                            ? "-left-2 -translate-x-full"
-                            : "-right-2 translate-x-full"
-                        } flex items-center`}
-                      >
-                        <span className="text-[10px] text-gray-500 dark:text-gray-400 whitespace-nowrap">
-                          {formatTime(message.createdAt)}
-                        </span>
-                        {isSameSender && (
-                          <FaCheckDouble className="ml-1 text-[8px] text-blue-400" />
-                        )}
-                      </div>
                     )}
                   </div>
-                </motion.div>
 
-                {/* Reply Button */}
-                {!isSameSender ? (
-                  <>
-                    <div
-                      className={`opacity-0 group-hover:opacity-100 transition-opacity duration-200 ${
-                        isSameSender ? "mr-2" : "ml-2"
-                      }`}
-                    >
-                      <button
-                        onClick={() => handleReplyMessage(message)}
-                        className="p-1.5 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 shadow-sm transition-colors"
-                      >
-                        <FaReply size={12} />
-                      </button>
+                  {/* Messenger-style profile avatar / status strictly below the LAST sent message */}
+                  {isSameSender && !isCallMessage && isLastSentMessage && (
+                    <div className="flex justify-end items-center gap-1.5 pr-1 mt-1 select-none">
+                      {isSeen ? (
+                        <div
+                          className="flex items-center gap-1.5 text-gray-400 dark:text-gray-500"
+                          title={`Seen by ${viewerName}`}
+                        >
+                          <span className="text-[10px] font-medium text-gray-400 dark:text-gray-400">
+                            Seen
+                          </span>
+                          <img
+                            src={viewerAvatar}
+                            alt={viewerName}
+                            className="w-4 h-4 rounded-full object-cover border border-white dark:border-[#0c0d12] shadow-sm"
+                          />
+                        </div>
+                      ) : isDelivered ? (
+                        <span
+                          className="flex items-center gap-1 text-[10px] text-cyan-400 font-medium"
+                          title="Delivered"
+                        >
+                          <FaCheckDouble className="text-[10px]" />
+                          <span>Delivered</span>
+                        </span>
+                      ) : (
+                        <span
+                          className="flex items-center gap-1 text-[10px] text-gray-400 font-medium"
+                          title="Sent"
+                        >
+                          <FaCheck className="text-[10px]" />
+                          <span>Sent</span>
+                        </span>
+                      )}
                     </div>
-                  </>
-                ) : null}
+                  )}
+                </div>
+
+                {/* Right Side (For Received Messages): Quick Reply + Delete for Me + Hover Time */}
+                {!isSameSender && (
+                  <div
+                    className={`flex items-center gap-1.5 flex-shrink-0 self-end mb-1 transition-opacity duration-200 ${
+                      clickedMessageId === messageId
+                        ? "opacity-100"
+                        : "opacity-0 group-hover:opacity-100"
+                    }`}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => handleReplyMessage(msg)}
+                      className="p-1 rounded-full text-gray-400 hover:text-blue-500 hover:bg-gray-100 dark:hover:bg-white/10 transition"
+                      title="Reply"
+                    >
+                      <FaReply className="w-3 h-3" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteForMe(msg)}
+                      className="p-1 rounded-full text-gray-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition"
+                      title="Delete for me"
+                    >
+                      <FaTrash className="w-2.5 h-2.5" />
+                    </button>
+                    <span className="text-[11px] font-medium text-gray-400 dark:text-gray-500 whitespace-nowrap select-none">
+                      {formatTime(msg.createdAt)}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           );
@@ -397,90 +608,75 @@ const ShowMessages = ({
   );
 };
 
-// Helper function to determine file type from URL
 const getFileType = (url) => {
   if (!url) return "unknown";
-
-  const extension = url.split(".").pop().toLowerCase();
-
-  if (["jpg", "jpeg", "png", "gif", "webp"].includes(extension)) {
+  const cleanUrl = url.split("?")[0].split("#")[0];
+  const ext = cleanUrl.split(".").pop().toLowerCase();
+  if (["jpg", "jpeg", "png", "gif", "webp", "svg", "bmp", "ico"].includes(ext))
     return "image";
-  } else if (["mp4", "webm", "ogg", "mov"].includes(extension)) {
-    return "video";
-  } else if (["mp3", "wav", "ogg"].includes(extension)) {
-    return "audio";
-  } else if (extension === "pdf") {
-    return "pdf";
-  } else if (["js", "html", "css", "jsx", "ts", "tsx"].includes(extension)) {
+  if (["mp4", "webm", "ogg", "mov", "mkv", "avi"].includes(ext)) return "video";
+  if (["mp3", "wav", "ogg", "m4a", "aac"].includes(ext)) return "audio";
+  if (ext === "pdf") return "pdf";
+  if (
+    [
+      "js",
+      "html",
+      "css",
+      "jsx",
+      "ts",
+      "tsx",
+      "py",
+      "json",
+      "c",
+      "cpp",
+      "java"
+    ].includes(ext)
+  )
     return "code";
-  } else {
-    return "file";
-  }
+  return "file";
 };
 
-// Component for rendering different types of attachments
 const AttachmentRenderer = ({ attachment, fileType }) => {
   const { url } = attachment;
 
   switch (fileType) {
     case "image":
       return (
-        <div className="relative group">
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block rounded-xl overflow-hidden border border-white/10 group relative max-w-xs"
+        >
           <img
             src={url}
-            className="w-full h-auto max-h-32 max-w-32 object-cover rounded-lg transform transition-transform duration-300 group-hover:scale-[1.02]"
-            alt="Image attachment"
+            alt="Shared attachment"
+            className="w-full max-h-60 object-cover group-hover:scale-105 transition duration-300"
           />
-          <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg">
-            <a
-              href={url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-white/90 text-gray-800 p-2 rounded-full hover:bg-white transition-colors"
-            >
-              <FaImage />
-            </a>
+          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition text-white text-xs font-semibold">
+            Click to view
           </div>
-        </div>
+        </a>
       );
 
     case "video":
       return (
-        <div className="relative rounded-lg overflow-hidden">
-          <video
-            className="w-full rounded-lg max-h-60"
-            controls
-            preload="metadata"
-          >
-            <source
-              src={url}
-              type={`video/${url.split(".").pop().toLowerCase()}`}
-            />
-            Your browser does not support video playback.
+        <div className="rounded-xl overflow-hidden border border-white/10 max-w-sm">
+          <video controls preload="metadata" className="w-full max-h-60">
+            <source src={url} />
           </video>
-          <div className="absolute top-2 left-2 bg-black/50 text-white text-xs p-1 px-2 rounded-full flex items-center">
-            <FaVideo className="mr-1" />
-            Video
-          </div>
         </div>
       );
 
     case "audio":
       return (
-        <div className="flex items-center space-x-3 p-1">
-          <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
-            <FaMusic className="text-white" />
+        <div className="flex items-center gap-3 p-2 rounded-xl bg-black/20 max-w-xs">
+          <div className="w-9 h-9 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center flex-shrink-0">
+            <FaMusic className="w-4 h-4" />
           </div>
-          <div className="flex-1">
-            <p className="text-xs font-medium mb-1">Audio File</p>
-            <audio controls className="w-full h-8">
-              <source
-                src={url}
-                type={`audio/${url.split(".").pop().toLowerCase()}`}
-              />
-              Your browser does not support audio playback.
-            </audio>
-          </div>
+          <audio controls className="w-full h-8 flex-1">
+            <source src={url} />
+          </audio>
         </div>
       );
 
@@ -490,16 +686,14 @@ const AttachmentRenderer = ({ attachment, fileType }) => {
           href={url}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-200/50 dark:hover:bg-gray-700/50 transition-colors"
+          className="flex items-center gap-3 p-2.5 rounded-xl bg-black/20 hover:bg-black/30 transition text-left"
         >
-          <div className="w-10 h-12 bg-gradient-to-br from-red-500 to-pink-500 rounded-md flex items-center justify-center flex-shrink-0">
-            <FaFilePdf className="text-white text-lg" />
+          <div className="w-9 h-9 rounded-lg bg-rose-500/20 text-rose-400 flex items-center justify-center flex-shrink-0">
+            <FaFilePdf className="w-4 h-4" />
           </div>
-          <div className="flex-1">
-            <p className="text-xs font-medium mb-1">PDF Document</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-              {url.split("/").pop()}
-            </p>
+          <div className="min-w-0">
+            <p className="text-xs font-bold truncate">PDF Document</p>
+            <p className="text-[10px] opacity-75 truncate">{url.split("/").pop()}</p>
           </div>
         </a>
       );
@@ -510,18 +704,14 @@ const AttachmentRenderer = ({ attachment, fileType }) => {
           href={url}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-200/50 dark:hover:bg-gray-700/50 transition-colors"
+          className="flex items-center gap-3 p-2.5 rounded-xl bg-black/20 hover:bg-black/30 transition text-left"
         >
-          <div className="w-10 h-12 bg-gradient-to-br from-gray-700 to-gray-900 rounded-md flex items-center justify-center flex-shrink-0">
-            <FaCode className="text-white text-lg" />
+          <div className="w-9 h-9 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center flex-shrink-0">
+            <FaCode className="w-4 h-4" />
           </div>
-          <div className="flex-1">
-            <p className="text-xs font-medium mb-1">
-              {url.split(".").pop().toUpperCase()} File
-            </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-              {url.split("/").pop()}
-            </p>
+          <div className="min-w-0">
+            <p className="text-xs font-bold truncate">Code Source</p>
+            <p className="text-[10px] opacity-75 truncate">{url.split("/").pop()}</p>
           </div>
         </a>
       );
@@ -532,16 +722,14 @@ const AttachmentRenderer = ({ attachment, fileType }) => {
           href={url}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-200/50 dark:hover:bg-gray-700/50 transition-colors"
+          className="flex items-center gap-3 p-2.5 rounded-xl bg-black/20 hover:bg-black/30 transition text-left"
         >
-          <div className="w-10 h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-md flex items-center justify-center flex-shrink-0">
-            <FaFileAlt className="text-white text-lg" />
+          <div className="w-9 h-9 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center flex-shrink-0">
+            <FaFileAlt className="w-4 h-4" />
           </div>
-          <div className="flex-1">
-            <p className="text-xs font-medium mb-1">File</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-              {url.split("/").pop()}
-            </p>
+          <div className="min-w-0">
+            <p className="text-xs font-bold truncate">File Attachment</p>
+            <p className="text-[10px] opacity-75 truncate">{url.split("/").pop()}</p>
           </div>
         </a>
       );

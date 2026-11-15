@@ -6,8 +6,10 @@ import {
   createJsonWebToken,
   verifyJsonWebToken
 } from "../helper/jsonWebToken.js";
-import { frontendUrl3, jsonWebTokenKey, resetPasswordKey } from "../secret.js";
+import { frontendUrl1, jsonWebTokenKey, resetPasswordKey } from "../secret.js";
 import { sendEmailWithNodemailer } from "../helper/sendEmail.js";
+
+const clientBaseUrl = (frontendUrl1 || "http://localhost:5173").replace(/\/+$/, "");
 import Request from "../models/request.model.js";
 import { NEW_FRIEND_REQUEST, REFETCH_CHATS } from "../constants/event.js";
 import Chat from "../models/chat.model.js";
@@ -36,7 +38,7 @@ const getSingleUser = async (req, res, next) => {
       .select({
         password: 0
       })
-      .populate("friends", "name avatar");
+      .populate("friends", "name avatar username isOnline lastSeen");
 
     if (!withOutObject) {
       return errorResponse(res, {
@@ -53,6 +55,16 @@ const getSingleUser = async (req, res, next) => {
 
     if (user.avatar && user.avatar.url) {
       user.avatar = user.avatar.url;
+    }
+
+    user.isOnline = userSocketIds.has(user._id.toString());
+
+    if (user.friends && Array.isArray(user.friends)) {
+      user.friends = user.friends.map((f) => ({
+        ...f,
+        avatar: f.avatar?.url || f.avatar,
+        isOnline: userSocketIds.has(f._id.toString())
+      }));
     }
 
     successResponse(res, {
@@ -165,7 +177,7 @@ const processRegisterController = async (req, res, next) => {
       the button Verify account or click
       <a
         style="color: blue; text-decoration: underline"
-        href="${frontendUrl3}/api/v1/verify/${token}"
+        href="${clientBaseUrl}/api/v1/verify/${token}"
         >Verify Account
       </a>
       this link!
@@ -180,7 +192,7 @@ const processRegisterController = async (req, res, next) => {
           color: white;
           border-radius: 8px;
         "
-        href="${frontendUrl3}/api/v1/verify/${token}"
+        href="${clientBaseUrl}/api/v1/verify/${token}"
       >
         Verify Account</a
       >
@@ -401,7 +413,7 @@ const getFriends = async (req, res, next) => {
       .select("friends")
       .populate({
         path: "friends",
-        select: "name avatar",
+        select: "name avatar username isOnline lastSeen",
         options: {
           limit: 20,
           skip
@@ -419,8 +431,15 @@ const getFriends = async (req, res, next) => {
 
     const editFriends = allFriends.friends;
 
-    const friends = editFriends.map(({ _id, name, avatar }) => {
-      return { _id, name, avatar: avatar.url };
+    const friends = editFriends.map(({ _id, name, avatar, username, lastSeen }) => {
+      return {
+        _id,
+        name,
+        username,
+        avatar: avatar?.url || avatar,
+        lastSeen,
+        isOnline: userSocketIds.has(_id.toString())
+      };
     });
 
     successResponse(res, {
@@ -721,7 +740,7 @@ const forGotPassword = async (req, res, next) => {
     <div style="padding: 10px 0px">
       You can reset your password for click this link <a
         style="color: blue; text-decoration: underline"
-        href="${frontendUrl3}/reset-password/${token}"
+        href="${clientBaseUrl}/reset-password/${token}"
       >
         Reset Password
       </a> or click reset password button!
@@ -736,7 +755,7 @@ const forGotPassword = async (req, res, next) => {
           color: white;
           border-radius: 8px;
         "
-        href="${frontendUrl3}/reset-password/${token}"
+        href="${clientBaseUrl}/reset-password/${token}"
       >
         Reset password</a
       >

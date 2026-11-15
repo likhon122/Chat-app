@@ -1,65 +1,80 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import { HiUserCircle, HiArrowRight } from "react-icons/hi2";
+import { useOnlineStatus } from "../../hooks/useOnlineStatus";
 
 const FriendsList = ({ friends }) => {
-  // State to manage how many friends to show
-  const [visibleCount, setVisibleCount] = useState(4);
-
-  // Limit the friends array based on the visible count
-  const displayedFriends = friends.slice(0, visibleCount);
+  const [visibleCount, setVisibleCount] = useState(6);
+  const { isUserOnline } = useOnlineStatus();
 
   if (!friends || friends.length === 0) {
     return (
-      <p className="text-gray-600 dark:text-gray-300 text-center mt-4">
-        No friends to display.
-      </p>
+      <div className="py-8 text-center text-xs text-gray-500 dark:text-gray-400">
+        No friends added yet. Start connecting with others!
+      </div>
     );
   }
 
-  // Handler for Show More button
-  const handleShowMore = () => {
-    setVisibleCount((prevCount) => prevCount + 4);
-  };
+  const displayedFriends = friends.slice(0, visibleCount);
 
   return (
-    <div className="flex flex-col items-center mt-8">
-      
-      <div className="flex flex-wrap justify-center gap-6">
-        {displayedFriends.map((friend) => (
-          <Link
-            to={`/profile/${friend._id}`}
-            key={friend._id}
-            className="flex flex-col items-center w-52 bg-gray-100 dark:bg-gray-700 rounded-lg shadow-lg transition-transform duration-300 transform hover:scale-105 p-4"
-          >
-            <div className="relative w-full">
-              <img
-                src={friend.avatar.url || "https://via.placeholder.com/150"}
-                alt={friend.name}
-                className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-4 border-blue-500 dark:border-blue-700 shadow-md"
-              />
-              <div className="absolute top-2 right-2">
-                <span className="bg-blue-500 text-white text-xs font-semibold rounded-full px-2 py-1">
-                  {friend.status || "Offline"}
-                </span>
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {displayedFriends.map((friend) => {
+          const isOnline = isUserOnline(friend._id) || Boolean(friend.isOnline);
+
+          return (
+            <Link
+              to={`/profile/${friend._id}`}
+              key={friend._id}
+              className="flex items-center gap-3 p-3 rounded-2xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5 hover:border-cyan-500/40 hover:bg-cyan-500/5 transition duration-200 group"
+            >
+              <div className="relative flex-shrink-0">
+                <img
+                  src={
+                    friend.avatar?.url ||
+                    friend.avatar ||
+                    "https://via.placeholder.com/150"
+                  }
+                  alt={friend.name}
+                  className="w-12 h-12 rounded-full object-cover border border-gray-200 dark:border-white/10 group-hover:scale-105 transition"
+                />
+                <div
+                  className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white dark:border-[#12131a] transition-colors ${
+                    isOnline
+                      ? "bg-emerald-500 shadow-[0_0_6px_#10b981]"
+                      : "bg-gray-400 dark:bg-gray-600"
+                  }`}
+                  title={isOnline ? "Online" : "Offline"}
+                />
               </div>
-            </div>
-            <p className="text-gray-800 dark:text-gray-100 mt-4 text-lg font-semibold text-center">
-              {friend.name}
-            </p>
-            
-            <button className="mt-3 bg-blue-600 dark:bg-blue-700 text-white rounded-md px-3 py-1 text-xs font-medium shadow-sm hover:bg-blue-700 dark:hover:bg-blue-800 transition duration-200 transform hover:scale-105">
-              View Profile
-            </button>
-          </Link>
-        ))}
+
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate group-hover:text-cyan-400 transition">
+                  {friend.name}
+                </p>
+                <p className="text-xs text-gray-400 truncate">
+                  @{friend.username || "user"}
+                </p>
+              </div>
+
+              <div className="text-gray-400 group-hover:text-cyan-400 group-hover:translate-x-1 transition flex-shrink-0">
+                <HiArrowRight className="w-4 h-4" />
+              </div>
+            </Link>
+          );
+        })}
       </div>
-      {visibleCount < friends?.length && (
-        <button
-          onClick={handleShowMore}
-          className="mt-4 bg-blue-500 dark:bg-blue-600 text-white rounded-md px-4 py-2 text-sm font-medium shadow-md hover:bg-blue-600 dark:hover:bg-blue-700 transition duration-300"
-        >
-          Show More
-        </button>
+
+      {visibleCount < friends.length && (
+        <div className="text-center pt-2">
+          <button
+            onClick={() => setVisibleCount((prev) => prev + 6)}
+            className="text-xs font-semibold text-cyan-600 dark:text-cyan-400 hover:underline inline-flex items-center gap-1"
+          >
+            Show more ({friends.length - visibleCount} remaining)
+          </button>
+        </div>
       )}
     </div>
   );

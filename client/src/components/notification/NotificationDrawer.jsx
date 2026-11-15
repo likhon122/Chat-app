@@ -8,7 +8,7 @@ import {
   useFriendRequestNotificationQuery,
   useRejectFriendRequestMutation
 } from "../../app/api/api";
-import { toast } from "react-toastify";
+import { toast } from "../../utils/alert";
 
 const NotificationDrawer = ({ onClose }) => {
   const { data, isLoading, error, refetch } =
