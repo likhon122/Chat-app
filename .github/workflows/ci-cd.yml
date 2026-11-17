@@ -127,56 +127,17 @@ jobs:
           cache-to: type=gha,mode=max,scope=client
 
   # ============================================================================
-  # Stage 3: Automated Deployment to Microsoft Azure VM
+  # Stage 3: Automated Deployment to Microsoft Azure Web App
   # ============================================================================
   deploy-to-azure:
-    name: Continuous Deployment to Azure VM
+    name: Continuous Deployment to Azure Web App
     needs: docker-build-push
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Source Code
-        uses: actions/checkout@v4
-
-      - name: Deploy to Azure via SSH
-        uses: appleboy/ssh-action@v1.0.3
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
         with:
-          host: ${{ secrets.AZURE_VM_HOST }}
-          username: ${{ secrets.AZURE_VM_USER }}
-          key: ${{ secrets.AZURE_SSH_KEY }}
-          port: ${{ secrets.AZURE_SSH_PORT || 22 }}
-          script_stop: true
-          envs: DOCKERHUB_USERNAME
-          script: |
-            set -e
-            echo "Starting deployment on Azure Virtual Machine..."
-
-            APP_DIR="/opt/chat-app"
-            mkdir -p "$APP_DIR"
-            cd "$APP_DIR"
-
-            # Authenticate with Docker Hub on host
-            echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
-
-            # Pull latest production docker images
-            export DOCKERHUB_USERNAME="${{ secrets.DOCKERHUB_USERNAME }}"
-            export IMAGE_TAG="${{ github.sha }}"
-
-            echo "Pulling fresh container images..."
-            docker pull "${DOCKERHUB_USERNAME}/chat-app-backend:latest"
-            docker pull "${DOCKERHUB_USERNAME}/chat-app-client:latest"
-
-            # Gracefully restart application containers
-            echo "Applying rolling container updates..."
-            docker compose -f docker-compose.prod.yml up -d --remove-orphans
-
-            # Health check validation
-            echo "Validating service health..."
-            sleep 10
-            docker compose -f docker-compose.prod.yml ps
-
-            # Prune obsolete images to conserve Azure VM disk space
-            echo "Pruning dangling images..."
-            docker image prune -af --filter "until=72h"
-
-            echo "Deployment completed successfully on Azure!"
+          app-name: 'chat-app'
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          images: '${{ secrets.DOCKERHUB_USERNAME }}/${{ env.BACKEND_IMAGE_NAME }}:latest'
